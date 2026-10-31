@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Flux</title>
+    <link>https://github.com/Aervorn/MacOS_Flux</link>
+    <item>
+      <title>Flux 0.4.0</title>
+      <pubDate>Sat, 31 Oct 2026 19:11:07 +0000</pubDate>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.4.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<ul><li>Automatic updates with <a href="https://sparkle-project.org">Sparkle</a>: Flux checks for new versions once a day (<b>Flux › Check for Updates…</b>, options in <b>Settings › General</b>).</li>
+<li>"Hide read articles" button in the toolbar (also in the <b>View</b> menu), for All Articles, folders and feeds.</li>
+<li>The <b>Add Feed</b>, <b>New Folder</b> and <b>Refresh</b> buttons are now in the sidebar.</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li>Mises à jour automatiques avec <a href="https://sparkle-project.org">Sparkle</a> : Flux recherche les nouvelles versions une fois par jour (<b>Flux › Rechercher les mises à jour…</b>, options dans <b>Réglages › Général</b>).</li>
+<li>Bouton « Masquer les articles lus » dans la barre d'outils (aussi dans le menu <b>Présentation</b>), pour Tous les articles, les dossiers et les flux.</li>
+<li>Les boutons <b>Ajouter un flux</b>, <b>Nouveau dossier</b> et <b>Actualiser</b> sont maintenant dans la barre latérale.</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.4.0/Flux-0.4.0.dmg" type="application/octet-stream" sparkle:edSignature="JdcW7YvpJd1xuGLhh4ftgy25xV/EdwnDotNrEjxJ7vyYjpwwHeKXsx6z424yQ+VBoUweFcGFsu1eXYjMe06uBw==" length="3360055" />
+    </item>
+  </channel>
+</rss>
