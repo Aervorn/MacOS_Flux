@@ -12,6 +12,7 @@ struct FluxApp: App {
     init() {
         Prefs.register()
         AppAppearance.apply()
+        _ = AppUpdater.shared   // démarre Sparkle (recherche planifiée des mises à jour)
 
         // Cache disque généreux pour les miniatures (AsyncImage passe par URLCache.shared)
         URLCache.shared = URLCache(memoryCapacity: 64 << 20, diskCapacity: 512 << 20)
@@ -48,8 +49,20 @@ struct FluxApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 AboutMenuItem()
+                CheckForUpdatesMenuItem()
+            }
+            CommandGroup(replacing: .newItem) {
+                Button("Ajouter un flux…") { ui.showAddFeed = true }
+                    .keyboardShortcut("n")
+                Button("Nouveau dossier…") { ui.showNewFolder = true }
+                    .keyboardShortcut("n", modifiers: [.command, .shift])
             }
             CommandGroup(after: .toolbar) {
+                Divider()
+                Button("Actualiser tous les flux") { Task { await store.refreshAll() } }
+                    .keyboardShortcut("r")
+                    .disabled(store.isRefreshing)
+                HideReadMenuItem()
                 Divider()
                 ReaderTextSizeCommands()
                 Divider()

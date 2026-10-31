@@ -11,6 +11,8 @@ struct ArticleListView: View {
     private let filter: SidebarSelection
 
     private let isSearching: Bool
+    /// Articles lus masqués (Tous les articles, dossiers et flux)
+    private let hidesRead: Bool
 
     /// Point de départ d'une sélection étendue (⇧-clic, ⇧↑/↓)
     @State private var anchor: String?
@@ -22,9 +24,11 @@ struct ArticleListView: View {
     /// Appelé quand on ouvre un article (clic simple, ou Entrée)
     private let onOpen: ((Article) -> Void)?
 
+    /// `hideRead` : masque les articles lus (sauf ceux sélectionnés) dans Tous les articles, les dossiers et les flux
     init(filter: SidebarSelection, selection: Binding<Set<String>>, folderFeedURLs: [String] = [], searchText: String = "",
-         onOpen: ((Article) -> Void)? = nil) {
+         hideRead: Bool = false, onOpen: ((Article) -> Void)? = nil) {
         self.onOpen = onOpen
+        self.hidesRead = hideRead
         self.filter = filter
         self._selection = selection
         self.isSearching = !searchText.isEmpty
@@ -34,9 +38,19 @@ struct ArticleListView: View {
         let urls = folderFeedURLs
         let q = searchText
         let predicate: Predicate<Article>?
+        // « Masquer les lus » : Tous les articles se comporte comme Non lus.
+        // Prédicats écrits en entier plutôt qu'avec un booléen capturé, que SwiftData traduit mal.
+        let effective: SidebarSelection = (hideRead && filter == .all) ? .unread : filter
+        let unreadOnly = hideRead
 
         if q.isEmpty {
-            switch filter {
+            switch effective {
+            case .feed(let url) where unreadOnly:
+                predicate = #Predicate { !$0.isHidden && $0.feedURL == url && (!$0.isRead || sticky.contains($0.key)) }
+            case .folder where unreadOnly:
+                predicate = #Predicate {
+                    !$0.isHidden && !$0.isDuplicate && urls.contains($0.feedURL) && (!$0.isRead || sticky.contains($0.key))
+                }
             case .all:
                 predicate = #Predicate { !$0.isHidden && !$0.isDuplicate }
             case .unread:
@@ -52,7 +66,17 @@ struct ArticleListView: View {
             }
         } else {
             // Même filtres, restreints aux articles dont le titre ou le texte contient la recherche
-            switch filter {
+            switch effective {
+            case .feed(let url) where unreadOnly:
+                predicate = #Predicate {
+                    !$0.isHidden && $0.feedURL == url && (!$0.isRead || sticky.contains($0.key))
+                        && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
+                }
+            case .folder where unreadOnly:
+                predicate = #Predicate {
+                    !$0.isHidden && !$0.isDuplicate && urls.contains($0.feedURL) && (!$0.isRead || sticky.contains($0.key))
+                        && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
+                }
             case .all:
                 predicate = #Predicate {
                     !$0.isHidden && !$0.isDuplicate
@@ -343,6 +367,7 @@ struct ArticleListView: View {
 
     private var emptyTitle: String {
         if isSearching { return String(localized: "Aucun résultat") }
+        if hidesRead { return String(localized: "Tout est lu") }
         switch filter {
         case .unread: return String(localized: "Tout est lu")
         case .starred: return String(localized: "Aucun favori")

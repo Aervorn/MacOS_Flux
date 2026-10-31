@@ -265,3 +265,15 @@
 "Étroite" = "Narrow";
 "à 230 mots par minute" = "at 230 words per minute";
 "⌘-clic pour ajouter ou retirer un article, ⇧-clic pour sélectionner une plage." = "⌘-click to add or remove an article, ⇧-click to select a range.";
+
+/* 0.4.0 : masquer les lus, barre latérale, Sparkle */
+"Masquer les articles lus" = "Hide Read Articles";
+"Afficher les articles lus" = "Show Read Articles";
+"Ajouter un flux…" = "Add Feed…";
+"Actualiser tous les flux" = "Refresh All Feeds";
+"Rechercher les mises à jour…" = "Check for Updates…";
+"Mises à jour" = "Updates";
+"Rechercher automatiquement les mises à jour" = "Automatically check for updates";
+"Télécharger et installer automatiquement" = "Automatically download and install";
+"Dernière recherche : %@" = "Last checked: %@";
+"Rechercher maintenant" = "Check Now";

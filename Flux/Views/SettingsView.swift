@@ -61,6 +61,8 @@ struct SettingsView: View {
                     Text("Général")
                 }
 
+                UpdateSettingsSection()
+
                 Section("Affichage") {
                     Toggle("Afficher le résumé sous le titre (mode liste)", isOn: $showSummary)
                     LabeledContent("Taille du texte de l'article") {
@@ -86,7 +88,7 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            .settingsTab(idealHeight: languageChanged ? 365 : 320)
+            .settingsTab(idealHeight: languageChanged ? 495 : 450)
             .tabItem { Label("Général", systemImage: "gearshape") }
 
             Form {

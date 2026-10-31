@@ -36,6 +36,8 @@ enum Prefs {
     static let duplicatesVersion = "duplicatesVersion"
     /// Synchronisation entre Mac par iCloud Drive
     static let syncEnabled = "syncEnabled"
+    /// Masquer les articles lus dans Tous les articles, les dossiers et les flux
+    static let hideRead = "hideRead"
 
     static let defaults: [String: Any] = [
         autoMarkReadEnabled: false,
@@ -52,6 +54,7 @@ enum Prefs {
         archiveFavorites: true,
         groupDuplicates: true,
         duplicateSensitivity: 1,
+        hideRead: false,
     ]
 
     static func register() {

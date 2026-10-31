@@ -173,9 +173,16 @@ Flux ne collecte rien et n'envoie rien te concernant. Pas de compte, pas de stat
 
 ## 🔄 Mettre à jour
 
-Les mises à jour automatiques arriveront dans une prochaine version. En attendant, télécharge le nouveau DMG depuis la [page des versions](https://github.com/Aervorn/MacOS_Flux/releases) et remplace l'app dans ton dossier Applications. Tes flux, articles, favoris et réglages sont conservés.
+Depuis la version 0.4.0, Flux se met à jour tout seul : il recherche une nouvelle version une fois par jour et propose de l'installer (ou passe par **Flux › Rechercher les mises à jour…**). Les mises à jour sont signées : Flux refuse tout fichier qui n'a pas été signé par l'auteur. La recherche et l'installation automatiques se désactivent dans **Réglages › Général**.
+
+Tu viens d'une version 0.3.x ? Télécharge une dernière fois le nouveau DMG depuis la [page des versions](https://github.com/Aervorn/MacOS_Flux/releases) et remplace l'app dans ton dossier Applications. Tes flux, articles, favoris et réglages sont conservés.
 
 ## 📝 Historique des versions
+
+### 0.4.0
+- Mises à jour automatiques avec [Sparkle](https://sparkle-project.org) : Flux recherche les nouvelles versions une fois par jour (**Flux › Rechercher les mises à jour…**, options dans **Réglages › Général**).
+- Bouton « Masquer les articles lus » dans la barre d'outils (aussi dans le menu **Présentation**), pour Tous les articles, les dossiers et les flux.
+- Les boutons **Ajouter un flux**, **Nouveau dossier** et **Actualiser** sont maintenant dans la barre latérale.
 
 ### 0.3.1
 - Nouveau certificat de signature et nouvel identifiant d'app. Tes flux, articles et favoris sont conservés ; les réglages sont réinitialisés.
@@ -226,14 +233,16 @@ Flux/
 ├── Net.swift                session réseau
 ├── Keyboard.swift           raccourcis à une touche
 ├── Settings.swift           réglages, apparence, langue
+├── Updater.swift            mises à jour automatiques (Sparkle)
 ├── Views/                   interface SwiftUI
 ├── en.lproj / fr.lproj      traductions
 └── Resources/Readability.js
 Design/                      icône de l'app (SVG, et le script Python qui génère les PNG), fond du DMG
-scripts/make-dmg.sh          fabrique le DMG d'une version
+scripts/make-dmg.sh          fabrique le DMG d'une version et l'appcast Sparkle
+scripts/sparkle-keys.sh      crée la clé de signature Sparkle (une seule fois)
 ```
 
-Pour fabriquer un DMG comme ceux publiés, `scripts/make-dmg.sh` génère le projet, archive l'app, vérifie sa signature et crée l'image disque. Il faut [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) et un certificat de signature, dont le nom se règle en haut du script.
+Pour fabriquer un DMG comme ceux publiés, `scripts/make-dmg.sh` génère le projet, archive l'app, vérifie sa signature et crée l'image disque. Il faut [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) et un certificat de signature, dont le nom se règle en haut du script. Il signe aussi le DMG pour Sparkle et réécrit `appcast.xml`, ce qui demande la clé EdDSA créée une fois avec `scripts/sparkle-keys.sh` (la clé privée reste dans ton trousseau).
 
 ## 🤝 Contribuer et signaler un problème
 

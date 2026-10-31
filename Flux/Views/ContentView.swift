@@ -13,8 +13,6 @@ struct ContentView: View {
     @State private var filter: SidebarSelection? = .all
     /// Articles sélectionnés dans la liste (sélection multiple possible)
     @State private var selectedKeys: Set<String> = []
-    @State private var showAddFeed = false
-    @State private var showNewFolder = false
     @State private var searchText = ""
     @State private var importMessage: String?
 
@@ -23,6 +21,14 @@ struct ContentView: View {
     @AppStorage(Prefs.articleLayout) private var articleLayout = "list"
     static let listWidthRange: ClosedRange<Double> = 300...700
     @AppStorage(Prefs.refreshMinutes) private var refreshMinutes = 30
+    @AppStorage(Prefs.hideRead) private var hideRead = false
+    /// « Masquer les lus » n'a de sens que dans Tous les articles, un dossier ou un flux
+    private var canHideRead: Bool {
+        switch filter ?? .all {
+        case .all, .folder, .feed: true
+        default: false
+        }
+    }
     /// Vignettes en plein écran : la grille occupe liste + lecture, l'article s'ouvre par-dessus
     private var immersiveGrid: Bool { articleLayout == "gridFull" }
     /// Article ouvert par-dessus la grille (mode vignettes plein écran)
@@ -67,6 +73,7 @@ struct ContentView: View {
             selection: $selectedKeys,
             folderFeedURLs: folderFeedURLs,
             searchText: searchText.trimmingCharacters(in: .whitespaces),
+            hideRead: hideRead && canHideRead,
             onOpen: { _ in if immersiveGrid { articleOpen = true } }
         )
     }
@@ -81,7 +88,7 @@ struct ContentView: View {
         // et ne la mémorise pas. La liste et l'article sont donc côte à côte dans la
         // colonne de détail, avec une largeur de liste enregistrée dans les réglages.
         NavigationSplitView {
-            SidebarView(selection: $filter, showNewFolder: $showNewFolder)
+            SidebarView(selection: $filter, showNewFolder: Binding(get: { ui.showNewFolder }, set: { ui.showNewFolder = $0 }))
         } detail: {
             Group {
                 if immersiveGrid {
@@ -141,35 +148,17 @@ struct ContentView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+            // Ajouter un flux, Nouveau dossier et Actualiser sont dans la barre latérale (SidebarView)
             ToolbarItemGroup(placement: .navigation) {
-                Button {
-                    showAddFeed = true
-                } label: {
-                    Label("Ajouter un flux", systemImage: "plus")
+                Toggle(isOn: $hideRead) {
+                    Label("Masquer les articles lus",
+                          systemImage: hideRead && canHideRead
+                              ? "line.3.horizontal.decrease.circle.fill"
+                              : "line.3.horizontal.decrease.circle")
                 }
-                .keyboardShortcut("n")
-                .help("Ajouter un flux (⌘N)")
-
-                Button {
-                    showNewFolder = true
-                } label: {
-                    Label("Nouveau dossier", systemImage: "folder.badge.plus")
-                }
-                .keyboardShortcut("n", modifiers: [.command, .shift])
-                .help("Nouveau dossier (⇧⌘N)")
-
-                Button {
-                    Task { await store.refreshAll() }
-                } label: {
-                    if store.isRefreshing {
-                        ProgressView().controlSize(.small)
-                    } else {
-                        Label("Actualiser", systemImage: "arrow.clockwise")
-                    }
-                }
-                .keyboardShortcut("r")
-                .disabled(store.isRefreshing)
-                .help("Actualiser tous les flux (⌘R)")
+                .toggleStyle(.button)
+                .disabled(!canHideRead)
+                .help(hideRead ? Text("Afficher les articles lus") : Text("Masquer les articles lus"))
 
                 Button {
                     store.markAllRead(filter ?? .all)
@@ -248,7 +237,7 @@ struct ContentView: View {
         } message: {
             Text(importMessage ?? "")
         }
-        .sheet(isPresented: $showAddFeed) {
+        .sheet(isPresented: Binding(get: { ui.showAddFeed }, set: { ui.showAddFeed = $0 })) {
             AddFeedSheet(initialFolderUID: currentFolderUID)
         }
     }
@@ -450,3 +439,12 @@ private struct ReadTrigger: Equatable {
     let visible: Bool
 }
 
+
+/// Présentation › Masquer les articles lus
+struct HideReadMenuItem: View {
+    @AppStorage(Prefs.hideRead) private var hideRead = false
+
+    var body: some View {
+        Toggle("Masquer les articles lus", isOn: $hideRead)
+    }
+}

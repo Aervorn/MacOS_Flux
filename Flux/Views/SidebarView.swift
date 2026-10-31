@@ -16,6 +16,7 @@ struct SidebarView: View {
     @Binding var selection: SidebarSelection?
     @Binding var showNewFolder: Bool
     @Environment(FeedStore.self) private var store
+    @Environment(UIState.self) private var ui
 
     @Query private var allFeeds: [Feed]
     /// Triés par nom affiché (le nom personnalisé s'il y en a un)
@@ -72,6 +73,7 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .navigationSplitViewColumnWidth(min: 190, ideal: 230)
+        .toolbar { sidebarToolbar }
         .contextMenu {
             Button("Nouveau dossier…") { showNewFolder = true }
         }
@@ -124,6 +126,41 @@ struct SidebarView: View {
         }
         .sheet(item: $editingFolder) { folder in
             FolderEditSheet(folder: folder)
+        }
+    }
+
+    // MARK: - Barre d'outils de la barre latérale
+
+    /// Les raccourcis (⌘N, ⇧⌘N, ⌘R) sont portés par les menus Fichier et Présentation :
+    /// ils restent disponibles quand la barre latérale est masquée.
+    @ToolbarContentBuilder
+    private var sidebarToolbar: some ToolbarContent {
+        ToolbarItemGroup {
+            Button {
+                ui.showAddFeed = true
+            } label: {
+                Label("Ajouter un flux", systemImage: "plus")
+            }
+            .help("Ajouter un flux (⌘N)")
+
+            Button {
+                showNewFolder = true
+            } label: {
+                Label("Nouveau dossier", systemImage: "folder.badge.plus")
+            }
+            .help("Nouveau dossier (⇧⌘N)")
+
+            Button {
+                Task { await store.refreshAll() }
+            } label: {
+                if store.isRefreshing {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Label("Actualiser", systemImage: "arrow.clockwise")
+                }
+            }
+            .disabled(store.isRefreshing)
+            .help("Actualiser tous les flux (⌘R)")
         }
     }
 

@@ -118,4 +118,6 @@ struct OPMLDocument: FileDocument {
 final class UIState {
     var showOPMLImport = false
     var showOPMLExport = false
+    var showAddFeed = false
+    var showNewFolder = false
 }

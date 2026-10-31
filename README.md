@@ -173,9 +173,16 @@ Flux collects nothing and sends nothing about you. There is no account, no analy
 
 ## 🔄 Updating
 
-Automatic updates will come in a future version. In the meantime, download the new DMG from the [releases page](https://github.com/Aervorn/MacOS_Flux/releases) and replace the app in your Applications folder. Your feeds, articles, favorites and settings are kept.
+Since version 0.4.0, Flux updates itself: it checks for a new version once a day and offers to install it (or use **Flux › Check for Updates…**). Updates are signed, and Flux refuses any file that wasn't signed by the author. Automatic checking and installing can be turned off in **Settings › General**.
+
+Coming from 0.3.x? Download the new DMG from the [releases page](https://github.com/Aervorn/MacOS_Flux/releases) one last time and replace the app in your Applications folder. Your feeds, articles, favorites and settings are kept.
 
 ## 📝 Changelog
+
+### 0.4.0
+- Automatic updates with [Sparkle](https://sparkle-project.org): Flux checks for new versions once a day (**Flux › Check for Updates…**, options in **Settings › General**).
+- "Hide read articles" button in the toolbar (also in the **View** menu), for All Articles, folders and feeds.
+- The **Add Feed**, **New Folder** and **Refresh** buttons are now in the sidebar.
 
 ### 0.3.1
 - New signing certificate and bundle identifier. Your feeds, articles and favorites are kept; settings are reset.
@@ -226,14 +233,16 @@ Flux/
 ├── Net.swift                network session
 ├── Keyboard.swift           single-key shortcuts
 ├── Settings.swift           settings, appearance, language
+├── Updater.swift            automatic updates (Sparkle)
 ├── Views/                   SwiftUI interface
 ├── en.lproj / fr.lproj      translations
 └── Resources/Readability.js
 Design/                      app icon (SVG, and the Python script that generates the PNGs), DMG background
-scripts/make-dmg.sh          builds the DMG of a release
+scripts/make-dmg.sh          builds the DMG of a release and the Sparkle appcast
+scripts/sparkle-keys.sh      creates the Sparkle signing key (once)
 ```
 
-To build a DMG like the published ones, `scripts/make-dmg.sh` generates the project, archives the app, checks its signature and creates the disk image. It needs [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) and a signing certificate, whose name is set at the top of the script.
+To build a DMG like the published ones, `scripts/make-dmg.sh` generates the project, archives the app, checks its signature and creates the disk image. It needs [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) and a signing certificate, whose name is set at the top of the script. It also signs the DMG for Sparkle and rewrites `appcast.xml`, which needs the EdDSA key created once by `scripts/sparkle-keys.sh` (the private key stays in your keychain).
 
 ## 🤝 Contributing & issues
 
