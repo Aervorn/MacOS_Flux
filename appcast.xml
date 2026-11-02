@@ -4,26 +4,14 @@
     <title>Flux</title>
     <link>https://github.com/Aervorn/MacOS_Flux</link>
     <item>
-      <title>Flux 0.5.0</title>
-      <pubDate>Mon, 02 Nov 2026 19:21:25 +0000</pubDate>
-      <sparkle:version>4</sparkle:version>
-      <sparkle:shortVersionString>0.5.0</sparkle:shortVersionString>
+      <title>Flux 0.5.1</title>
+      <pubDate>Mon, 02 Nov 2026 20:13:31 +0000</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.5.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[<ul><li><b>Tags for favorites</b>: right-click on articles › Tags, or the tag button in the article toolbar. Tags appear under Favorites in the sidebar.</li>
-<li><b>Filter rules on several feeds</b>: check the feeds a rule applies to. Shortcut: right-click a feed › New Filter Rule….</li>
-<li><b>Backup to iCloud Drive</b>: a complete daily copy of Flux, with one-click restore (<b>Settings › iCloud</b>).</li>
-<li><b>Export as PDF and print</b> an article (toolbar button, ⌥⌘E, ⌘P).</li>
-<li><b>Change a feed's address</b> without losing its articles (right-click › Change Address…).</li>
-<li>A short tour of Flux on first launch, and a "What's New" window after updates (both in the <b>Help</b> menu).</li>
-<li>Clearer context menus in the sidebar, and the General settings tab no longer needs scrolling.</li></ul>]]></description>
-      <description xml:lang="fr"><![CDATA[<ul><li><b>Tags pour les favoris</b> : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Les tags apparaissent sous Favoris dans la barre latérale.</li>
-<li><b>Règles de filtrage sur plusieurs flux</b> : coche les flux concernés par une règle. Raccourci : clic droit sur un flux › Nouvelle règle de filtrage….</li>
-<li><b>Sauvegarde dans iCloud Drive</b> : une copie complète de Flux chaque jour, et la restauration en un clic (<b>Réglages › iCloud</b>).</li>
-<li><b>Export PDF et impression</b> d'un article (bouton de la barre d'outils, ⌥⌘E, ⌘P).</li>
-<li><b>Changer l'adresse d'un flux</b> sans perdre ses articles (clic droit › Modifier l'adresse…).</li>
-<li>Une courte découverte de Flux au premier lancement, et une fenêtre « Nouveautés » après les mises à jour (toutes deux dans le menu <b>Aide</b>).</li>
-<li>Menus contextuels plus clairs dans la barre latérale, et l'onglet Général des réglages ne demande plus de défiler.</li></ul>]]></description>
-      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.5.0/Flux-0.5.0.dmg" type="application/octet-stream" sparkle:edSignature="J27vGUxmWJp52iyKYxOfyyxmDq3s65BLVTCNFYCnYXdQ9uGdExVGrKZz2htknegtdSx08ryjIqkHRaX9A0B4Dw==" length="3669490" />
+      <description><![CDATA[<ul><li>New app icon made for macOS 26: it adapts to the light, dark, clear and tinted icon styles (no more dark border in the Dock in dark mode).</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li>Nouvelle icône pensée pour macOS 26 : elle s'adapte aux styles d'icônes clair, sombre, transparent et teinté (plus de bordure sombre dans le Dock en mode sombre).</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.5.1/Flux-0.5.1.dmg" type="application/octet-stream" sparkle:edSignature="fDMIZXalkJXo2rFc1+DuWrqxvxXWskyw6EyfX9NgeaDE1XOYGlTf/DB5D9nCRKBqo952Qjf9ZKoVEj50YFv7AA==" length="5387554" />
     </item>
   </channel>
 </rss>
