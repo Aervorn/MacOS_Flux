@@ -263,7 +263,7 @@ struct SettingsView: View {
             .tabItem { Label("Stockage", systemImage: "internaldrive") }
 
             SyncSettingsView()      // hauteur calculée dans la vue (selon l'état et les autres Mac)
-                .tabItem { Label("Synchronisation", systemImage: "icloud") }
+                .tabItem { Label("iCloud", systemImage: "icloud") }
         }
         .onChange(of: appearance) {
             AppAppearance.apply(appearance)

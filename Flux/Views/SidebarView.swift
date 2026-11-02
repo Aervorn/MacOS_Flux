@@ -9,6 +9,8 @@ enum SidebarSelection: Hashable {
     /// Articles déjà ouverts, du plus récent au plus ancien
     case history
     case folder(String)   // Folder.uid
+    /// Favoris portant ce tag
+    case tag(String)      // FavoriteTag.uid
     case feed(String)     // Feed.url
 }
 
@@ -35,6 +37,13 @@ struct SidebarView: View {
     @State private var newRuleFeed: Feed?
     @State private var feedName = ""
 
+    @Query(sort: \FavoriteTag.name) private var tags: [FavoriteTag]
+    @AppStorage("favoritesExpanded") private var favoritesExpanded = true
+    /// « Nouveau tag… » (liste vide : création sans article)
+    @State private var newTag: [Article]?
+    @State private var renamingTag: FavoriteTag?
+    @State private var tagName = ""
+
     var body: some View {
         let counts = Dictionary(grouping: unread, by: \.feedURL).mapValues(\.count)
 
@@ -49,9 +58,7 @@ struct SidebarView: View {
                     .badge(unread.filter { !$0.isDuplicate }.count)
                     .tag(SidebarSelection.unread)
                     .contextMenu { smartMenu(.unread) }
-                Label("Favoris", systemImage: "star")
-                    .tag(SidebarSelection.starred)
-                    .contextMenu { smartMenu(.starred) }
+                favoritesGroup
                 Label("Historique", systemImage: "clock.arrow.circlepath")
                     .tag(SidebarSelection.history)
                     .contextMenu { smartMenu(.history) }
@@ -133,6 +140,18 @@ struct SidebarView: View {
                      : String(localized: "Ses articles seront supprimés, sauf ses \(favorites) favoris, qui restent dans Favoris."))
             }
         }
+        .alert("Renommer le tag", isPresented: Binding(
+            get: { renamingTag != nil },
+            set: { if !$0 { renamingTag = nil } }
+        )) {
+            TextField("Nom du tag", text: $tagName)
+            Button("Renommer") {
+                if let tag = renamingTag { store.rename(tag, to: tagName) }
+            }
+            .keyboardShortcut(.defaultAction)
+            Button("Annuler", role: .cancel) {}
+        }
+        .newTagAlert(for: $newTag)
         .sheet(item: $editingFolder) { folder in
             FolderEditSheet(folder: folder)
         }
@@ -146,6 +165,53 @@ struct SidebarView: View {
                 if selection == .feed(oldURL) { selection = .feed(newURL) }
             }
         }
+    }
+
+    // MARK: - Favoris et tags
+
+    /// Favoris, avec ses tags en dessous quand il y en a
+    @ViewBuilder
+    private var favoritesGroup: some View {
+        if tags.isEmpty {
+            favoritesLabel
+        } else {
+            DisclosureGroup(isExpanded: $favoritesExpanded) {
+                ForEach(tags) { tag in
+                    tagRow(tag)
+                }
+            } label: {
+                favoritesLabel
+            }
+        }
+    }
+
+    private var favoritesLabel: some View {
+        Label("Favoris", systemImage: "star")
+            .tag(SidebarSelection.starred)
+            .contextMenu {
+                smartMenu(.starred)
+                Divider()
+                Button("Nouveau tag…") { newTag = [] }
+            }
+    }
+
+    private func tagRow(_ tag: FavoriteTag) -> some View {
+        Label(tag.name, systemImage: "tag")
+            .tag(SidebarSelection.tag(tag.uid))
+            .contextMenu {
+                Button("Tout marquer comme lu") { store.markAllRead(.tag(tag.uid)) }
+                Divider()
+                Button("Renommer…") {
+                    tagName = tag.name
+                    renamingTag = tag
+                }
+                Button("Nouveau tag…") { newTag = [] }
+                Divider()
+                Button("Supprimer le tag", role: .destructive) {
+                    if selection == .tag(tag.uid) { selection = .starred }
+                    store.delete(tag)
+                }
+            }
     }
 
     // MARK: - Vues intelligentes

@@ -16,6 +16,9 @@ struct ArticleListView: View {
 
     /// Point de départ d'une sélection étendue (⇧-clic, ⇧↑/↓)
     @State private var anchor: String?
+    /// Articles à qui ajouter le tag créé par « Nouveau tag… »
+    @State private var tagTargets: [Article]?
+    @Query(sort: \FavoriteTag.name) private var tags: [FavoriteTag]
     /// Dernier article atteint au clavier ou à la souris
     @State private var cursor: String?
 
@@ -59,6 +62,9 @@ struct ArticleListView: View {
                 predicate = #Predicate { $0.isStarred }
             case .history:
                 predicate = #Predicate { $0.openedAt != nil }
+            case .tag(let uid):
+                let needle = Article.tagNeedle(uid)
+                predicate = #Predicate { $0.isStarred && $0.tagsRaw.localizedStandardContains(needle) }
             case .feed(let url):
                 predicate = #Predicate { !$0.isHidden && $0.feedURL == url }
             case .folder:
@@ -95,6 +101,12 @@ struct ArticleListView: View {
             case .history:
                 predicate = #Predicate {
                     $0.openedAt != nil
+                        && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
+                }
+            case .tag(let uid):
+                let needle = Article.tagNeedle(uid)
+                predicate = #Predicate {
+                    $0.isStarred && $0.tagsRaw.localizedStandardContains(needle)
                         && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
                 }
             case .feed(let url):
@@ -223,6 +235,7 @@ struct ArticleListView: View {
                 ContentUnavailableView(emptyTitle, systemImage: isSearching ? "magnifyingglass" : "tray")
             }
         }
+        .newTagAlert(for: $tagTargets)
     }
 
     private var otherSourceCounts: [String: Int] {
@@ -371,6 +384,7 @@ struct ArticleListView: View {
         switch filter {
         case .unread: return String(localized: "Tout est lu")
         case .starred: return String(localized: "Aucun favori")
+        case .tag: return String(localized: "Aucun favori avec ce tag")
         case .history: return String(localized: "Aucun article ouvert pour l'instant")
         default: return String(localized: "Aucun article")
         }
@@ -390,6 +404,9 @@ struct ArticleListView: View {
         }
         Button(allStarred ? String(localized: "Retirer des favoris") : String(localized: "Ajouter aux favoris")) {
             store.setStarred(!allStarred, targets)
+        }
+        Menu("Tags") {
+            TagMenuContent(tags: tags, articles: targets, store: store) { tagTargets = targets }
         }
         if targets.count == 1, article.clusterID != nil {
             Divider()

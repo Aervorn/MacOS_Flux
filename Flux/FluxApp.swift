@@ -6,6 +6,7 @@ struct FluxApp: App {
     private let container: ModelContainer
     @State private var store: FeedStore
     @State private var sync: SyncEngine
+    @State private var backup: BackupManager
     @State private var ui = UIState()
     @State private var keyboard = KeyboardRouter()
 
@@ -19,13 +20,16 @@ struct FluxApp: App {
 
         // Base dans ~/Library/Application Support/Flux/ (l'app n'est pas sandboxée,
         // on évite le "default.store" partagé avec d'autres apps)
+        // Restauration demandée avant la relance : appliquée avant d'ouvrir la base
+        BackupManager.applyPendingRestore()
+
         let directory = URL.applicationSupportDirectory.appending(path: "Flux", directoryHint: .isDirectory)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let configuration = ModelConfiguration(url: directory.appending(path: "Flux.store"))
 
         let modelContainer: ModelContainer
         do {
-            modelContainer = try ModelContainer(for: Feed.self, Article.self, Folder.self, FilterRule.self, configurations: configuration)
+            modelContainer = try ModelContainer(for: Feed.self, Article.self, Folder.self, FilterRule.self, FavoriteTag.self, configurations: configuration)
         } catch {
             fatalError("Impossible d'ouvrir la base : \(error)")
         }
@@ -33,6 +37,9 @@ struct FluxApp: App {
         let feedStore = FeedStore(context: modelContainer.mainContext)
         _store = State(initialValue: feedStore)
         _sync = State(initialValue: SyncEngine(store: feedStore))
+        let backupManager = BackupManager(store: feedStore)
+        backupManager.start()
+        _backup = State(initialValue: backupManager)
     }
 
     var body: some Scene {
@@ -97,6 +104,7 @@ struct FluxApp: App {
             SettingsView()
                 .environment(store)
                 .environment(sync)
+                .environment(backup)
                 .modelContainer(container)
         }
         .windowResizability(.contentSize)

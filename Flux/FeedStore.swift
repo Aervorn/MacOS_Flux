@@ -311,6 +311,9 @@ final class FeedStore {
             predicate = #Predicate { !$0.isRead && urls.contains($0.feedURL) }
         case .history:
             predicate = #Predicate { !$0.isRead && $0.openedAt != nil }
+        case .tag(let uid):
+            let needle = Article.tagNeedle(uid)
+            predicate = #Predicate { !$0.isRead && $0.isStarred && $0.tagsRaw.localizedStandardContains(needle) }
         case .all, .unread:
             predicate = #Predicate { !$0.isRead }
         }
@@ -342,6 +345,56 @@ final class FeedStore {
         } else {
             unarchive(changed)
         }
+    }
+
+    // MARK: - Tags des favoris
+
+    @discardableResult
+    func createTag(named name: String) -> FavoriteTag? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let tags = (try? context.fetch(FetchDescriptor<FavoriteTag>())) ?? []
+        if let existing = tags.first(where: { $0.name.localizedCaseInsensitiveCompare(trimmed) == .orderedSame }) {
+            return existing
+        }
+        let tag = FavoriteTag(name: trimmed)
+        context.insert(tag)
+        try? context.save()
+        return tag
+    }
+
+    func rename(_ tag: FavoriteTag, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != tag.name else { return }
+        tag.name = trimmed
+        try? context.save()
+    }
+
+    /// Supprime le tag ; les favoris restent, sans ce tag
+    func delete(_ tag: FavoriteTag) {
+        removeTagFromArticles(tag.uid)
+        context.delete(tag)
+        try? context.save()
+    }
+
+    func removeTagFromArticles(_ uid: String) {
+        let needle = Article.tagNeedle(uid)
+        let tagged = (try? context.fetch(FetchDescriptor<Article>(
+            predicate: #Predicate { $0.tagsRaw.localizedStandardContains(needle) }))) ?? []
+        for article in tagged { article.tagUIDs.removeAll { $0 == uid } }
+    }
+
+    /// Ajoute ou retire un tag. Un tag range un favori : l'ajouter à un article
+    /// qui n'en est pas un l'ajoute aux favoris.
+    func setTag(_ uid: String, _ on: Bool, _ articles: [Article]) {
+        for article in articles {
+            if on {
+                if !article.tagUIDs.contains(uid) { article.tagUIDs.append(uid) }
+            } else {
+                article.tagUIDs.removeAll { $0 == uid }
+            }
+        }
+        if on { setStarred(true, articles) } else { try? context.save() }
     }
 
     func articles(withKeys keys: Set<String>) -> [Article] {

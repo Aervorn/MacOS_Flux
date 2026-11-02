@@ -38,6 +38,14 @@ enum Prefs {
     static let syncEnabled = "syncEnabled"
     /// Masquer les articles lus dans Tous les articles, les dossiers et les flux
     static let hideRead = "hideRead"
+    /// Sauvegarde quotidienne dans iCloud Drive (BackupManager)
+    static let backupEnabled = "backupEnabled"
+    /// Nombre de sauvegardes gardées pour ce Mac
+    static let backupKeep = "backupKeep"
+    /// Inclure l'archive des favoris (articles complets et images)
+    static let backupIncludeArchive = "backupIncludeArchive"
+    /// Date de la dernière sauvegarde (secondes depuis 1970), propre à ce Mac
+    static let lastBackup = "lastBackup"
 
     static let defaults: [String: Any] = [
         autoMarkReadEnabled: false,
@@ -55,6 +63,9 @@ enum Prefs {
         groupDuplicates: true,
         duplicateSensitivity: 1,
         hideRead: false,
+        backupEnabled: false,
+        backupKeep: 7,
+        backupIncludeArchive: true,
     ]
 
     static func register() {

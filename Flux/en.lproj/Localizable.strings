@@ -301,3 +301,42 @@
 "Source :" = "Source:";
 "Exporter en PDF" = "Export as PDF";
 "Exporter l'article en PDF (⌥⌘E)" = "Export Article as PDF (⌥⌘E)";
+
+/* Sauvegarde iCloud */
+"iCloud" = "iCloud";
+"Sauvegarde" = "Backup";
+"Sauvegarder Flux chaque jour dans iCloud Drive" = "Back up Flux to iCloud Drive every day";
+"Inclure l'archive des favoris (articles complets et images)" = "Include the favorites archive (full articles and images)";
+"Sauvegardes conservées" = "Backups to keep";
+"3 dernières" = "Last 3";
+"7 dernières" = "Last 7";
+"14 dernières" = "Last 14";
+"30 dernières" = "Last 30";
+"Dernière sauvegarde %@" = "Last backup %@";
+"Aucune sauvegarde pour l'instant." = "No backup yet.";
+"Sauvegarder maintenant" = "Back Up Now";
+"Afficher dans le Finder" = "Show in Finder";
+"Restaurer…" = "Restore…";
+"Copie complète de Flux (flux, dossiers, articles, favoris, règles, historique et réglages) rangée dans iCloud Drive › Flux › Sauvegardes. Contrairement à la synchronisation, une suppression n'efface pas les sauvegardes déjà faites. Le cache d'images n'est pas sauvegardé : il se retélécharge." = "A complete copy of Flux (feeds, folders, articles, favorites, rules, history and settings) stored in iCloud Drive › Flux › Sauvegardes. Unlike sync, deleting something doesn't erase backups already made. The image cache isn't backed up: it downloads again.";
+"Restaurer « %@ » ?" = "Restore “%@”?";
+"Restaurer et relancer" = "Restore and Relaunch";
+"Flux va redémarrer avec le contenu de cette sauvegarde. Le contenu actuel est mis de côté dans le dossier « Avant restauration ». Si la synchronisation est activée, le contenu restauré sera aussi envoyé à tes autres Mac." = "Flux will relaunch with the contents of this backup. The current contents are set aside in the “Avant restauration” folder. If sync is on, the restored contents will also be sent to your other Macs.";
+"Choisis la sauvegarde à restaurer" = "Choose the backup to restore";
+"Choisir" = "Choose";
+"Sauvegarde en cours…" = "Backing up…";
+"Préparation de la restauration…" = "Preparing restore…";
+"iCloud Drive n'est pas activé sur ce Mac." = "iCloud Drive isn't turned on on this Mac.";
+"Impossible de copier la base de Flux." = "Couldn't copy the Flux database.";
+"Impossible de créer ou d'ouvrir l'archive de la sauvegarde." = "Couldn't create or open the backup archive.";
+"Ce fichier n'est pas une sauvegarde de Flux." = "This file isn't a Flux backup.";
+
+/* Tags des favoris */
+"Tags" = "Tags";
+"Tags du favori" = "Favorite's Tags";
+"Nouveau tag…" = "New Tag…";
+"Nouveau tag" = "New Tag";
+"Nom du tag" = "Tag name";
+"Le tag est ajouté à l'article, qui rejoint les favoris s'il n'y était pas." = "The tag is added to the article, which is added to favorites if it wasn't already.";
+"Renommer le tag" = "Rename Tag";
+"Supprimer le tag" = "Delete Tag";
+"Aucun favori avec ce tag" = "No favorites with this tag";

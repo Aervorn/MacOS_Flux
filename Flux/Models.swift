@@ -87,6 +87,20 @@ final class FilterRule {
     var filterAction: FilterAction { FilterAction(rawValue: action) ?? .hide }
 }
 
+/// Tag pour ranger les favoris (un favori peut en avoir plusieurs)
+@Model
+final class FavoriteTag {
+    @Attribute(.unique) var uid: String
+    var name: String
+    var createdAt: Date
+
+    init(name: String) {
+        self.uid = UUID().uuidString
+        self.name = name
+        self.createdAt = .now
+    }
+}
+
 enum FilterAction: String, CaseIterable, Identifiable {
     case hide
     case markRead
@@ -191,6 +205,9 @@ final class Article {
     var clusterOptOut: Bool = false
     /// Nom de la source, gardé quand son flux est supprimé (favoris conservés)
     var sourceTitle: String?
+    /// Tags (FavoriteTag.uid) sous la forme « ,uid1,uid2, » ("" = aucun) : une simple chaîne
+    /// se filtre dans un #Predicate (une liste ne se traduit pas en requête). Voir `tagUIDs`.
+    var tagsRaw: String = ""
     var imageURL: String?
     var author: String?
     var published: Date
@@ -218,6 +235,19 @@ final class Article {
 }
 
 extension Article {
+    /// Tags de l'article, triés
+    var tagUIDs: [String] {
+        get { tagsRaw.split(separator: ",").map(String.init) }
+        set {
+            let uids = Set(newValue.filter { !$0.isEmpty }).sorted()
+            let raw = uids.isEmpty ? "" : "," + uids.joined(separator: ",") + ","
+            if raw != tagsRaw { tagsRaw = raw }
+        }
+    }
+
+    /// Motif à chercher dans `tagsRaw` pour un tag
+    static func tagNeedle(_ uid: String) -> String { "," + uid + "," }
+
     /// Limite pour ne pas alourdir la base avec des articles très longs
     private static let searchTextLimit = 30_000
 

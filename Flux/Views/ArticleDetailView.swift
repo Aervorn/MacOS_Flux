@@ -1,4 +1,5 @@
 import AppKit
+import SwiftData
 import SwiftUI
 
 struct ArticleDetailView: View {
@@ -12,6 +13,9 @@ struct ArticleDetailView: View {
     @AppStorage(Prefs.readerFontSize) private var readerFontSize = 17
     @State private var loading = false
     @State private var errorMessage: String?
+    /// « Nouveau tag… » depuis la barre d'outils
+    @State private var tagTargets: [Article]?
+    @Query(sort: \FavoriteTag.name) private var tags: [FavoriteTag]
 
     private var articleURL: URL? { article.link.flatMap { URL(string: $0) } }
 
@@ -112,6 +116,13 @@ struct ArticleDetailView: View {
                     }
                     .help(article.isStarred ? String(localized: "Retirer des favoris") : String(localized: "Ajouter aux favoris"))
 
+                    Menu {
+                        TagMenuContent(tags: tags, articles: [article], store: store) { tagTargets = [article] }
+                    } label: {
+                        Label("Tags", systemImage: article.tagUIDs.isEmpty ? "tag" : "tag.fill")
+                    }
+                    .help("Tags du favori")
+
                     if let url = articleURL {
                         ShareLink(item: url)
                         Button {
@@ -124,6 +135,7 @@ struct ArticleDetailView: View {
                 }
             }
             .task { await prepare() }
+            .newTagAlert(for: $tagTargets)
             // Menu Fichier › Imprimer… / Exporter en PDF… (contenu affiché : extrait ou article complet)
             .focusedSceneValue(\.articleExport, ArticleExportActions(
                 print: { ArticleExport.printArticle(article, body: bodyHTML) },

@@ -24,6 +24,8 @@ enum SyncModel {
         var folders: [String: FolderEntry] = [:]    // clé : uid
         var filters: [String: FilterEntry] = [:]    // clé : uid
         var articles: [String: ArticleEntry] = [:]  // clé : Article.key
+        /// Tags des favoris (clé : uid) ; absent des fichiers des anciennes versions
+        var tags: [String: TagEntry]?
     }
 
     struct FeedEntry: Codable {
@@ -50,6 +52,16 @@ enum SyncModel {
 
         func sameValue(as other: FolderEntry) -> Bool {
             name == other.name && symbol == other.symbol && color == other.color && deleted == other.deleted
+        }
+    }
+
+    struct TagEntry: Codable {
+        var name: String
+        var deleted = false
+        var modified: Double
+
+        func sameValue(as other: TagEntry) -> Bool {
+            name == other.name && deleted == other.deleted
         }
     }
 
@@ -91,12 +103,14 @@ enum SyncModel {
         var modified: Double
         /// De quoi recréer un favori sur un Mac qui n'a pas (ou plus) l'article
         var meta: ArticleMeta?
+        /// Tags (uid), triés ; nil = aucun
+        var tags: [String]?
 
         func sameValue(as other: ArticleEntry) -> Bool {
-            read == other.read && starred == other.starred
+            read == other.read && starred == other.starred && (tags ?? []) == (other.tags ?? [])
         }
 
-        var isDefault: Bool { !read && !starred }
+        var isDefault: Bool { !read && !starred && (tags ?? []).isEmpty }
     }
 
     struct ArticleMeta: Codable {
@@ -143,7 +157,7 @@ final class SyncEngine {
 
     // MARK: - Emplacements
 
-    static var iCloudDrive: URL {
+    nonisolated static var iCloudDrive: URL {
         FileManager.default.homeDirectoryForCurrentUser
             .appending(path: "Library/Mobile Documents/com~apple~CloudDocs", directoryHint: .isDirectory)
     }
@@ -170,7 +184,7 @@ final class SyncEngine {
         return id
     }
 
-    static var deviceName: String {
+    nonisolated static var deviceName: String {
         Host.current().localizedName ?? "Mac"
     }
 
@@ -342,6 +356,20 @@ final class SyncEngine {
             else { var gone = old; gone.deleted = true; gone.modified = now; snap.feeds[url] = gone }
         }
 
+        // Tags des favoris
+        let previousTags = previous.tags ?? [:]
+        var tagEntries: [String: SyncModel.TagEntry] = [:]
+        for tag in (try? context.fetch(FetchDescriptor<FavoriteTag>())) ?? [] {
+            var entry = SyncModel.TagEntry(name: tag.name, modified: now)
+            if let old = previousTags[tag.uid], old.sameValue(as: entry) { entry.modified = old.modified }
+            tagEntries[tag.uid] = entry
+        }
+        for (uid, old) in previousTags where tagEntries[uid] == nil {
+            if old.deleted { if old.modified > tombstoneLimit { tagEntries[uid] = old } }
+            else { var gone = old; gone.deleted = true; gone.modified = now; tagEntries[uid] = gone }
+        }
+        snap.tags = tagEntries.isEmpty ? nil : tagEntries
+
         // Règles de filtrage
         let rules = (try? context.fetch(FetchDescriptor<FilterRule>())) ?? []
         for rule in rules {
@@ -362,6 +390,8 @@ final class SyncEngine {
             present.insert(article.key)
             var entry = SyncModel.ArticleEntry(read: article.isRead, starred: article.isStarred,
                                                published: article.published.timeIntervalSince1970, modified: now)
+            let tagUIDs = article.tagUIDs
+            if !tagUIDs.isEmpty { entry.tags = tagUIDs }
             if article.isStarred {
                 entry.meta = SyncModel.ArticleMeta(feedURL: article.feedURL, title: article.title, link: article.link,
                                                    summary: article.summary, imageURL: article.imageURL,
@@ -393,6 +423,8 @@ final class SyncEngine {
             guard let entry = state.lastSnapshot.articles[article.key] else { continue }
             if article.isRead != entry.read { article.isRead = entry.read }
             if article.isStarred != entry.starred { store.setStarred(entry.starred, [article]) }
+            let tags = entry.tags ?? []
+            if article.tagUIDs != tags { article.tagUIDs = tags }
         }
     }
 
@@ -438,6 +470,40 @@ final class SyncEngine {
             }
             current.folders[uid] = entry
         }
+
+        // Tags des favoris (avant les articles, qui y font référence)
+        var tagsByUID = Dictionary(((try? context.fetch(FetchDescriptor<FavoriteTag>())) ?? []).map { ($0.uid, $0) },
+                                   uniquingKeysWith: { a, _ in a })
+        let remoteTags = remote.tags ?? [:]
+        var currentTags = current.tags ?? [:]
+        for (uid, entry) in remoteTags {
+            if let local = currentTags[uid], local.modified >= entry.modified { continue }
+            if entry.deleted {
+                if let tag = tagsByUID[uid] { store.delete(tag); tagsByUID[uid] = nil }
+            } else if let tag = tagsByUID[uid] {
+                tag.name = entry.name
+            } else if let twin = tagsByUID.values.first(where: {
+                $0.name.localizedCaseInsensitiveCompare(entry.name) == .orderedSame && remoteTags[$0.uid] == nil
+            }) {
+                // Même tag créé séparément sur les deux Mac : un seul identifiant
+                let oldUID = twin.uid
+                let needle = Article.tagNeedle(oldUID)
+                let tagged = (try? context.fetch(FetchDescriptor<Article>(
+                    predicate: #Predicate { $0.tagsRaw.localizedStandardContains(needle) }))) ?? []
+                for article in tagged { article.tagUIDs = article.tagUIDs.map { $0 == oldUID ? uid : $0 } }
+                tagsByUID[oldUID] = nil
+                currentTags[oldUID] = nil
+                twin.uid = uid
+                tagsByUID[uid] = twin
+            } else {
+                let tag = FavoriteTag(name: entry.name)
+                tag.uid = uid
+                context.insert(tag)
+                tagsByUID[uid] = tag
+            }
+            currentTags[uid] = entry
+        }
+        current.tags = currentTags.isEmpty ? nil : currentTags
 
         // Flux
         var feeds = Dictionary(((try? context.fetch(FetchDescriptor<Feed>())) ?? []).map { ($0.url, $0) },
@@ -521,6 +587,8 @@ final class SyncEngine {
             if let local = current.articles[key], local.modified >= entry.modified { continue }
             if let article = articles[key] {
                 if article.isRead != entry.read { article.isRead = entry.read }
+                let tags = entry.tags ?? []
+                if article.tagUIDs != tags { article.tagUIDs = tags }
                 if article.isStarred != entry.starred {
                     if entry.starred { toStar.append(article) } else { toUnstar.append(article) }
                 }
@@ -531,6 +599,7 @@ final class SyncEngine {
                                       author: meta.author, published: Date(timeIntervalSince1970: entry.published))
                 article.isRead = entry.read
                 article.sourceTitle = meta.source
+                article.tagUIDs = entry.tags ?? []
                 context.insert(article)
                 article.feed = feeds[meta.feedURL]
                 toStar.append(article)
