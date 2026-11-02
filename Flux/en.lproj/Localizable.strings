@@ -294,3 +294,10 @@
 "Aucun flux coché" = "No feed selected";
 "Rechercher un flux" = "Search feeds";
 "Aucun flux ne correspond." = "No matching feed.";
+
+/* Impression et export PDF */
+"Exporter en PDF…" = "Export as PDF…";
+"Imprimer…" = "Print…";
+"Source :" = "Source:";
+"Exporter en PDF" = "Export as PDF";
+"Exporter l'article en PDF (⌥⌘E)" = "Export Article as PDF (⌥⌘E)";

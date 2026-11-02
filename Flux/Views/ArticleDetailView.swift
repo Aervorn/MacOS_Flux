@@ -90,6 +90,13 @@ struct ArticleDetailView: View {
                 }
                 ToolbarItemGroup {
                     Button {
+                        ArticleExport.exportPDF(article, body: bodyHTML)
+                    } label: {
+                        Label("Exporter en PDF", systemImage: "arrow.down.doc")
+                    }
+                    .help("Exporter l'article en PDF (⌥⌘E)")
+
+                    Button {
                         toggleFull()
                     } label: {
                         Label(showFull ? String(localized: "Version du flux") : String(localized: "Article complet"),
@@ -117,6 +124,10 @@ struct ArticleDetailView: View {
                 }
             }
             .task { await prepare() }
+            // Menu Fichier › Imprimer… / Exporter en PDF… (contenu affiché : extrait ou article complet)
+            .focusedSceneValue(\.articleExport, ArticleExportActions(
+                print: { ArticleExport.printArticle(article, body: bodyHTML) },
+                exportPDF: { ArticleExport.exportPDF(article, body: bodyHTML) }))
     }
 
     /// Si le flux ne fournit qu'un extrait, on va chercher l'article complet.

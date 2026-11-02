@@ -68,6 +68,9 @@ struct FluxApp: App {
                 Divider()
                 StatsMenuItem()
             }
+            CommandGroup(replacing: .printItem) {
+                ArticleExportCommands()
+            }
             CommandGroup(after: .newItem) {
                 Divider()
                 Button("Importer des abonnements (OPML)…") { ui.showOPMLImport = true }

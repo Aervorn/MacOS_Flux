@@ -78,7 +78,9 @@ struct ArticleWebView: NSViewRepresentable {
 enum ReaderTemplate {
     /// `width` : "narrow" (680 pt, confortable à lire), "wide" (960 pt) ou "full" (toute la largeur)
     /// `fontSize` : taille du texte en points (le titre et les légendes suivent en proportion)
-    static func render(_ article: Article, body: String, width: String = "narrow", fontSize: Int = 17) -> String {
+    /// `forPrint` : mise en page claire pour le papier, avec l'adresse de l'article à la fin
+    static func render(_ article: Article, body: String, width: String = "narrow", fontSize: Int = 17,
+                       forPrint: Bool = false) -> String {
         let maxWidth = switch width {
         case "full": "none"
         case "wide": "960px"
@@ -100,6 +102,10 @@ enum ReaderTemplate {
         }
         // Toutes les images passent par le cache disque (disponibles hors ligne)
         let body = HTMLUtils.rewriteImagesForCache(body, base: article.link.flatMap { URL(string: $0) })
+        var source = ""
+        if forPrint, let link = article.link, !link.isEmpty {
+            source = "<div class=\"source\">\(HTMLUtils.escape(String(localized: "Source :"))) \(HTMLUtils.escape(link))</div>"
+        }
 
         return """
         <!doctype html>
@@ -107,7 +113,7 @@ enum ReaderTemplate {
         <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>\(css) article { max-width: \(maxWidth); } html { font-size: \(fontSize)px; }</style>
+        <style>\(css) article { max-width: \(maxWidth); } html { font-size: \(fontSize)px; }\(forPrint ? printCSS : "")</style>
         </head>
         <body>
         <article>
@@ -115,11 +121,25 @@ enum ReaderTemplate {
           <h1 class="title">\(HTMLUtils.escape(article.title))</h1>
           \(hero)
           <div class="content">\(body)</div>
+          \(source)
         </article>
         </body>
         </html>
         """
     }
+
+    /// Impression : toujours en clair (même en mode sombre), sans marges propres à l'écran,
+    /// sans couper les images ni les blocs en deux
+    private static let printCSS = """
+    :root { color-scheme: light; --text: #1d1d1f; --muted: #6e6e73; --link: #0a66d8; --rule: rgba(0,0,0,.12); --code: rgba(0,0,0,.05); }
+    body { padding: 0; background: #fff; }
+    article { max-width: none; }
+    .hero { max-height: 320px; }
+    img, figure, pre, blockquote, table { break-inside: avoid; }
+    h1, h2, h3 { break-after: avoid; }
+    pre { white-space: pre-wrap; overflow: visible; }
+    .source { margin-top: 2.4em; padding-top: .8em; border-top: 1px solid var(--rule); color: var(--muted); font-size: .76rem; word-break: break-all; }
+    """
 
     private static let css = """
     :root { color-scheme: light dark; --text: #1d1d1f; --muted: #6e6e73; --link: #0a66d8; --rule: rgba(0,0,0,.1); --code: rgba(0,0,0,.05); }
