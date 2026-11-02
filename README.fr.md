@@ -47,6 +47,7 @@ Flux est une app SwiftUI native, en français et en anglais, en mode clair et so
 - **Ajouter un flux** (⌘N) en collant son adresse, ou simplement celle du site : Flux trouve le flux déclaré par le site, puis essaie les chemins habituels (`/feed`, `/rss`, `/atom.xml`…).
 - **Dossiers** (⇧⌘N), repliables, avec leur propre total de non-lus, leur couleur et leur icône (clic droit › Personnaliser…). Glisse un flux sur un dossier pour l'y ranger.
 - **Renommer un flux** (clic droit › Renommer…) quand son nom est à rallonge. Le nom d'origine est conservé, tu peux y revenir.
+- **Changer l'adresse d'un flux** (clic droit › Modifier l'adresse…), par exemple quand un site propose un flux plus complet : ses articles, leur état lu/favori, son nom et son dossier sont conservés.
 - **Import et export OPML** (menu Fichier, ⇧⌘I / ⇧⌘E) pour reprendre tes abonnements depuis un autre lecteur (NetNewsWire, Reeder, Feedly…) avec leurs dossiers, ou pour les sauvegarder.
 - **Limites :** les dossiers imbriqués d'un fichier OPML sont ramenés au dossier le plus proche.
 
@@ -74,8 +75,9 @@ Quand plusieurs sources publient la même actualité à moins de 48 heures d'éc
 
 ### 🚫 Filtres par mots-clés
 
-Des règles (Réglages › Filtres) excluent les articles selon un mot-clé dans leur titre, sans tenir compte des majuscules ni des accents : **masquer** l'article, ou simplement le **marquer comme lu**. Une règle vaut pour tous les flux ou pour un seul, pour le mot entier ou n'importe où dans le titre, et indique combien d'articles elle touche (avec un aperçu avant d'enregistrer).
+Des règles (Réglages › Filtres) excluent les articles selon un mot-clé dans leur titre, sans tenir compte des majuscules ni des accents : **masquer** l'article, ou simplement le **marquer comme lu**. Une règle vaut pour tous les flux ou seulement pour ceux que tu coches, pour le mot entier ou n'importe où dans le titre, et indique combien d'articles elle touche (avec un aperçu avant d'enregistrer).
 
+- Raccourci : clic droit sur un flux › Nouvelle règle de filtrage… ouvre une règle avec ce flux déjà coché.
 - Les règles s'appliquent aux articles existants et à ceux qui arrivent ; les favoris ne sont jamais filtrés. Supprimer une règle fait réapparaître les articles qu'elle masquait.
 - **Limite :** seul le titre est examiné, pas le texte de l'article.
 
@@ -94,6 +96,7 @@ Des règles (Réglages › Filtres) excluent les articles selon un mot-clé dans
 | ⌘R | Actualiser |
 | ⇧⌘K | Tout marquer comme lu (vue en cours) |
 | ⌘+ (ou ⌘=) / ⌘− / ⌘0 | Agrandir / réduire / taille par défaut du texte |
+| ⌥⌘E / ⌘P | Exporter l'article en PDF / l'imprimer |
 | ⌥⌘S | Statistiques de lecture |
 | ⌘, | Réglages |
 
@@ -110,6 +113,8 @@ Quand elle est activée (Réglages › Hors ligne), Flux télécharge après cha
 
 - Les **favoris** sont conservés indéfiniment, même lus, et ne sont jamais marqués comme lus automatiquement.
 - **Archive des favoris** (Réglages › Stockage, activée par défaut) : quand tu ajoutes un favori, l'article complet et ses images sont rangés dans une archive permanente, indépendante du cache hors ligne. Tu peux le relire même si le site le supprime, ou sans connexion. Retirer un favori libère sa place.
+- Des **tags** pour ranger les favoris : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Un article peut avoir plusieurs tags, et taguer un article l'ajoute aux favoris. Les tags apparaissent sous Favoris dans la barre latérale.
+- **Exporter en PDF** (bouton de la barre d'outils de l'article, ou ⌥⌘E) et **Imprimer** (⌘P), dans une mise en page claire pensée pour le papier, découpée en vraies pages.
 - L'**Historique** (barre latérale) liste les articles que tu as ouverts, du plus récent au plus ancien, et la recherche y fonctionne aussi.
 - **Marquer les articles comme lus** immédiatement, après 5, 10 ou 30 secondes, ou jamais (Réglages › Lecture).
 - En option, **marquer comme lus les anciens articles** au-delà de 1 jour à 1 mois, avec un aperçu du nombre d'articles concernés avant d'appliquer.
@@ -124,14 +129,21 @@ Présentation › Statistiques de lecture (⌥⌘S) : articles lus, temps passé
 
 ### ☁️ Synchronisation entre Mac
 
-Réglages › Synchronisation : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus et favoris**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément.
+Réglages › iCloud : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus, favoris et leurs tags**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément.
 
 - Non synchronisés : réglages, historique, statistiques et images (chaque Mac télécharge les siennes, archive des favoris comprise).
 - **Limites :** iCloud Drive doit être activé ; les changements arrivent aussi vite qu'iCloud Drive transporte les fichiers (en général en moins d'une minute). Flux passe par iCloud Drive plutôt que CloudKit, qui exige un compte développeur Apple payant. La première fois, macOS peut demander l'autorisation d'accéder à iCloud Drive.
 
+### 💾 Sauvegarde dans iCloud Drive
+
+Réglages › iCloud › Sauvegarde : une fois par jour, Flux range une copie complète de lui-même (flux, dossiers, articles, favoris, tags, règles, historique, réglages et, en option, l'archive des favoris) dans un `.zip` dans `iCloud Drive/Flux/Sauvegardes/<nom du Mac>/`, et garde les 3 à 30 dernières. Contrairement à la synchronisation, une suppression ne touche pas les sauvegardes déjà faites.
+
+- **Restaurer…** relance Flux avec le contenu d'une sauvegarde ; le contenu actuel est d'abord mis de côté. Si la synchronisation est activée, le contenu restauré l'emporte sur les autres Mac et leur est envoyé.
+- Désactivée par défaut. Le cache d'images n'est pas sauvegardé : il se retélécharge.
+
 ### ⚙️ Réglages
 
-Les réglages sont rangés en cinq onglets (Général, Lecture, Filtres, Stockage, Synchronisation) : apparence (automatique, clair, sombre), langue (système, français, anglais), résumé sous le titre, largeur du texte de l'article, délai avant de marquer comme lu, intervalle d'actualisation (de 15 minutes à 6 heures), lecture hors ligne et stockage.
+Les réglages sont rangés en cinq onglets (Général, Lecture, Filtres, Stockage, iCloud) : apparence (automatique, clair, sombre), langue (système, français, anglais), résumé sous le titre, largeur du texte de l'article, délai avant de marquer comme lu, intervalle d'actualisation (de 15 minutes à 6 heures), lecture hors ligne et stockage.
 
 ## 🧩 Compatibilité
 
@@ -178,6 +190,15 @@ Depuis la version 0.4.0, Flux se met à jour tout seul : il recherche une nouvel
 Tu viens d'une version 0.3.x ? Télécharge une dernière fois le nouveau DMG depuis la [page des versions](https://github.com/Aervorn/MacOS_Flux/releases) et remplace l'app dans ton dossier Applications. Tes flux, articles, favoris et réglages sont conservés.
 
 ## 📝 Historique des versions
+
+### 0.5.0
+- **Tags pour les favoris** : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Les tags apparaissent sous Favoris dans la barre latérale.
+- **Règles de filtrage sur plusieurs flux** : coche les flux concernés par une règle. Raccourci : clic droit sur un flux › Nouvelle règle de filtrage….
+- **Sauvegarde dans iCloud Drive** : une copie complète de Flux chaque jour, et la restauration en un clic (**Réglages › iCloud**).
+- **Export PDF et impression** d'un article (bouton de la barre d'outils, ⌥⌘E, ⌘P).
+- **Changer l'adresse d'un flux** sans perdre ses articles (clic droit › Modifier l'adresse…).
+- Une courte découverte de Flux au premier lancement, et une fenêtre « Nouveautés » après les mises à jour (toutes deux dans le menu **Aide**).
+- Menus contextuels plus clairs dans la barre latérale, et l'onglet Général des réglages ne demande plus de défiler.
 
 ### 0.4.0
 - Mises à jour automatiques avec [Sparkle](https://sparkle-project.org) : Flux recherche les nouvelles versions une fois par jour (**Flux › Rechercher les mises à jour…**, options dans **Réglages › Général**).

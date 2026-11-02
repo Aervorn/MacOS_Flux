@@ -15,9 +15,9 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "0.4.0"
+    MARKETING_VERSION: "0.5.0"
     # Sparkle compare ce numéro : l'augmenter à chaque version publiée
-    CURRENT_PROJECT_VERSION: "3"
+    CURRENT_PROJECT_VERSION: "4"
 
 targets:
   Flux:

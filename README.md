@@ -47,6 +47,7 @@ Flux is a native SwiftUI app, available in English and French, in light and dark
 - **Add a feed** (⌘N) by pasting its address, or simply the website's address: Flux finds the feed declared by the site, then tries the usual paths (`/feed`, `/rss`, `/atom.xml`…).
 - **Folders** (⇧⌘N), collapsible, with their own unread count, color and icon (right-click › Customize…). Drag a feed onto a folder to file it.
 - **Rename a feed** (right-click › Rename…) when its name is too long. The original name is kept, so you can go back to it.
+- **Change a feed's address** (right-click › Change Address…), for example when a site offers a more complete feed: its articles, read states, favorites, name and folder are kept.
 - **OPML import and export** (File menu, ⇧⌘I / ⇧⌘E) to bring your subscriptions from another reader (NetNewsWire, Reeder, Feedly…) with their folders, or to back them up.
 - **Limitations:** nested folders in an OPML file are flattened to their closest folder.
 
@@ -74,8 +75,9 @@ When several sources publish the same story within 48 hours, Flux groups them: o
 
 ### 🚫 Keyword filters
 
-Rules (Settings › Filters) exclude articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. A rule applies to all feeds or to a single one, to the whole word or anywhere in the title, and shows how many articles it affects (with a preview before you save it).
+Rules (Settings › Filters) exclude articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. A rule applies to all feeds or only to the feeds you check, to the whole word or anywhere in the title, and shows how many articles it affects (with a preview before you save it).
 
+- Shortcut: right-click a feed › New Filter Rule… opens a rule with that feed already checked.
 - Rules apply to existing and incoming articles; favorites are never filtered. Deleting a rule brings back the articles it was hiding.
 - **Limitation:** only the title is checked, not the article text.
 
@@ -94,6 +96,7 @@ Rules (Settings › Filters) exclude articles by a keyword in their title, ignor
 | ⌘R | Refresh |
 | ⇧⌘K | Mark all as read (current view) |
 | ⌘+ (or ⌘=) / ⌘− / ⌘0 | Bigger / smaller / default text size |
+| ⌥⌘E / ⌘P | Export the article as PDF / print it |
 | ⌥⌘S | Reading statistics |
 | ⌘, | Settings |
 
@@ -110,6 +113,8 @@ When enabled (Settings › Offline), after each refresh Flux downloads unread ar
 
 - **Favorites** are kept forever, even once read, and are never marked as read automatically.
 - **Favorites archive** (Settings › Storage, on by default): when you add a favorite, the full article and its images are stored in a permanent archive, separate from the offline cache. You can read it again even if the site deletes it, or without a connection. Removing a favorite frees its space.
+- **Tags** to organize favorites: right-click on articles › Tags, or the tag button in the article toolbar. An article can have several tags, and tagging an article adds it to favorites. Tags appear under Favorites in the sidebar.
+- **Export as PDF** (button in the article toolbar, or ⌥⌘E) and **Print** (⌘P), in a light layout made for paper, split into real pages.
 - **History** (sidebar) lists the articles you've opened, most recent first, and search works there too.
 - **Mark articles as read** immediately, after 5, 10 or 30 seconds, or never (Settings › Reading).
 - Optionally **mark old articles as read** after 1 day to 1 month, with a preview of how many articles are affected before you apply.
@@ -124,14 +129,21 @@ View › Reading Statistics (⌥⌘S): articles read, time spent reading, estima
 
 ### ☁️ Sync between Macs
 
-Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles and favorites** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/` and merges the others: when something changed on both Macs, the most recent change wins, item by item.
+Settings › iCloud: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/` and merges the others: when something changed on both Macs, the most recent change wins, item by item.
 
 - Not synced: settings, history, statistics and images (each Mac downloads its own, favorites archive included).
 - **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). Flux uses iCloud Drive rather than CloudKit, which requires a paid Apple Developer account. The first time, macOS may ask for permission to access iCloud Drive.
 
+### 💾 Backup to iCloud Drive
+
+Settings › iCloud › Backup: once a day, Flux stores a complete copy of itself (feeds, folders, articles, favorites, tags, rules, history, settings and, optionally, the favorites archive) as a `.zip` in `iCloud Drive/Flux/Sauvegardes/<Mac name>/`, keeping the last 3 to 30. Unlike sync, deleting something doesn't touch backups already made.
+
+- **Restore…** relaunches Flux with the contents of a backup; the current contents are set aside first. If sync is on, the restored contents win over the other Macs and are sent to them.
+- Off by default. The image cache isn't backed up: it downloads again.
+
 ### ⚙️ Settings
 
-Settings are organized in five tabs (General, Reading, Filters, Storage, Sync): appearance (automatic, light, dark), language (system, English, French), summary under the title, article text width, mark-as-read delay, refresh interval (15 minutes to 6 hours), offline reading and storage.
+Settings are organized in five tabs (General, Reading, Filters, Storage, iCloud): appearance (automatic, light, dark), language (system, English, French), summary under the title, article text width, mark-as-read delay, refresh interval (15 minutes to 6 hours), offline reading and storage.
 
 ## 🧩 Compatibility
 
@@ -178,6 +190,15 @@ Since version 0.4.0, Flux updates itself: it checks for a new version once a day
 Coming from 0.3.x? Download the new DMG from the [releases page](https://github.com/Aervorn/MacOS_Flux/releases) one last time and replace the app in your Applications folder. Your feeds, articles, favorites and settings are kept.
 
 ## 📝 Changelog
+
+### 0.5.0
+- **Tags for favorites**: right-click on articles › Tags, or the tag button in the article toolbar. Tags appear under Favorites in the sidebar.
+- **Filter rules on several feeds**: check the feeds a rule applies to. Shortcut: right-click a feed › New Filter Rule….
+- **Backup to iCloud Drive**: a complete daily copy of Flux, with one-click restore (**Settings › iCloud**).
+- **Export as PDF and print** an article (toolbar button, ⌥⌘E, ⌘P).
+- **Change a feed's address** without losing its articles (right-click › Change Address…).
+- A short tour of Flux on first launch, and a "What's New" window after updates (both in the **Help** menu).
+- Clearer context menus in the sidebar, and the General settings tab no longer needs scrolling.
 
 ### 0.4.0
 - Automatic updates with [Sparkle](https://sparkle-project.org): Flux checks for new versions once a day (**Flux › Check for Updates…**, options in **Settings › General**).

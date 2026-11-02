@@ -46,6 +46,10 @@ enum Prefs {
     static let backupIncludeArchive = "backupIncludeArchive"
     /// Date de la dernière sauvegarde (secondes depuis 1970), propre à ce Mac
     static let lastBackup = "lastBackup"
+    /// Découverte de Flux déjà présentée sur ce Mac
+    static let onboardingSeen = "onboardingSeen"
+    /// Dernière version lancée sur ce Mac (pour afficher les nouveautés après une mise à jour)
+    static let lastSeenVersion = "lastSeenVersion"
 
     static let defaults: [String: Any] = [
         autoMarkReadEnabled: false,

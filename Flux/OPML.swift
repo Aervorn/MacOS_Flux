@@ -120,4 +120,8 @@ final class UIState {
     var showOPMLExport = false
     var showAddFeed = false
     var showNewFolder = false
+    /// Découverte de Flux (première installation, ou menu Aide)
+    var showOnboarding = false
+    /// Nouveautés d'une version (après une mise à jour, ou menu Aide)
+    var whatsNew: WhatsNew.Release?
 }

@@ -47,6 +47,7 @@ struct FluxApp: App {
             ContentView()
                 .environment(store)
                 .environment(sync)
+                .environment(backup)
                 .environment(ui)
                 .environment(keyboard)
                 .frame(minWidth: 1000, minHeight: 560)
@@ -74,6 +75,11 @@ struct FluxApp: App {
                 ReaderTextSizeCommands()
                 Divider()
                 StatsMenuItem()
+            }
+            CommandGroup(replacing: .help) {
+                Button("Découvrir Flux") { ui.showOnboarding = true }
+                Button("Nouveautés de Flux") { ui.whatsNew = WhatsNew.latest }
+                    .disabled(WhatsNew.latest == nil)
             }
             CommandGroup(replacing: .printItem) {
                 ArticleExportCommands()

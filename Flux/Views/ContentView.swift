@@ -240,6 +240,12 @@ struct ContentView: View {
         .sheet(isPresented: Binding(get: { ui.showAddFeed }, set: { ui.showAddFeed = $0 })) {
             AddFeedSheet(initialFolderUID: currentFolderUID)
         }
+        .sheet(isPresented: Binding(get: { ui.showOnboarding }, set: { ui.showOnboarding = $0 })) {
+            OnboardingView()
+        }
+        .sheet(item: Binding(get: { ui.whatsNew }, set: { ui.whatsNew = $0 })) { release in
+            WhatsNewView(release: release)
+        }
     }
 
     /// Historique, temps de lecture et marquage comme lu de l'article affiché
@@ -301,6 +307,10 @@ struct ContentView: View {
         .onAppear {
             keyboard.start()
             sync.start()
+            // Découverte (première installation) ou nouveautés (mise à jour), une fois la fenêtre en place
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                StartupScreens.decide(context: context, ui: ui)
+            }
         }
         .task {
             // Actualisation au lancement
