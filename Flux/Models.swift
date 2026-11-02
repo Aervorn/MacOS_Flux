@@ -13,6 +13,9 @@ final class Feed {
     var folder: Folder?
     /// Nom choisi par l'utilisateur (nil = nom fourni par le flux)
     var customTitle: String?
+    /// Ancienne adresse, après un changement d'adresse (la synchro s'en sert pour
+    /// déplacer le flux sur les autres Mac au lieu de le supprimer et de le recréer)
+    var previousURL: String?
 
     @Relationship(deleteRule: .cascade, inverse: \Article.feed)
     var articles: [Article] = []
@@ -65,16 +68,19 @@ final class FilterRule {
     var wholeWord: Bool
     /// FilterAction.rawValue
     var action: String
-    /// Flux concerné (nil = tous les flux)
+    /// Ancien champ (un seul flux, nil = tous), remplacé par feedURLs.
+    /// Gardé pour migrer les règles des versions précédentes (FeedStore.migrateFilterScopes).
     var feedURL: String?
+    /// Flux concernés, triés (vide = tous les flux)
+    var feedURLs: [String] = []
     var createdAt: Date
 
-    init(keyword: String, wholeWord: Bool, action: FilterAction, feedURL: String?) {
+    init(keyword: String, wholeWord: Bool, action: FilterAction, feedURLs: [String]) {
         self.uid = UUID().uuidString
         self.keyword = keyword
         self.wholeWord = wholeWord
         self.action = action.rawValue
-        self.feedURL = feedURL
+        self.feedURLs = feedURLs.sorted()
         self.createdAt = .now
     }
 

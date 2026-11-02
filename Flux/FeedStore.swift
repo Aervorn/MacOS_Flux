@@ -14,6 +14,19 @@ final class FeedStore {
 
     init(context: ModelContext) {
         self.context = context
+        migrateFilterScopes()
+    }
+
+    /// Règles créées avant le choix de plusieurs flux : l'ancien champ feedURL passe dans feedURLs
+    private func migrateFilterScopes() {
+        let rules = (try? context.fetch(FetchDescriptor<FilterRule>(
+            predicate: #Predicate { $0.feedURL != nil }))) ?? []
+        guard !rules.isEmpty else { return }
+        for rule in rules {
+            if rule.feedURLs.isEmpty, let url = rule.feedURL { rule.feedURLs = [url] }
+            rule.feedURL = nil
+        }
+        try? context.save()
     }
 
     // MARK: - Ajout
@@ -343,6 +356,75 @@ final class FeedStore {
         try? context.save()
     }
 
+    // MARK: - Changement d'adresse
+
+    /// Change l'adresse d'un flux (ex. un site qui propose un flux plus complet) en gardant
+    /// ses articles, leur état lu/favori, son nom, son dossier et ses règles de filtrage.
+    func changeAddress(of feed: Feed, to urlString: String) async throws {
+        var s = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !s.contains("://") { s = "https://" + s }
+        guard let url = URL(string: s), url.host() != nil else { throw FeedError.invalidURL }
+
+        let (feedURL, parsed) = try await Self.discover(url)
+        let newURL = feedURL.absoluteString
+        guard !feed.isDeleted, newURL != feed.url else { return }
+        let existing = try context.fetch(FetchDescriptor<Feed>(predicate: #Predicate { $0.url == newURL }))
+        guard existing.isEmpty else { throw FeedError.alreadyExists }
+
+        migrate(feed, to: newURL)
+        if let site = parsed.siteURL { feed.siteURL = site }
+        feed.lastError = nil
+        // Les articles communs aux deux adresses (même guid) sont reconnus : pas de doublons
+        var added = ingest(parsed, into: feed)
+        feed.lastRefreshed = .now
+        try? context.save()
+        if parsed.items.count < 20 {
+            added += await fetchOlderArticles(for: feed)
+        }
+        groupDuplicates(added)
+        Task { await fillMissingImages(added) }
+    }
+
+    /// Réécrit les données locales d'un flux sous une nouvelle adresse, sans réseau.
+    /// Sert aussi à la synchro, quand l'adresse a été changée sur un autre Mac.
+    func migrate(_ feed: Feed, to newURL: String) {
+        let oldURL = feed.url
+        guard newURL != oldURL, !feed.isDeleted else { return }
+        let oldPrefix = oldURL + "|"
+
+        // Favoris gardés d'une ancienne suppression d'un flux à la nouvelle adresse
+        let already = (try? context.fetch(FetchDescriptor<Article>(
+            predicate: #Predicate { $0.feedURL == newURL }))) ?? []
+        var byKey = Dictionary(already.map { ($0.key, $0) }, uniquingKeysWith: { a, _ in a })
+        let articles = (try? context.fetch(FetchDescriptor<Article>(
+            predicate: #Predicate { $0.feedURL == oldURL }))) ?? []
+
+        feed.url = newURL
+        feed.previousURL = oldURL
+        for article in articles {
+            let ident = article.key.hasPrefix(oldPrefix) ? String(article.key.dropFirst(oldPrefix.count)) : article.key
+            let newKey = newURL + "|" + ident
+            if let twin = byKey[newKey], twin !== article {
+                // Déjà présent sous la nouvelle adresse : on garde un seul exemplaire
+                if article.isRead && !twin.isRead { twin.isRead = true }
+                if article.isStarred && !twin.isStarred { twin.isStarred = true }
+                context.delete(article)
+                continue
+            }
+            article.key = newKey
+            article.feedURL = newURL
+            if article.feed == nil { article.feed = feed }
+            byKey[newKey] = article
+        }
+        for article in already where article.feed == nil { article.feed = feed }
+
+        let rules = (try? context.fetch(FetchDescriptor<FilterRule>())) ?? []
+        for rule in rules where rule.feedURLs.contains(oldURL) {
+            rule.feedURLs = Array(Set(rule.feedURLs.map { $0 == oldURL ? newURL : $0 })).sorted()
+        }
+        try? context.save()
+    }
+
     /// Supprime un flux et ses articles, sauf les favoris : ils restent dans Favoris
     /// (et reviennent dans le flux si on l'ajoute à nouveau)
     func delete(_ feed: Feed) {
@@ -396,22 +478,22 @@ final class FeedStore {
         }
     }
 
-    func addFilter(keyword: String, wholeWord: Bool, action: FilterAction, feedURL: String?) {
+    func addFilter(keyword: String, wholeWord: Bool, action: FilterAction, feedURLs: [String]) {
         let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        context.insert(FilterRule(keyword: trimmed, wholeWord: wholeWord, action: action, feedURL: feedURL))
+        context.insert(FilterRule(keyword: trimmed, wholeWord: wholeWord, action: action, feedURLs: feedURLs))
         try? context.save()
         applyFiltersToExisting()
     }
 
-    func updateFilter(_ rule: FilterRule, keyword: String, wholeWord: Bool, action: FilterAction, feedURL: String?) {
+    func updateFilter(_ rule: FilterRule, keyword: String, wholeWord: Bool, action: FilterAction, feedURLs: [String]) {
         let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         releaseArticles(of: rule.uid)
         rule.keyword = trimmed
         rule.wholeWord = wholeWord
         rule.action = action.rawValue
-        rule.feedURL = feedURL
+        rule.feedURLs = feedURLs.sorted()
         try? context.save()
         applyFiltersToExisting()
     }

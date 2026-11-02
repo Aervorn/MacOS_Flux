@@ -3,19 +3,20 @@ import Foundation
 /// Règles d'exclusion prêtes à être testées (mot-clé normalisé, expression compilée)
 struct CompiledFilter {
     let uid: String
-    let feedURL: String?
+    /// Flux concernés (vide = tous les flux)
+    let feedURLs: Set<String>
     let action: FilterAction
     private let needle: String
     private let regex: NSRegularExpression?
 
     init(_ rule: FilterRule) {
         self.init(uid: rule.uid, keyword: rule.keyword, wholeWord: rule.wholeWord,
-                  action: rule.filterAction, feedURL: rule.feedURL)
+                  action: rule.filterAction, feedURLs: rule.feedURLs)
     }
 
-    init(uid: String = "", keyword: String, wholeWord: Bool, action: FilterAction, feedURL: String?) {
+    init(uid: String = "", keyword: String, wholeWord: Bool, action: FilterAction, feedURLs: [String]) {
         self.uid = uid
-        self.feedURL = feedURL
+        self.feedURLs = Set(feedURLs)
         self.action = action
         needle = CompiledFilter.fold(keyword.trimmingCharacters(in: .whitespacesAndNewlines))
         if wholeWord, !needle.isEmpty {
@@ -34,7 +35,7 @@ struct CompiledFilter {
 
     func matches(title: String, feedURL articleFeed: String) -> Bool {
         guard !needle.isEmpty else { return false }
-        if let feedURL, feedURL != articleFeed { return false }
+        if !feedURLs.isEmpty, !feedURLs.contains(articleFeed) { return false }
         let folded = CompiledFilter.fold(title)
         if let regex {
             return regex.firstMatch(in: folded, range: NSRange(folded.startIndex..., in: folded)) != nil

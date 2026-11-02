@@ -30,6 +30,9 @@ struct SidebarView: View {
     @State private var editingFolder: Folder?
     @State private var feedToDelete: Feed?
     @State private var renamingFeed: Feed?
+    @State private var editingAddress: Feed?
+    /// Flux pour lequel on crée une règle de filtrage depuis le menu contextuel
+    @State private var newRuleFeed: Feed?
     @State private var feedName = ""
 
     var body: some View {
@@ -37,15 +40,21 @@ struct SidebarView: View {
 
         List(selection: $selection) {
             Section {
+                // Chaque vue a son propre menu contextuel : sans lui, c'est celui de la liste
+                // (« Nouveau dossier de flux… ») qui s'afficherait, ce qui prête à confusion ici
                 Label("Tous les articles", systemImage: "tray.full")
                     .tag(SidebarSelection.all)
+                    .contextMenu { smartMenu(.all) }
                 Label("Non lus", systemImage: "circle.inset.filled")
                     .badge(unread.filter { !$0.isDuplicate }.count)
                     .tag(SidebarSelection.unread)
+                    .contextMenu { smartMenu(.unread) }
                 Label("Favoris", systemImage: "star")
                     .tag(SidebarSelection.starred)
+                    .contextMenu { smartMenu(.starred) }
                 Label("Historique", systemImage: "clock.arrow.circlepath")
                     .tag(SidebarSelection.history)
+                    .contextMenu { smartMenu(.history) }
             }
 
             Section {
@@ -75,7 +84,7 @@ struct SidebarView: View {
         .navigationSplitViewColumnWidth(min: 190, ideal: 230)
         .toolbar { sidebarToolbar }
         .contextMenu {
-            Button("Nouveau dossier…") { showNewFolder = true }
+            Button("Nouveau dossier de flux…") { showNewFolder = true }
         }
         .alert("Nouveau dossier", isPresented: $showNewFolder) {
             TextField("Nom du dossier", text: $newFolderName)
@@ -127,6 +136,23 @@ struct SidebarView: View {
         .sheet(item: $editingFolder) { folder in
             FolderEditSheet(folder: folder)
         }
+        .sheet(item: $newRuleFeed) { feed in
+            FilterRuleSheet(rule: nil, feeds: feeds, initialFeedURL: feed.url) { keyword, wholeWord, action, feedURLs in
+                store.addFilter(keyword: keyword, wholeWord: wholeWord, action: action, feedURLs: feedURLs)
+            }
+        }
+        .sheet(item: $editingAddress) { feed in
+            FeedAddressSheet(feed: feed) { oldURL, newURL in
+                if selection == .feed(oldURL) { selection = .feed(newURL) }
+            }
+        }
+    }
+
+    // MARK: - Vues intelligentes
+
+    @ViewBuilder
+    private func smartMenu(_ view: SidebarSelection) -> some View {
+        Button("Tout marquer comme lu") { store.markAllRead(view) }
     }
 
     // MARK: - Barre d'outils de la barre latérale
@@ -198,7 +224,7 @@ struct SidebarView: View {
                     }
                     Divider()
                     Button("Personnaliser…") { editingFolder = folder }
-                    Button("Nouveau dossier…") { showNewFolder = true }
+                    Button("Nouveau dossier de flux…") { showNewFolder = true }
                     Divider()
                     Button("Supprimer le dossier", role: .destructive) {
                         if selection == .folder(folder.uid) { selection = .all }
@@ -228,6 +254,8 @@ struct SidebarView: View {
                     feedName = feed.displayTitle
                     renamingFeed = feed
                 }
+                Button("Modifier l'adresse…") { editingAddress = feed }
+                Button("Nouvelle règle de filtrage…") { newRuleFeed = feed }
 
                 Menu("Déplacer vers") {
                     ForEach(folders) { folder in
@@ -278,6 +306,88 @@ struct FeedRow: View {
             }
             .frame(width: 16, height: 16)
             .clipShape(RoundedRectangle(cornerRadius: 3))
+        }
+    }
+}
+
+/// Changer l'adresse d'un flux sans perdre ses articles
+struct FeedAddressSheet: View {
+    let feed: Feed
+    /// Appelé avec l'ancienne et la nouvelle adresse une fois le changement fait
+    let onChanged: (String, String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(FeedStore.self) private var store
+
+    @State private var address: String
+    @State private var working = false
+    @State private var errorMessage: String?
+
+    init(feed: Feed, onChanged: @escaping (String, String) -> Void) {
+        self.feed = feed
+        self.onChanged = onChanged
+        _address = State(initialValue: feed.url)
+    }
+
+    private var canSubmit: Bool {
+        let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed != feed.url && !working
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Modifier l'adresse du flux")
+                .font(.title2.bold())
+            Text("Les articles déjà récupérés, leur état (lu, favori), le nom et le dossier du flux sont conservés.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            TextField("https://exemple.fr/feed.xml", text: $address)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { if canSubmit { save() } }
+                .disabled(working)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.callout)
+                    .foregroundStyle(.red)
+            }
+
+            HStack {
+                Spacer()
+                Button("Annuler", role: .cancel) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button {
+                    save()
+                } label: {
+                    if working {
+                        ProgressView().controlSize(.small).frame(width: 70)
+                    } else {
+                        Text("Enregistrer").frame(width: 70)
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(!canSubmit)
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private func save() {
+        let oldURL = feed.url
+        Task {
+            working = true
+            errorMessage = nil
+            do {
+                try await store.changeAddress(of: feed, to: address)
+                onChanged(oldURL, feed.url)
+                dismiss()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            working = false
         }
     }
 }

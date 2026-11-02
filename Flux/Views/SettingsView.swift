@@ -88,7 +88,7 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            .settingsTab(idealHeight: languageChanged ? 495 : 450)
+            .settingsTab(idealHeight: languageChanged ? 565 : 520)
             .tabItem { Label("Général", systemImage: "gearshape") }
 
             Form {

@@ -31,6 +31,8 @@ enum SyncModel {
         var siteURL: String?            // idem
         var customTitle: String?
         var folder: String?
+        /// Ancienne adresse du flux (changement d'adresse) ; absente des fichiers des anciennes versions
+        var previousURL: String?
         var deleted = false
         var modified: Double
 
@@ -55,13 +57,29 @@ enum SyncModel {
         var keyword: String
         var wholeWord: Bool
         var action: String
+        /// Ancien format (un seul flux). Encore écrit pour les versions précédentes : le premier
+        /// flux de la liste (elles appliquent alors la règle à ce seul flux plutôt qu'à tous)
         var feedURL: String?
+        /// Flux concernés, triés (vide = tous) ; absent des fichiers des anciennes versions
+        var feedURLs: [String]?
         var deleted = false
         var modified: Double
 
+        init(keyword: String, wholeWord: Bool, action: String, feedURLs: [String], modified: Double) {
+            self.keyword = keyword
+            self.wholeWord = wholeWord
+            self.action = action
+            self.feedURLs = feedURLs.sorted()
+            self.feedURL = self.feedURLs?.first
+            self.modified = modified
+        }
+
+        /// Flux concernés, quel que soit le format du fichier (vide = tous)
+        var scope: [String] { (feedURLs ?? feedURL.map { [$0] } ?? []).sorted() }
+
         func sameValue(as other: FilterEntry) -> Bool {
             keyword == other.keyword && wholeWord == other.wholeWord && action == other.action
-                && feedURL == other.feedURL && deleted == other.deleted
+                && scope == other.scope && deleted == other.deleted
         }
     }
 
@@ -315,7 +333,7 @@ final class SyncEngine {
         let feeds = (try? context.fetch(FetchDescriptor<Feed>())) ?? []
         for feed in feeds {
             var entry = SyncModel.FeedEntry(title: feed.title, siteURL: feed.siteURL, customTitle: feed.customTitle,
-                                            folder: feed.folder?.uid, modified: now)
+                                            folder: feed.folder?.uid, previousURL: feed.previousURL, modified: now)
             if let old = previous.feeds[feed.url], old.sameValue(as: entry) { entry.modified = old.modified }
             snap.feeds[feed.url] = entry
         }
@@ -328,7 +346,7 @@ final class SyncEngine {
         let rules = (try? context.fetch(FetchDescriptor<FilterRule>())) ?? []
         for rule in rules {
             var entry = SyncModel.FilterEntry(keyword: rule.keyword, wholeWord: rule.wholeWord, action: rule.action,
-                                              feedURL: rule.feedURL, modified: now)
+                                              feedURLs: rule.feedURLs, modified: now)
             if let old = previous.filters[rule.uid], old.sameValue(as: entry) { entry.modified = old.modified }
             snap.filters[rule.uid] = entry
         }
@@ -424,6 +442,21 @@ final class SyncEngine {
         // Flux
         var feeds = Dictionary(((try? context.fetch(FetchDescriptor<Feed>())) ?? []).map { ($0.url, $0) },
                                uniquingKeysWith: { a, _ in a })
+        // Adresse changée sur un autre Mac : on déplace le flux local (articles, lus, favoris)
+        // au lieu de le supprimer puis de le recréer
+        for (url, entry) in remote.feeds where !entry.deleted && feeds[url] == nil {
+            guard let oldURL = entry.previousURL, let feed = feeds[oldURL] else { continue }
+            store.migrate(feed, to: url)
+            feeds[oldURL] = nil
+            feeds[url] = feed
+            if var gone = current.feeds[oldURL] {
+                gone.deleted = true
+                gone.modified = entry.modified
+                current.feeds[oldURL] = gone
+            }
+            createdFeeds.append(feed)
+        }
+
         for (url, entry) in remote.feeds {
             if let local = current.feeds[url], local.modified >= entry.modified { continue }
             if entry.deleted {
@@ -459,10 +492,10 @@ final class SyncEngine {
                 if let rule = rulesByUID[uid] { store.deleteFilter(rule); rulesByUID[uid] = nil }
             } else if let rule = rulesByUID[uid] {
                 store.updateFilter(rule, keyword: entry.keyword, wholeWord: entry.wholeWord,
-                                   action: FilterAction(rawValue: entry.action) ?? .hide, feedURL: entry.feedURL)
+                                   action: FilterAction(rawValue: entry.action) ?? .hide, feedURLs: entry.scope)
             } else if let twin = rulesByUID.values.first(where: {
                 CompiledFilter.fold($0.keyword) == CompiledFilter.fold(entry.keyword)
-                    && $0.feedURL == entry.feedURL && remote.filters[$0.uid] == nil
+                    && $0.feedURLs.sorted() == entry.scope && remote.filters[$0.uid] == nil
             }) {
                 // Même règle créée sur les deux Mac : un seul identifiant
                 rulesByUID[twin.uid] = nil
@@ -471,7 +504,7 @@ final class SyncEngine {
                 rulesByUID[uid] = twin
             } else {
                 let rule = FilterRule(keyword: entry.keyword, wholeWord: entry.wholeWord,
-                                      action: FilterAction(rawValue: entry.action) ?? .hide, feedURL: entry.feedURL)
+                                      action: FilterAction(rawValue: entry.action) ?? .hide, feedURLs: entry.scope)
                 rule.uid = uid
                 context.insert(rule)
                 rulesByUID[uid] = rule

@@ -277,3 +277,20 @@
 "Télécharger et installer automatiquement" = "Automatically download and install";
 "Dernière recherche : %@" = "Last checked: %@";
 "Rechercher maintenant" = "Check Now";
+
+/* Changement d'adresse d'un flux */
+"Modifier l'adresse…" = "Change Address…";
+"Modifier l'adresse du flux" = "Change Feed Address";
+"Les articles déjà récupérés, leur état (lu, favori), le nom et le dossier du flux sont conservés." = "Articles already fetched, their state (read, favorite), and the feed's name and folder are kept.";
+
+/* Barre latérale : menus contextuels */
+"Nouveau dossier de flux…" = "New Feed Folder…";
+"Nouvelle règle de filtrage…" = "New Filter Rule…";
+
+/* Règles de filtrage : plusieurs flux */
+"Certains flux" = "Selected Feeds";
+"%lld flux" = "%lld feeds";
+"%lld flux cochés" = "%lld feeds selected";
+"Aucun flux coché" = "No feed selected";
+"Rechercher un flux" = "Search feeds";
+"Aucun flux ne correspond." = "No matching feed.";
