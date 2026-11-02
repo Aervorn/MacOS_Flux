@@ -191,6 +191,9 @@ Coming from 0.3.x? Download the new DMG from the [releases page](https://github.
 
 ## 📝 Changelog
 
+### 0.5.1
+- New app icon made for macOS 26: it adapts to the light, dark, clear and tinted icon styles (no more dark border in the Dock in dark mode).
+
 ### 0.5.0
 - **Tags for favorites**: right-click on articles › Tags, or the tag button in the article toolbar. Tags appear under Favorites in the sidebar.
 - **Filter rules on several feeds**: check the feeds a rule applies to. Shortcut: right-click a feed › New Filter Rule….

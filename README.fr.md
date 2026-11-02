@@ -191,6 +191,9 @@ Tu viens d'une version 0.3.x ? Télécharge une dernière fois le nouveau DMG de
 
 ## 📝 Historique des versions
 
+### 0.5.1
+- Nouvelle icône pensée pour macOS 26 : elle s'adapte aux styles d'icônes clair, sombre, transparent et teinté (plus de bordure sombre dans le Dock en mode sombre).
+
 ### 0.5.0
 - **Tags pour les favoris** : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Les tags apparaissent sous Favoris dans la barre latérale.
 - **Règles de filtrage sur plusieurs flux** : coche les flux concernés par une règle. Raccourci : clic droit sur un flux › Nouvelle règle de filtrage….
