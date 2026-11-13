@@ -113,7 +113,8 @@ Quand elle est activée (Réglages › Hors ligne), Flux télécharge après cha
 
 - Les **favoris** sont conservés indéfiniment, même lus, et ne sont jamais marqués comme lus automatiquement.
 - **Archive des favoris** (Réglages › Stockage, activée par défaut) : quand tu ajoutes un favori, l'article complet et ses images sont rangés dans une archive permanente, indépendante du cache hors ligne. Tu peux le relire même si le site le supprime, ou sans connexion. Retirer un favori libère sa place.
-- Des **tags** pour ranger les favoris : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Un article peut avoir plusieurs tags, et taguer un article l'ajoute aux favoris. Les tags apparaissent sous Favoris dans la barre latérale.
+- Des **tags** pour ranger les favoris : clic droit sur des articles › Tags, ou le bouton étiquette de la barre d'outils de l'article. Un article peut avoir plusieurs tags, et taguer un article l'ajoute aux favoris. Les tags apparaissent sous Favoris dans la barre latérale, et sous chaque article dans Favoris et dans les vues des tags (sur plusieurs lignes si besoin).
+- En option, **masquer dans Favoris les articles qui ont un tag** (Réglages › Général) : ils n'apparaissent plus que dans la vue de leurs tags, et Favoris ne montre que ceux que tu n'as pas encore rangés.
 - **Exporter en PDF** (bouton de la barre d'outils de l'article, ou ⌥⌘E) et **Imprimer** (⌘P), dans une mise en page claire pensée pour le papier, découpée en vraies pages.
 - L'**Historique** (barre latérale) liste les articles que tu as ouverts, du plus récent au plus ancien, et la recherche y fonctionne aussi.
 - **Marquer les articles comme lus** immédiatement, après 5, 10 ou 30 secondes, ou jamais (Réglages › Lecture).
@@ -143,7 +144,7 @@ Réglages › iCloud › Sauvegarde : une fois par jour, Flux range une copie co
 
 ### ⚙️ Réglages
 
-Les réglages sont rangés en cinq onglets (Général, Lecture, Filtres, Stockage, iCloud) : apparence (automatique, clair, sombre), langue (système, français, anglais), résumé sous le titre, largeur du texte de l'article, délai avant de marquer comme lu, intervalle d'actualisation (de 15 minutes à 6 heures), lecture hors ligne et stockage.
+Les réglages sont rangés en cinq onglets (Général, Lecture, Filtres, Stockage, iCloud) : apparence (automatique, clair, sombre), langue (système, français, anglais), résumé sous le titre, articles tagués masqués dans Favoris, largeur du texte de l'article, délai avant de marquer comme lu, intervalle d'actualisation (de 15 minutes à 6 heures), lecture hors ligne et stockage.
 
 ## 🧩 Compatibilité
 
@@ -190,6 +191,11 @@ Depuis la version 0.4.0, Flux se met à jour tout seul : il recherche une nouvel
 Tu viens d'une version 0.3.x ? Télécharge une dernière fois le nouveau DMG depuis la [page des versions](https://github.com/Aervorn/MacOS_Flux/releases) et remplace l'app dans ton dossier Applications. Tes flux, articles, favoris et réglages sont conservés.
 
 ## 📝 Historique des versions
+
+### 0.6.0
+- **Les tags sous chaque favori** : dans Favoris et dans les vues des tags, chaque article affiche ses tags juste en dessous, sur plusieurs lignes si besoin.
+- **Nouvelle option : masquer dans Favoris les articles qui ont un tag** (**Réglages › Général**). Les articles tagués n'apparaissent alors plus que dans la vue de leurs tags.
+- Fermer la fenêtre principale ferme maintenant aussi la fenêtre des réglages, qui restait ouverte seule (et elle ne se rouvre plus au lancement suivant).
 
 ### 0.5.1
 - Nouvelle icône pensée pour macOS 26 : elle s'adapte aux styles d'icônes clair, sombre, transparent et teinté (plus de bordure sombre dans le Dock en mode sombre).

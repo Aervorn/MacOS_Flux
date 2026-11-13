@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage(Prefs.appearance) private var appearance = AppAppearance.system
     @AppStorage(Prefs.markReadDelay) private var markReadDelay = 0
     @AppStorage(Prefs.showSummary) private var showSummary = true
+    @AppStorage(Prefs.hideTaggedFavorites) private var hideTaggedFavorites = false
     @AppStorage(Prefs.readerWidth) private var readerWidth = "narrow"
     @AppStorage(Prefs.readerFontSize) private var readerFontSize = 17
     @AppStorage(Prefs.archiveFavorites) private var archiveFavorites = true
@@ -65,6 +66,8 @@ struct SettingsView: View {
 
                 Section("Affichage") {
                     Toggle("Afficher le résumé sous le titre (mode liste)", isOn: $showSummary)
+                    Toggle("Masquer dans Favoris les articles qui ont un tag", isOn: $hideTaggedFavorites)
+                        .help("Ils restent visibles dans la vue de chacun de leurs tags, sous Favoris.")
                     LabeledContent("Taille du texte de l'article") {
                         HStack(spacing: 10) {
                             Image(systemName: "textformat.size.smaller").foregroundStyle(.secondary)
@@ -88,7 +91,7 @@ struct SettingsView: View {
                 }
             }
             .formStyle(.grouped)
-            .settingsTab(idealHeight: languageChanged ? 565 : 520)
+            .settingsTab(idealHeight: languageChanged ? 595 : 550)
             .tabItem { Label("Général", systemImage: "gearshape") }
 
             Form {
@@ -265,6 +268,8 @@ struct SettingsView: View {
             SyncSettingsView()      // hauteur calculée dans la vue (selon l'état et les autres Mac)
                 .tabItem { Label("iCloud", systemImage: "icloud") }
         }
+        // Pas rouverte au prochain lancement, et fermée avec la fenêtre principale
+        .background(WindowReader { AppWindows.registerSettings($0) })
         .onChange(of: appearance) {
             AppAppearance.apply(appearance)
         }

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftData
 import SwiftUI
 
@@ -114,5 +115,48 @@ struct FluxApp: App {
                 .modelContainer(container)
         }
         .windowResizability(.contentSize)
+    }
+}
+
+/// Lien entre la fenêtre principale et celle des réglages.
+/// Fermer la fenêtre principale (ou quitter Flux) ferme aussi les réglages, qui sinon
+/// restaient seuls à l'écran ; ils ne sont pas non plus rouverts au lancement suivant.
+@MainActor
+enum AppWindows {
+    private static weak var main: NSWindow?
+    private static weak var settings: NSWindow?
+    private static var observers: [Any] = []
+
+    static func registerMain(_ window: NSWindow?) {
+        guard let window else { return }
+        main = window
+        startObserving()
+    }
+
+    static func registerSettings(_ window: NSWindow?) {
+        guard let window else { return }
+        settings = window
+        window.isRestorable = false
+        startObserving()
+    }
+
+    private static func startObserving() {
+        guard observers.isEmpty else { return }
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: NSWindow.willCloseNotification, object: nil, queue: .main) { note in
+            let closing = note.object as? NSWindow
+            MainActor.assumeIsolated {
+                if let closing, closing === main { closeSettings() }
+            }
+        })
+        observers.append(center.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { closeSettings() }
+        })
+    }
+
+    private static func closeSettings() {
+        guard let settings, settings.isVisible else { return }
+        settings.isRestorable = false
+        settings.close()
     }
 }

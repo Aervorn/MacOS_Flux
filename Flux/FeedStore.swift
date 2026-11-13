@@ -304,6 +304,8 @@ final class FeedStore {
         switch filter {
         case .feed(let url):
             predicate = #Predicate { !$0.isRead && $0.feedURL == url }
+        case .starred where UserDefaults.standard.bool(forKey: Prefs.hideTaggedFavorites):
+            predicate = #Predicate { !$0.isRead && $0.isStarred && $0.tagsRaw == "" }
         case .starred:
             predicate = #Predicate { !$0.isRead && $0.isStarred }
         case .folder(let uid):

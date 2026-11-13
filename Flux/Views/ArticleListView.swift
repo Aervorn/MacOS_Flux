@@ -28,8 +28,9 @@ struct ArticleListView: View {
     private let onOpen: ((Article) -> Void)?
 
     /// `hideRead` : masque les articles lus (sauf ceux sélectionnés) dans Tous les articles, les dossiers et les flux
+    /// `hideTaggedFavorites` : Favoris ne montre que les articles sans tag (les autres sont dans leurs tags)
     init(filter: SidebarSelection, selection: Binding<Set<String>>, folderFeedURLs: [String] = [], searchText: String = "",
-         hideRead: Bool = false, onOpen: ((Article) -> Void)? = nil) {
+         hideRead: Bool = false, hideTaggedFavorites: Bool = false, onOpen: ((Article) -> Void)? = nil) {
         self.onOpen = onOpen
         self.hidesRead = hideRead
         self.filter = filter
@@ -45,6 +46,7 @@ struct ArticleListView: View {
         // Prédicats écrits en entier plutôt qu'avec un booléen capturé, que SwiftData traduit mal.
         let effective: SidebarSelection = (hideRead && filter == .all) ? .unread : filter
         let unreadOnly = hideRead
+        let untaggedOnly = hideTaggedFavorites
 
         if q.isEmpty {
             switch effective {
@@ -58,6 +60,8 @@ struct ArticleListView: View {
                 predicate = #Predicate { !$0.isHidden && !$0.isDuplicate }
             case .unread:
                 predicate = #Predicate { !$0.isHidden && !$0.isDuplicate && (!$0.isRead || sticky.contains($0.key)) }
+            case .starred where untaggedOnly:
+                predicate = #Predicate { $0.isStarred && $0.tagsRaw == "" }
             case .starred:
                 predicate = #Predicate { $0.isStarred }
             case .history:
@@ -91,6 +95,11 @@ struct ArticleListView: View {
             case .unread:
                 predicate = #Predicate {
                     !$0.isHidden && !$0.isDuplicate && (!$0.isRead || sticky.contains($0.key))
+                        && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
+                }
+            case .starred where untaggedOnly:
+                predicate = #Predicate {
+                    $0.isStarred && $0.tagsRaw == ""
                         && ($0.title.localizedStandardContains(q) || $0.searchText.localizedStandardContains(q))
                 }
             case .starred:
@@ -170,11 +179,46 @@ struct ArticleListView: View {
         articles.filter { selection.contains($0.key) }
     }
 
+    // MARK: - Tags sous les favoris
+
+    /// Les tags sont affichés sous chaque article dans Favoris et dans les vues des tags
+    private var showsTags: Bool {
+        switch filter {
+        case .starred, .tag: true
+        default: false
+        }
+    }
+
+    /// Nom de chaque tag, par uid
+    private var tagNamesByUID: [String: String] {
+        Dictionary(tags.map { ($0.uid, $0.name) }, uniquingKeysWith: { a, _ in a })
+    }
+
+    /// Noms des tags d'un article, triés (vide hors Favoris et tags)
+    private func tagNames(of article: Article, _ names: [String: String]) -> [String] {
+        guard showsTags else { return [] }
+        return article.tagUIDs.compactMap { names[$0] }
+            .sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+    }
+
+    /// Largeur de la colonne de texte d'une ligne (liste − marges − miniature)
+    private var rowTextWidth: CGFloat {
+        max(availableWidth - 2 * 8 - 2 * 10 - 92 - 12 - 2, 60)
+    }
+
+    /// Largeur du contenu d'une carte (vignettes)
+    private var cardContentWidth: CGFloat {
+        let columns = CGFloat(columnCount)
+        let card = (availableWidth - 2 * Self.gridPadding - Self.gridSpacing * (columns - 1)) / columns
+        return max(card - 2 * 6, 60)
+    }
+
     // Une ScrollView + LazyVStack plutôt qu'une List : sur macOS, List estime la
     // hauteur des lignes jamais affichées avec une valeur par défaut, puis la
     // corrige au défilement, ce qui faisait sauter la liste en bas.
     var body: some View {
         let counts = otherSourceCounts
+        let names = tagNamesByUID
         return ScrollViewReader { proxy in
             ScrollView {
                 if isGrid {
@@ -184,14 +228,14 @@ struct ArticleListView: View {
                         spacing: Self.gridSpacing
                     ) {
                         ForEach(articles) { article in
-                            card(for: article, counts: counts)
+                            card(for: article, counts: counts, tags: tagNames(of: article, names))
                         }
                     }
                     .padding(Self.gridPadding)
                 } else {
                     LazyVStack(spacing: 0) {
                         ForEach(articles) { article in
-                            row(for: article, counts: counts)
+                            row(for: article, counts: counts, tags: tagNames(of: article, names))
                         }
                     }
                     .padding(.vertical, 6)
@@ -248,12 +292,16 @@ struct ArticleListView: View {
         return counts[cluster] ?? 0
     }
 
-    private func row(for article: Article, counts: [String: Int]) -> some View {
+    private func row(for article: Article, counts: [String: Int], tags: [String]) -> some View {
         let isSelected = selection.contains(article.key)
-        return ArticleRow(article: article, showSummary: showSummary, otherSources: otherSources(article, counts))
+        let tagsWidth = rowTextWidth
+        // Hauteur toujours calculée d'avance (tags compris) : l'ascenseur reste stable
+        let tagsHeight = tags.isEmpty ? 0 : ArticleRow.tagsSpacing + TagChips.height(tags, maxWidth: tagsWidth)
+        return ArticleRow(article: article, showSummary: showSummary, otherSources: otherSources(article, counts),
+                          tags: tags, tagsWidth: tagsWidth)
             .padding(.horizontal, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: showSummary ? Self.rowHeight : Self.compactRowHeight)
+            .frame(height: (showSummary ? Self.rowHeight : Self.compactRowHeight) + tagsHeight)
             .background {
                 if isSelected {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -272,9 +320,10 @@ struct ArticleListView: View {
             .id(article.key)
     }
 
-    private func card(for article: Article, counts: [String: Int]) -> some View {
+    private func card(for article: Article, counts: [String: Int], tags: [String]) -> some View {
         let isSelected = selection.contains(article.key)
-        return ArticleCard(article: article, otherSources: otherSources(article, counts))
+        return ArticleCard(article: article, otherSources: otherSources(article, counts),
+                           tags: tags, tagsWidth: cardContentWidth)
             .padding(6)
             .background {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -428,6 +477,12 @@ struct ArticleRow: View {
     var showSummary = true
     /// Autres sources ayant publié la même actualité
     var otherSources = 0
+    /// Noms des tags affichés sous le texte (Favoris et tags)
+    var tags: [String] = []
+    var tagsWidth: CGFloat = 0
+
+    /// Espace ajouté au-dessus des tags (espacement de la pile + marge)
+    static let tagsSpacing: CGFloat = 5
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -464,6 +519,11 @@ struct ArticleRow: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .lineLimit(2, reservesSpace: true)
+                }
+
+                if !tags.isEmpty {
+                    TagChips(names: tags, maxWidth: tagsWidth)
+                        .padding(.top, Self.tagsSpacing - 3)
                 }
             }
         }
@@ -502,6 +562,9 @@ struct Thumbnail: View {
 struct ArticleCard: View {
     let article: Article
     var otherSources = 0
+    /// Noms des tags affichés sous le titre (Favoris et tags)
+    var tags: [String] = []
+    var tagsWidth: CGFloat = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -546,6 +609,10 @@ struct ArticleCard: View {
                     .foregroundStyle(article.isRead ? .secondary : .primary)
                     .lineLimit(3, reservesSpace: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if !tags.isEmpty {
+                TagChips(names: tags, maxWidth: tagsWidth)
             }
         }
         .help(article.sourceName)

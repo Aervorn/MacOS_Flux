@@ -113,7 +113,8 @@ When enabled (Settings › Offline), after each refresh Flux downloads unread ar
 
 - **Favorites** are kept forever, even once read, and are never marked as read automatically.
 - **Favorites archive** (Settings › Storage, on by default): when you add a favorite, the full article and its images are stored in a permanent archive, separate from the offline cache. You can read it again even if the site deletes it, or without a connection. Removing a favorite frees its space.
-- **Tags** to organize favorites: right-click on articles › Tags, or the tag button in the article toolbar. An article can have several tags, and tagging an article adds it to favorites. Tags appear under Favorites in the sidebar.
+- **Tags** to organize favorites: right-click on articles › Tags, or the tag button in the article toolbar. An article can have several tags, and tagging an article adds it to favorites. Tags appear under Favorites in the sidebar, and under each article in Favorites and in tag views (on several lines if needed).
+- Optionally **hide tagged articles from Favorites** (Settings › General): they then only appear in the view of their tags, and Favorites only shows the ones you haven't sorted yet.
 - **Export as PDF** (button in the article toolbar, or ⌥⌘E) and **Print** (⌘P), in a light layout made for paper, split into real pages.
 - **History** (sidebar) lists the articles you've opened, most recent first, and search works there too.
 - **Mark articles as read** immediately, after 5, 10 or 30 seconds, or never (Settings › Reading).
@@ -143,7 +144,7 @@ Settings › iCloud › Backup: once a day, Flux stores a complete copy of itsel
 
 ### ⚙️ Settings
 
-Settings are organized in five tabs (General, Reading, Filters, Storage, iCloud): appearance (automatic, light, dark), language (system, English, French), summary under the title, article text width, mark-as-read delay, refresh interval (15 minutes to 6 hours), offline reading and storage.
+Settings are organized in five tabs (General, Reading, Filters, Storage, iCloud): appearance (automatic, light, dark), language (system, English, French), summary under the title, tagged articles hidden from Favorites, article text width, mark-as-read delay, refresh interval (15 minutes to 6 hours), offline reading and storage.
 
 ## 🧩 Compatibility
 
@@ -190,6 +191,11 @@ Since version 0.4.0, Flux updates itself: it checks for a new version once a day
 Coming from 0.3.x? Download the new DMG from the [releases page](https://github.com/Aervorn/MacOS_Flux/releases) one last time and replace the app in your Applications folder. Your feeds, articles, favorites and settings are kept.
 
 ## 📝 Changelog
+
+### 0.6.0
+- **Tags under each favorite**: in Favorites and in tag views, each article shows its tags right below it, on several lines if needed.
+- **New option: hide tagged articles from Favorites** (**Settings › General**). Tagged articles then only appear in the view of their tags.
+- Closing the main window now also closes the Settings window, which used to stay open on its own (and it no longer reopens at the next launch).
 
 ### 0.5.1
 - New app icon made for macOS 26: it adapts to the light, dark, clear and tinted icon styles (no more dark border in the Dock in dark mode).

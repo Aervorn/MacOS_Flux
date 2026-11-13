@@ -22,6 +22,7 @@ struct ContentView: View {
     static let listWidthRange: ClosedRange<Double> = 300...700
     @AppStorage(Prefs.refreshMinutes) private var refreshMinutes = 30
     @AppStorage(Prefs.hideRead) private var hideRead = false
+    @AppStorage(Prefs.hideTaggedFavorites) private var hideTaggedFavorites = false
     /// « Masquer les lus » n'a de sens que dans Tous les articles, un dossier ou un flux
     private var canHideRead: Bool {
         switch filter ?? .all {
@@ -74,6 +75,7 @@ struct ContentView: View {
             folderFeedURLs: folderFeedURLs,
             searchText: searchText.trimmingCharacters(in: .whitespaces),
             hideRead: hideRead && canHideRead,
+            hideTaggedFavorites: hideTaggedFavorites,
             onOpen: { _ in if immersiveGrid { articleOpen = true } }
         )
     }
@@ -303,7 +305,10 @@ struct ContentView: View {
             }
         }
         .onChange(of: immersiveGrid) { articleOpen = false }
-        .background(WindowReader { keyboard.mainWindow = $0 })
+        .background(WindowReader {
+            keyboard.mainWindow = $0
+            AppWindows.registerMain($0)
+        })
         .onAppear {
             keyboard.start()
             sync.start()

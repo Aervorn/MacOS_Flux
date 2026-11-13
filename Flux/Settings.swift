@@ -38,6 +38,8 @@ enum Prefs {
     static let syncEnabled = "syncEnabled"
     /// Masquer les articles lus dans Tous les articles, les dossiers et les flux
     static let hideRead = "hideRead"
+    /// Favoris : masquer les articles qui ont un tag (ils restent dans la vue de leur(s) tag(s))
+    static let hideTaggedFavorites = "hideTaggedFavorites"
     /// Sauvegarde quotidienne dans iCloud Drive (BackupManager)
     static let backupEnabled = "backupEnabled"
     /// Nombre de sauvegardes gardées pour ce Mac
@@ -67,6 +69,7 @@ enum Prefs {
         groupDuplicates: true,
         duplicateSensitivity: 1,
         hideRead: false,
+        hideTaggedFavorites: false,
         backupEnabled: false,
         backupKeep: 7,
         backupIncludeArchive: true,

@@ -84,6 +84,12 @@ enum WhatsNew {
     /// Du plus récent au plus ancien. Une version absente d'ici (correctif) n'affiche rien.
     static var releases: [Release] {
         [
+            Release(version: "0.6.0", items: [
+                Item(symbol: "tag", title: String(localized: "Les tags sous chaque favori"),
+                     text: String(localized: "Dans Favoris et dans les vues des tags, chaque article affiche ses tags juste en dessous.")),
+                Item(symbol: "star.square.on.square", title: String(localized: "Favoris rangés par tags"),
+                     text: String(localized: "Nouvelle option dans Réglages › Général : les articles qui ont un tag n'apparaissent plus dans Favoris, seulement dans la vue de leurs tags.")),
+            ]),
             Release(version: "0.5.0", items: [
                 Item(symbol: "tag", title: String(localized: "Tags pour les favoris"),
                      text: String(localized: "Range tes favoris avec des tags, depuis le clic droit ou la barre d'outils. Ils apparaissent sous Favoris dans la barre latérale.")),
