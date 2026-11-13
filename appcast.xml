@@ -4,14 +4,18 @@
     <title>Flux</title>
     <link>https://github.com/Aervorn/MacOS_Flux</link>
     <item>
-      <title>Flux 0.5.1</title>
-      <pubDate>Mon, 02 Nov 2026 20:13:31 +0000</pubDate>
-      <sparkle:version>5</sparkle:version>
-      <sparkle:shortVersionString>0.5.1</sparkle:shortVersionString>
+      <title>Flux 0.6.0</title>
+      <pubDate>Fri, 13 Nov 2026 08:17:54 +0000</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[<ul><li>New app icon made for macOS 26: it adapts to the light, dark, clear and tinted icon styles (no more dark border in the Dock in dark mode).</li></ul>]]></description>
-      <description xml:lang="fr"><![CDATA[<ul><li>Nouvelle icône pensée pour macOS 26 : elle s'adapte aux styles d'icônes clair, sombre, transparent et teinté (plus de bordure sombre dans le Dock en mode sombre).</li></ul>]]></description>
-      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.5.1/Flux-0.5.1.dmg" type="application/octet-stream" sparkle:edSignature="fDMIZXalkJXo2rFc1+DuWrqxvxXWskyw6EyfX9NgeaDE1XOYGlTf/DB5D9nCRKBqo952Qjf9ZKoVEj50YFv7AA==" length="5387554" />
+      <description><![CDATA[<ul><li><b>Tags under each favorite</b>: in Favorites and in tag views, each article shows its tags right below it, on several lines if needed.</li>
+<li><b>New option: hide tagged articles from Favorites</b> (<b>Settings › General</b>). Tagged articles then only appear in the view of their tags.</li>
+<li>Closing the main window now also closes the Settings window, which used to stay open on its own (and it no longer reopens at the next launch).</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li><b>Les tags sous chaque favori</b> : dans Favoris et dans les vues des tags, chaque article affiche ses tags juste en dessous, sur plusieurs lignes si besoin.</li>
+<li><b>Nouvelle option : masquer dans Favoris les articles qui ont un tag</b> (<b>Réglages › Général</b>). Les articles tagués n'apparaissent alors plus que dans la vue de leurs tags.</li>
+<li>Fermer la fenêtre principale ferme maintenant aussi la fenêtre des réglages, qui restait ouverte seule (et elle ne se rouvre plus au lancement suivant).</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.6.0/Flux-0.6.0.dmg" type="application/octet-stream" sparkle:edSignature="d8uXK02/dm0msKxCeEt9bfxAWGBNhsPNxYyzl5Ca58NDNz8IG2l0aSKu3ssIgQEQxOJWxvAMfj9FUKQyQ6k9Cw==" length="5420440" />
     </item>
   </channel>
 </rss>
