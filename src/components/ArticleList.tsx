@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Star } from "lucide-react";
+import { Layers, Star } from "lucide-react";
 import type { ArticleLayout, ArticleRow } from "../api";
 import { formatPublished } from "../format";
 import Thumb from "./Thumb";
@@ -37,6 +37,11 @@ export default function ArticleList({ articles, layout, selectedKey, showSummary
           >
             <div className={styles.cardMedia}>
               <Thumb thumb={a.thumb} className={styles.cardThumb} />
+              {a.otherSources > 0 && (
+                <span className={styles.cardBadge} title={t("list.otherSources", { count: a.otherSources })}>
+                  <Layers size={11} />+{a.otherSources}
+                </span>
+              )}
               {a.isStarred && <Star size={12} fill="currentColor" className={styles.cardStar} />}
             </div>
             <div className={styles.cardTitleRow}>
@@ -66,6 +71,11 @@ export default function ArticleList({ articles, layout, selectedKey, showSummary
                 <span className={styles.source}>{a.source}</span>
                 <span>{formatPublished(a.published, i18n.language)}</span>
                 {a.readingMinutes > 0 && <span>{t("list.readingMinutes", { count: a.readingMinutes })}</span>}
+                {a.otherSources > 0 && (
+                  <span className={styles.badge} title={t("list.otherSources", { count: a.otherSources })}>
+                    <Layers size={11} />+{a.otherSources}
+                  </span>
+                )}
                 {a.isStarred && <Star size={12} className={styles.star} />}
               </div>
               <div className={styles.title}>{a.title}</div>

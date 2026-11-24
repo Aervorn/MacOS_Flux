@@ -87,6 +87,34 @@
   backdrop-filter: blur(6px);
 }
 
+.cardBadge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 11px;
+  backdrop-filter: blur(6px);
+}
+
+/* Badge « autres sources » dans la liste */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--pill);
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
 .cardTitleRow {
   display: flex;
   align-items: baseline;

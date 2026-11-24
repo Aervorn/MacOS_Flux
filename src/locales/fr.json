@@ -17,7 +17,8 @@
     "emptyTitle": "Aucun article pour l'instant",
     "emptyBody": "Importe tes données depuis l'app Swift (menu Dev, en bas de la barre latérale).",
     "noResults": "Aucun article ici.",
-    "readingMinutes": "{{count}} min"
+    "readingMinutes": "{{count}} min",
+    "otherSources": "{{count}} autre(s) source(s) sur ce sujet"
   },
   "toolbar": {
     "search": "Rechercher",

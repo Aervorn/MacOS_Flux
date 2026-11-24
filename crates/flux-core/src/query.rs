@@ -198,6 +198,8 @@ pub struct ArticleRow {
     pub link: Option<String>,
     /// Temps de lecture estimé (230 mots par minute), 0 si inconnu.
     pub reading_minutes: u32,
+    /// Nombre d'autres sources qui parlent du même sujet (articles regroupés sous celui-ci).
+    pub other_sources: u32,
 }
 
 fn host_of(url: &str) -> &str {
@@ -280,7 +282,11 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
         "SELECT a.key, a.title, a.summary, a.feed_url, a.published, a.opened_at, a.is_read, a.is_starred,
                 a.image_url, a.author, a.link, a.word_count, a.source_title,
                 COALESCE(f.custom_title, f.title),
-                {text}
+                {text},
+                CASE WHEN a.is_duplicate = 0 AND a.cluster_id IS NOT NULL
+                     THEN (SELECT COUNT(*) FROM articles d
+                           WHERE d.cluster_id = a.cluster_id AND d.is_duplicate = 1 AND d.is_hidden = 0)
+                     ELSE 0 END
          FROM articles a LEFT JOIN feeds f ON f.id = a.feed_id
          WHERE {where_}
          ORDER BY {order}",
@@ -320,6 +326,7 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
             author: row.get(9)?,
             link: row.get(10)?,
             reading_minutes: if words > 0 { ((words as f64) / 230.0).ceil() as u32 } else { 0 },
+            other_sources: row.get::<_, i64>(15)?.max(0) as u32,
         });
     }
     Ok(out)
@@ -402,6 +409,18 @@ mod tests {
         assert_eq!(keys(list_articles(&c, &q).unwrap()), ["e"]);
         assert_eq!(keys(list_articles(&c, &query(Selection::Tag { uid: "T1".into() })).unwrap()), ["a"]);
         assert_eq!(keys(list_articles(&c, &query(Selection::History)).unwrap()), ["e", "b"]);
+    }
+
+    #[test]
+    fn other_sources_counts_grouped_duplicates() {
+        let c = fixture();
+        c.execute_batch("UPDATE articles SET cluster_id = 'C1' WHERE id IN (1, 3)").unwrap();
+        let rows = list_articles(&c, &query(Selection::All)).unwrap();
+        assert_eq!(rows.iter().find(|r| r.key == "a").unwrap().other_sources, 1);
+        assert_eq!(rows.iter().find(|r| r.key == "b").unwrap().other_sources, 0);
+        // Le doublon lui-même (vue du flux) n'affiche pas de badge
+        let feed = list_articles(&c, &query(Selection::Feed { url: "u2".into() })).unwrap();
+        assert_eq!(feed[0].other_sources, 0);
     }
 
     #[test]

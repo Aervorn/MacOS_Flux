@@ -17,7 +17,8 @@
     "emptyTitle": "No articles yet",
     "emptyBody": "Import your data from the Swift app (Dev menu, at the bottom of the sidebar).",
     "noResults": "No articles here.",
-    "readingMinutes": "{{count}} min"
+    "readingMinutes": "{{count}} min",
+    "otherSources": "{{count}} other source(s) on this story"
   },
   "toolbar": {
     "search": "Search",

@@ -90,6 +90,7 @@ export interface ArticleRow {
   author: string | null;
   link: string | null;
   readingMinutes: number;
+  otherSources: number;
 }
 
 export interface SimilarArticle {
