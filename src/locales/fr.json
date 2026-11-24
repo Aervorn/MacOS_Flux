@@ -155,7 +155,8 @@
     "newTag": "Nouveau tag…",
     "openBrowser": "Ouvrir dans le navigateur",
     "copyLink": "Copier le lien",
-    "detachCluster": "Sortir du groupe"
+    "detachCluster": "Sortir du groupe",
+    "changeAddress": "Modifier l’adresse…"
   },
   "dialogs": {
     "renameFeed": "Renommer le flux",
@@ -173,7 +174,8 @@
     "deleteFolderTitle": "Supprimer le dossier « {{name}} » ?",
     "deleteFolderBody": "Les flux du dossier ne sont pas supprimés : ils reviennent à la racine.",
     "deleteTagTitle": "Supprimer le tag « {{name}} » ?",
-    "deleteTagBody": "Les articles gardent leur place dans les favoris, sans ce tag."
+    "deleteTagBody": "Les articles gardent leur place dans les favoris, sans ce tag.",
+    "changeAddress": "Modifier l’adresse du flux"
   },
   "filters": {
     "title": "Filtres",
@@ -258,5 +260,47 @@
     "installing": "Téléchargement de la mise à jour… Flux redémarrera tout seul.",
     "upToDate": "Flux est à jour (version {{version}}).",
     "error": "Mise à jour impossible : {{message}}"
+  },
+  "onboarding": {
+    "menu": "Découvrir Flux",
+    "skip": "Passer",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "start": "Commencer",
+    "openSettings": "Ouvrir les réglages de synchronisation",
+    "welcome": {
+      "title": "Bienvenue dans Flux",
+      "text": "Un lecteur RSS pour Mac, sans algorithme ni annuaire : tu choisis tes sources, Flux te les présente proprement."
+    },
+    "add": {
+      "title": "Ajoute tes sources",
+      "text": "Colle l’adresse d’un site ou de son flux : Flux trouve le flux tout seul.",
+      "tip1": "Bouton + ou ⌘N pour ajouter un flux",
+      "tip2": "Range tes flux dans des dossiers (clic droit › Déplacer vers)",
+      "tip3": "Tu viens d’un autre lecteur ? Menu › Importer les flux (OPML)"
+    },
+    "read": {
+      "title": "Lis sans quitter l’app",
+      "text": "Quand un flux ne donne qu’un extrait, Flux récupère l’article complet et l’affiche dans une mise en page lisible.",
+      "tip1": "La même actualité publiée par plusieurs sources n’apparaît qu’une fois",
+      "tip2": "j / k : article suivant ou précédent ; espace : faire défiler",
+      "tip3": "Lecture hors ligne possible (Réglages › Lecture)"
+    },
+    "sort": {
+      "title": "Fais le tri",
+      "text": "Les règles de filtrage masquent ou marquent comme lus les articles dont le titre contient un mot-clé, sur tous tes flux ou seulement certains.",
+      "tip1": "Menu › Filtres pour créer une règle",
+      "tip2": "Le bouton œil de la barre d’outils masque les articles lus"
+    },
+    "keep": {
+      "title": "Garde l’essentiel",
+      "text": "Les favoris sont archivés en entier, images comprises : tu peux les relire même si le site les supprime.",
+      "tip1": "Range tes favoris avec des tags (taguer un article l’ajoute aux favoris)",
+      "tip2": "Imprime un article ou exporte-le en PDF (⌘P)"
+    },
+    "icloud": {
+      "title": "Synchronise et sauvegarde",
+      "text": "Avec iCloud Drive, tes flux, favoris et articles lus suivent sur tes autres Mac, et une copie complète de Flux est sauvegardée chaque jour."
+    }
   }
 }

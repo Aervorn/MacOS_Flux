@@ -41,6 +41,7 @@ export interface Prefs {
   uiFont: "inter" | "geist" | "system";
   articleFont: "classic" | "geist" | "literata" | "sourceSerif" | "merriweather" | "atkinson" | "systemSerif" | "mono";
   sidebarDensity: "compact" | "normal" | "spacious";
+  onboardingSeen: boolean;
 }
 
 export interface Settings {
@@ -258,6 +259,7 @@ export const api = {
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
   addReadingSeconds: (key: string, seconds: number) => invoke<void>("add_reading_seconds", { key, seconds }),
   addFeed: (input: string, folderUid: string | null) => invoke<AddedFeed>("add_feed", { input, folderUid }),
+  changeFeedAddress: (url: string, input: string) => invoke<AddedFeed>("change_feed_address", { url, input }),
   refreshAll: () => invoke<RefreshReport>("refresh_all"),
   renameFeed: (url: string, name: string) => invoke<void>("rename_feed", { url, name }),
   moveFeed: (url: string, folderUid: string | null) => invoke<void>("move_feed", { url, folderUid }),

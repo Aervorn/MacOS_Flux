@@ -8,19 +8,21 @@ import styles from "./ArticleList.module.css";
 interface Props {
   articles: ArticleRow[];
   layout: ArticleLayout;
-  selectedKey: string | null;
+  /** Articles sélectionnés (un seul, ou plusieurs avec ⌘ / ⇧). */
+  selectedKeys: string[];
   showSummary: boolean;
-  onSelect: (key: string) => void;
+  onSelect: (article: ArticleRow, e: React.MouseEvent) => void;
   onMenu: (e: React.MouseEvent, article: ArticleRow) => void;
 }
 
-export default function ArticleList({ articles, layout, selectedKey, showSummary, onSelect, onMenu }: Props) {
+export default function ArticleList({ articles, layout, selectedKeys, showSummary, onSelect, onMenu }: Props) {
   const { t, i18n } = useTranslation();
 
   if (articles.length === 0) {
     return <p className={styles.empty}>{t("list.noResults")}</p>;
   }
 
+  const chosen = new Set(selectedKeys);
   const grid = layout !== "list";
 
   if (grid) {
@@ -30,8 +32,9 @@ export default function ArticleList({ articles, layout, selectedKey, showSummary
         {articles.map((a) => (
           <button
             key={a.key}
-            className={`${styles.card} ${a.key === selectedKey ? styles.selected : ""} ${a.isRead ? styles.read : ""}`}
-            onClick={() => onSelect(a.key)}
+            className={`${styles.card} ${chosen.has(a.key) ? styles.selected : ""} ${a.isRead ? styles.read : ""}`}
+            onClick={(e) => onSelect(a, e)}
+            data-article-key={a.key}
             onContextMenu={(e) => onMenu(e, a)}
             title={a.source}
           >
@@ -57,12 +60,13 @@ export default function ArticleList({ articles, layout, selectedKey, showSummary
   return (
     <div className={styles.list}>
       {articles.map((a) => {
-        const selected = a.key === selectedKey;
+        const selected = chosen.has(a.key);
         return (
           <button
             key={a.key}
             className={`${styles.item} ${selected ? styles.selected : ""} ${a.isRead ? styles.read : ""}`}
-            onClick={() => onSelect(a.key)}
+            onClick={(e) => onSelect(a, e)}
+            data-article-key={a.key}
             onContextMenu={(e) => onMenu(e, a)}
           >
             <Thumb thumb={a.thumb} className={styles.itemThumb} />

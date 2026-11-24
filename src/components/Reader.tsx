@@ -389,7 +389,7 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
         )}
       </div>
 
-      <div className={styles.scroll} ref={scrollRef}>
+      <div className={styles.scroll} ref={scrollRef} data-reader-scroll="">
         <article
           className={styles.article}
           data-width={prefs.readerWidth}

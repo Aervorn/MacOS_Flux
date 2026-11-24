@@ -46,6 +46,8 @@ pub struct Prefs {
     pub article_font: String,
     /// Espacement de la barre latérale : "compact", "normal" ou "spacious".
     pub sidebar_density: String,
+    /// La découverte de Flux a déjà été vue (ou n'a plus lieu d'être).
+    pub onboarding_seen: bool,
 }
 
 impl Default for Prefs {
@@ -78,6 +80,7 @@ impl Default for Prefs {
             ui_font: "inter".into(),
             article_font: "classic".into(),
             sidebar_density: "normal".into(),
+            onboarding_seen: false,
         }
     }
 }

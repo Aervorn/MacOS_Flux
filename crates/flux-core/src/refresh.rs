@@ -125,6 +125,50 @@ pub async fn add_feed(
     Ok(AddedFeed { url: feed_url, title, articles: added.len() })
 }
 
+/// Change l'adresse d'un flux (adresse du flux ou du site) en gardant ses articles, leur état,
+/// son nom, son dossier et ses règles de filtrage, puis importe les articles de la nouvelle adresse.
+pub async fn change_address(
+    db: &Mutex<Connection>,
+    old_url: &str,
+    input: &str,
+    prefs: &Prefs,
+    images: &ImageDirs,
+) -> Result<AddedFeed> {
+    let mut address = input.trim().to_string();
+    if !address.contains("://") {
+        address = format!("https://{address}");
+    }
+    let url = Url::parse(&address).map_err(|_| Error::Feed(FeedError::InvalidUrl))?;
+    if url.host_str().is_none() {
+        return Err(Error::Feed(FeedError::InvalidUrl));
+    }
+
+    let (feed_url, parsed) = discover(&url).await?;
+    let opts = IngestOptions::from_prefs(prefs, feeds::now());
+    let title = parsed.title.as_deref().map(clean_title).filter(|t| !t.is_empty()).unwrap_or_else(|| feed_url.clone());
+    if feed_url == old_url {
+        return Ok(AddedFeed { url: feed_url, title, articles: 0 });
+    }
+
+    let mut added = {
+        let conn = lock(db)?;
+        crate::manage::migrate_feed(&conn, old_url, &feed_url)?;
+        if let Some(site) = &parsed.site_url {
+            conn.execute("UPDATE feeds SET site_url = ?2 WHERE url = ?1", rusqlite::params![feed_url, site])?;
+        }
+        // Les articles communs aux deux adresses (même guid) sont reconnus : pas de doublons
+        let added = feeds::ingest(&conn, &feed_url, &parsed, &opts)?;
+        feeds::mark_refreshed(&conn, &feed_url, None)?;
+        added
+    };
+    if parsed.items.len() < 20 {
+        added.extend(fetch_older(db, &feed_url, &opts).await);
+    }
+    process_new(db, &added, prefs);
+    fill_images(db, &added, images).await;
+    Ok(AddedFeed { url: feed_url, title, articles: added.len() })
+}
+
 /// Articles plus anciens d'un flux paginé (`?paged=2`, `?paged=3`… : WordPress et la plupart des CMS).
 /// Un flux non paginé renvoie la même page : rien n'est ajouté et on s'arrête.
 pub async fn fetch_older(db: &Mutex<Connection>, feed_url: &str, opts: &IngestOptions) -> Vec<NewArticle> {

@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Link, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
+import { CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Globe, Link, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
 import { api } from "./api";
 import type { ArticleDetail, ArticleRow, Selection, SidebarFeed, SidebarFolder, SidebarTag, Sidebar } from "./api";
 import type { MenuItem } from "./components/ContextMenu";
@@ -48,6 +48,27 @@ export function feedMenu(ctx: MenuContext, feed: SidebarFeed): MenuItem[] {
           confirmLabel: t("dialogs.save"),
           allowEmpty: true,
           onSubmit: (name) => run(ctx, () => api.renameFeed(feed.url, name)),
+        }),
+    },
+    {
+      label: t("menu.changeAddress"),
+      icon: <Globe size={16} />,
+      onClick: () =>
+        ctx.ask({
+          kind: "prompt",
+          title: t("dialogs.changeAddress"),
+          initial: feed.url,
+          placeholder: "https://…",
+          confirmLabel: t("dialogs.save"),
+          onSubmit: (address) => {
+            api
+              .changeFeedAddress(feed.url, address)
+              .then((added) => {
+                if (ctx.selection.kind === "feed" && ctx.selection.url === feed.url) ctx.select({ kind: "feed", url: added.url });
+                ctx.refresh();
+              })
+              .catch(ctx.fail);
+          },
         }),
     },
     {
@@ -235,6 +256,44 @@ export function articleMenu(ctx: MenuContext, article: ArticleRow, detail: Artic
       icon: <Link size={16} />,
       disabled: !article.link,
       onClick: () => article.link && copy(article.link),
+    },
+  ];
+}
+
+/** Menu de plusieurs articles sélectionnés : mêmes actions pour tous. */
+export function articlesMenu(ctx: MenuContext, keys: string[]): MenuItem[] {
+  const { t } = ctx;
+  return [
+    { label: t("menu.markRead"), icon: <CircleCheck size={16} />, onClick: () => run(ctx, () => api.setRead(keys, true)) },
+    { label: t("menu.markUnread"), icon: <Circle size={16} />, onClick: () => run(ctx, () => api.setRead(keys, false)) },
+    { label: t("menu.favorite"), icon: <Star size={16} />, onClick: () => run(ctx, () => api.setStarred(keys, true)) },
+    { label: t("menu.unfavorite"), icon: <Star size={16} />, onClick: () => run(ctx, () => api.setStarred(keys, false)) },
+    {
+      label: t("menu.tags"),
+      icon: <Tag size={16} />,
+      submenu: [
+        ...(ctx.sidebar?.tags ?? []).map((tag) => ({
+          label: tag.name,
+          onClick: () => run(ctx, () => api.setTag(tag.uid, true, keys)),
+        })),
+        ...(ctx.sidebar?.tags.length ? (["separator"] as MenuItem[]) : []),
+        {
+          label: t("menu.newTag"),
+          icon: <Plus size={16} />,
+          onClick: () =>
+            ctx.ask({
+              kind: "prompt",
+              title: t("dialogs.newTag"),
+              placeholder: t("dialogs.tagName"),
+              confirmLabel: t("dialogs.create"),
+              onSubmit: (name) =>
+                run(ctx, async () => {
+                  const created = await api.createTag(name);
+                  if (created) await api.setTag(created.uid, true, keys);
+                }),
+            }),
+        },
+      ],
     },
   ];
 }

@@ -210,6 +210,15 @@ async fn add_feed(state: State<'_, AppState>, input: String, folder_uid: Option<
         .map_err(|e| e.to_string())
 }
 
+/// Change l'adresse d'un flux en gardant ses articles et leur état.
+#[tauri::command]
+async fn change_feed_address(state: State<'_, AppState>, url: String, input: String) -> Result<AddedFeed, String> {
+    let prefs = current_prefs(&state)?;
+    flux_core::refresh::change_address(&state.db, &url, &input, &prefs, &state.images)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 /// Actualise tous les flux (sans effet si une actualisation est déjà en cours).
 #[tauri::command]
 async fn refresh_all(state: State<'_, AppState>) -> Result<RefreshReport, String> {
@@ -822,6 +831,7 @@ pub fn run() {
             export_opml,
             create_folder,
             print_page,
+            change_feed_address,
             check_update,
             install_update,
             swift_import_status,

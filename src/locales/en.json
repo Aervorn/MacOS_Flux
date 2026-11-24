@@ -155,7 +155,8 @@
     "newTag": "New tag…",
     "openBrowser": "Open in browser",
     "copyLink": "Copy link",
-    "detachCluster": "Remove from group"
+    "detachCluster": "Remove from group",
+    "changeAddress": "Change address…"
   },
   "dialogs": {
     "renameFeed": "Rename feed",
@@ -173,7 +174,8 @@
     "deleteFolderTitle": "Delete the folder “{{name}}”?",
     "deleteFolderBody": "The feeds in the folder are not deleted: they go back to the top level.",
     "deleteTagTitle": "Delete the tag “{{name}}”?",
-    "deleteTagBody": "The articles stay in favorites, without this tag."
+    "deleteTagBody": "The articles stay in favorites, without this tag.",
+    "changeAddress": "Change the feed address"
   },
   "filters": {
     "title": "Filters",
@@ -258,5 +260,47 @@
     "installing": "Downloading the update… Flux will restart by itself.",
     "upToDate": "Flux is up to date (version {{version}}).",
     "error": "Update failed: {{message}}"
+  },
+  "onboarding": {
+    "menu": "Discover Flux",
+    "skip": "Skip",
+    "previous": "Back",
+    "next": "Next",
+    "start": "Get started",
+    "openSettings": "Open the sync settings",
+    "welcome": {
+      "title": "Welcome to Flux",
+      "text": "An RSS reader for Mac with no algorithm and no directory: you pick your sources, Flux presents them neatly."
+    },
+    "add": {
+      "title": "Add your sources",
+      "text": "Paste the address of a site or of its feed: Flux finds the feed by itself.",
+      "tip1": "The + button or ⌘N adds a feed",
+      "tip2": "File your feeds in folders (right-click › Move to)",
+      "tip3": "Coming from another reader? Menu › Import feeds (OPML)"
+    },
+    "read": {
+      "title": "Read without leaving the app",
+      "text": "When a feed only gives an excerpt, Flux fetches the full article and shows it in a readable layout.",
+      "tip1": "The same story published by several sources shows up only once",
+      "tip2": "j / k: next or previous article; space: scroll",
+      "tip3": "Offline reading is possible (Settings › Reading)"
+    },
+    "sort": {
+      "title": "Sort things out",
+      "text": "Filter rules hide articles, or mark them as read, when their title contains a keyword, on all your feeds or only some.",
+      "tip1": "Menu › Filters to create a rule",
+      "tip2": "The eye button in the toolbar hides read articles"
+    },
+    "keep": {
+      "title": "Keep what matters",
+      "text": "Favorites are archived in full, images included: you can read them again even if the site deletes them.",
+      "tip1": "Organize favorites with tags (tagging an article adds it to favorites)",
+      "tip2": "Print an article or export it as PDF (⌘P)"
+    },
+    "icloud": {
+      "title": "Sync and back up",
+      "text": "With iCloud Drive, your feeds, favorites and read articles follow you to your other Macs, and a full copy of Flux is backed up every day."
+    }
   }
 }

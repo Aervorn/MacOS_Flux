@@ -13,12 +13,13 @@ import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
 import SettingsDialog, { type Section } from "./components/SettingsDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
-import { Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
+import { Compass, Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
-import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
+import { articleMenu, articlesMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
+import Onboarding from "./components/Onboarding";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -29,9 +30,14 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [articles, setArticles] = useState<ArticleRow[]>([]);
+  // L'article ouvert dans le lecteur, les articles sélectionnés (⌘-clic, ⇧-clic…) et le curseur du clavier.
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [cursorKey, setCursorKey] = useState<string | null>(null);
+  const anchorRef = useRef<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [info, setInfo] = useState<AppInfo | null>(null);
+  const [tour, setTour] = useState(false);
   const [update, setUpdate] = useState<string | null>(null);
   const [swiftImport, setSwiftImport] = useState<{ available: boolean; dismissed: boolean }>({ available: false, dismissed: false });
   const [refreshing, setRefreshing] = useState(false);
@@ -178,9 +184,197 @@ export default function App() {
   const openArticleMenu = async (e: React.MouseEvent, article: ArticleRow) => {
     e.preventDefault();
     const { clientX: x, clientY: y } = e;
+    // Plusieurs articles sélectionnés : le menu agit sur tous ; sinon sur l'article cliqué.
+    if (selectedKeys.length > 1 && selectedKeys.includes(article.key)) {
+      setMenu({ x, y, items: articlesMenu(menuContext(), selectedKeys) });
+      return;
+    }
+    if (!selectedKeys.includes(article.key)) {
+      setSelectedKeys([article.key]);
+      setCursorKey(article.key);
+      anchorRef.current = article.key;
+    }
     const detail = await api.article(article.key).catch(() => null);
     setMenu({ x, y, items: articleMenu(menuContext(), article, detail) });
   };
+
+  // --- Sélection et clavier -------------------------------------------------------------------
+
+  const openArticle = useCallback((key: string | null) => {
+    setSelectedKey(key);
+    setSelectedKeys(key ? [key] : []);
+    setCursorKey(key);
+    anchorRef.current = key;
+  }, []);
+
+  // Un changement de vue repart sans sélection.
+  useEffect(() => {
+    setSelectedKeys([]);
+    setCursorKey(null);
+    anchorRef.current = null;
+  }, [selection]);
+
+  const rangeKeys = (from: string, to: string): string[] => {
+    const i = articles.findIndex((a) => a.key === from);
+    const j = articles.findIndex((a) => a.key === to);
+    if (i < 0 || j < 0) return [to];
+    return articles.slice(Math.min(i, j), Math.max(i, j) + 1).map((a) => a.key);
+  };
+
+  const fullGrid = prefs?.articleLayout === "gridFull";
+
+  const clickArticle = (article: ArticleRow, e: React.MouseEvent) => {
+    const key = article.key;
+    if (e.shiftKey && anchorRef.current) {
+      setSelectedKeys(rangeKeys(anchorRef.current, key));
+      setCursorKey(key);
+      if (!fullGrid) setSelectedKey(key);
+    } else if (e.metaKey || e.ctrlKey) {
+      const on = !selectedKeys.includes(key);
+      const next = on ? [...selectedKeys, key] : selectedKeys.filter((k) => k !== key);
+      setSelectedKeys(next);
+      setCursorKey(key);
+      anchorRef.current = key;
+      if (!fullGrid) setSelectedKey(on ? key : selectedKey === key ? (next[next.length - 1] ?? null) : selectedKey);
+    } else {
+      openArticle(key);
+    }
+  };
+
+  // Déplace le curseur (j / k, flèches) ; avec `extend`, étend la sélection.
+  const moveCursor = (delta: number, extend: boolean) => {
+    if (articles.length === 0) return;
+    const current = cursorKey ?? selectedKey;
+    const index = current ? articles.findIndex((a) => a.key === current) : -1;
+    const target = index < 0 ? (delta > 0 ? 0 : articles.length - 1) : Math.min(articles.length - 1, Math.max(0, index + delta));
+    const key = articles[target].key;
+    document.querySelector(`[data-article-key="${CSS.escape(key)}"]`)?.scrollIntoView({ block: "nearest" });
+    if (extend) {
+      const anchor = anchorRef.current ?? current ?? key;
+      anchorRef.current = anchor;
+      setSelectedKeys(rangeKeys(anchor, key));
+      setCursorKey(key);
+      if (!fullGrid) setSelectedKey(key);
+    } else if (fullGrid && !selectedKey) {
+      setSelectedKeys([key]);
+      setCursorKey(key);
+      anchorRef.current = key;
+    } else {
+      openArticle(key);
+    }
+  };
+
+  // Articles visés par une action au clavier : la sélection, sinon l'article ouvert.
+  const targetRows = (): ArticleRow[] => {
+    const keys = selectedKeys.length > 0 ? selectedKeys : selectedKey ? [selectedKey] : [];
+    return articles.filter((a) => keys.includes(a.key));
+  };
+
+  const toggleReadKeys = () => {
+    const rows = targetRows();
+    if (rows.length === 0) return;
+    const allRead = rows.every((a) => a.isRead);
+    api.setRead(rows.map((a) => a.key), !allRead).then(refresh).catch((e) => setNotice(errorMessage(e, t)));
+  };
+
+  const toggleStarKeys = () => {
+    const rows = targetRows();
+    if (rows.length === 0) return;
+    const allStarred = rows.every((a) => a.isStarred);
+    api.setStarred(rows.map((a) => a.key), !allStarred).then(refresh).catch((e) => setNotice(errorMessage(e, t)));
+  };
+
+  const openInBrowser = () => {
+    const link = targetRows()[0]?.link;
+    if (link) api.openUrl(link).catch((e) => setNotice(errorMessage(e, t)));
+  };
+
+  const spaceScroll = (up: boolean) => {
+    const el = document.querySelector<HTMLElement>("[data-reader-scroll]");
+    if (!el) {
+      if (!up) moveCursor(1, false);
+      return;
+    }
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4;
+    if (!up && atBottom) moveCursor(1, false);
+    else el.scrollBy({ top: (up ? -1 : 1) * el.clientHeight * 0.9, behavior: "smooth" });
+  };
+
+  const modalOpen =
+    tour || settings !== null || asking !== null || notice !== null || showAddFeed || update !== null || menu !== null ||
+    (swiftImport.available && !swiftImport.dismissed);
+
+  // Raccourcis (comme Reeder). Les touches seules sont ignorées pendant la saisie dans un champ.
+  const onKeyRef = useRef<(e: KeyboardEvent) => void>(() => undefined);
+  onKeyRef.current = (e: KeyboardEvent) => {
+    if (!prefs || modalOpen || e.isComposing) return;
+    const typing = !!(e.target as HTMLElement | null)?.closest?.("input, textarea, select, [contenteditable='true']");
+    const key = e.key.toLowerCase();
+    const cmd = e.metaKey || e.ctrlKey;
+
+    if (cmd) {
+      if (e.code === "KeyA" && !typing) {
+        e.preventDefault();
+        setSelectedKeys(articles.map((a) => a.key));
+      } else if (e.code === "KeyN") {
+        e.preventDefault();
+        if (e.shiftKey) createFolder();
+        else setShowAddFeed(true);
+      } else if (e.code === "KeyR" && !e.shiftKey) {
+        e.preventDefault();
+        void refreshFeeds();
+      } else if (e.code === "KeyK" && e.shiftKey) {
+        e.preventDefault();
+        void markAllRead();
+      } else if (e.key === ",") {
+        e.preventDefault();
+        setSettings("appearance");
+      } else if ((e.code === "KeyP" && !e.altKey) || (e.code === "KeyE" && e.altKey)) {
+        e.preventDefault();
+        if (selectedKey) api.printPage().catch(() => undefined);
+      }
+      return;
+    }
+    if (typing || e.altKey) return;
+
+    const grid = prefs.articleLayout !== "list";
+    const stop = () => e.preventDefault();
+    switch (e.key) {
+      case "ArrowDown":
+        if (!grid) { stop(); moveCursor(1, e.shiftKey); }
+        return;
+      case "ArrowUp":
+        if (!grid) { stop(); moveCursor(-1, e.shiftKey); }
+        return;
+      case "ArrowRight":
+        if (grid) { stop(); moveCursor(1, e.shiftKey); }
+        return;
+      case "ArrowLeft":
+        if (grid) { stop(); moveCursor(-1, e.shiftKey); }
+        return;
+      case "Enter":
+        if (fullGrid && cursorKey && !selectedKey) { stop(); openArticle(cursorKey); }
+        return;
+      case " ":
+        stop();
+        (document.activeElement as HTMLElement | null)?.blur?.();
+        spaceScroll(e.shiftKey);
+        return;
+    }
+    if (e.shiftKey) return;
+    switch (key) {
+      case "j": moveCursor(1, false); break;
+      case "k": moveCursor(-1, false); break;
+      case "m": toggleReadKeys(); break;
+      case "s": toggleStarKeys(); break;
+      case "b": openInBrowser(); break;
+    }
+  };
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => onKeyRef.current(e);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const createFolder = () =>
     setAsking({
@@ -269,6 +463,7 @@ export default function App() {
         { label: t("settings.importOpml"), icon: <Download size={16} />, onClick: () => void importOpml() },
         { label: t("settings.exportOpml"), icon: <Upload size={16} />, onClick: () => void exportOpml() },
         "separator",
+        { label: t("onboarding.menu"), icon: <Compass size={16} />, onClick: () => setTour(true) },
         { label: t("update.check"), icon: <RefreshCw size={16} />, onClick: () => void checkUpdateNow() },
         {
           label: t("settings.about"),
@@ -328,6 +523,16 @@ export default function App() {
     }
   };
 
+  // Première ouverture : la découverte de Flux, si on n'a encore aucun flux (sinon, rien à découvrir).
+  const feedCount = sidebar ? sidebar.feeds.length + sidebar.folders.reduce((n, f) => n + f.feeds.length, 0) : null;
+  const importOffered = swiftImport.available && !swiftImport.dismissed;
+  useEffect(() => {
+    if (!prefs || feedCount === null || prefs.onboardingSeen || importOffered) return;
+    if (feedCount === 0) setTour(true);
+    updatePrefs({ onboardingSeen: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs?.onboardingSeen, feedCount, importOffered]);
+
   const dismissSwiftImport = () => {
     setSwiftImport((s) => ({ ...s, dismissed: true }));
     api.swiftImportDismiss().catch(() => undefined);
@@ -365,9 +570,9 @@ export default function App() {
       <ArticleList
         articles={articles}
         layout={prefs.articleLayout}
-        selectedKey={selectedKey}
+        selectedKeys={selectedKeys}
         showSummary={prefs.showSummary}
-        onSelect={setSelectedKey}
+        onSelect={clickArticle}
         onMenu={(e, article) => void openArticleMenu(e, article)}
       />
     </div>
@@ -440,7 +645,7 @@ export default function App() {
                   articleKey={selectedKey}
                   prefs={prefs}
                   onPrefs={updatePrefs}
-                  onOpenArticle={setSelectedKey}
+                  onOpenArticle={openArticle}
                   tags={sidebar?.tags ?? []}
                   onChanged={refresh}
                 />
@@ -454,7 +659,7 @@ export default function App() {
             articleKey={selectedKey}
             prefs={prefs}
             onPrefs={updatePrefs}
-            onOpenArticle={setSelectedKey}
+            onOpenArticle={openArticle}
             tags={sidebar?.tags ?? []}
             onChanged={refresh}
             onClose={() => setSelectedKey(null)}
@@ -463,6 +668,15 @@ export default function App() {
           list
         )}
       </main>
+      {tour && (
+        <Onboarding
+          onClose={() => setTour(false)}
+          onOpenSync={() => {
+            setTour(false);
+            setSettings("sync");
+          }}
+        />
+      )}
       {update && (
         <ConfirmDialog
           title={t("update.title")}
