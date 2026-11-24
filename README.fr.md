@@ -47,11 +47,11 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 ### 📰 Tes flux, à ta façon
 
 - **Ajoute un flux** en collant son adresse, ou simplement celle du site : Flux trouve le flux déclaré par le site, puis essaie les chemins habituels (`/feed`, `/rss`, `/atom.xml`…).
-- **Des dossiers**, repliables, avec leur nombre de non-lus. Clic droit sur un flux pour le renommer, le ranger dans un dossier, ouvrir son site, copier son adresse ou le supprimer.
+- **Des dossiers**, repliables, avec leur nombre de non-lus. Clic droit sur un flux pour le renommer, le ranger dans un dossier, ouvrir son site, copier son adresse ou le supprimer ; ou glisse-le sur un dossier. Clic droit sur un dossier pour changer son icône (symbole ou emoji) et sa couleur.
 - **Import et export OPML** (menu de l'app) pour reprendre tes abonnements depuis un autre lecteur (NetNewsWire, Reeder, Feedly…) avec leurs dossiers, ou les sauvegarder.
 - Le **favicon** du site s'affiche à côté de chaque flux ; la barre latérale et la liste se redimensionnent, et la fenêtre retient sa taille et sa position.
-- **Limites :** les dossiers imbriqués d'un fichier OPML sont aplatis dans le dossier le plus proche. Changer l'icône ou la couleur d'un dossier et glisser un flux dans un dossier ne sont pas encore disponibles.
-- **Changer l'adresse d'un flux** (clic droit › Modifier l’adresse…) : saisis la nouvelle adresse du flux ou du site ; les articles, leur état de lecture et les favoris sont conservés. La synchro ne transmet pas ce changement.
+- **Limites :** les dossiers imbriqués d'un fichier OPML sont aplatis dans le dossier le plus proche. Les flux se glissent un par un. Un flux dont la dernière actualisation a échoué reçoit une pastille d'avertissement dans la barre latérale : survole-la (ou clic droit › Voir l’erreur…) pour lire le message et la date de la dernière actualisation réussie ; seule la dernière erreur est conservée, pas un historique.
+- **Changer l'adresse d'un flux** (clic droit › Modifier l’adresse…) : saisis la nouvelle adresse du flux ou du site ; les articles, leur état de lecture et les favoris sont conservés, et la synchro transmet le changement à tes autres Mac.
 
 ### 🖼️ Une liste agréable à parcourir
 
@@ -66,8 +66,8 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 
 - Quand un flux ne donne qu'un extrait, Flux télécharge la page et en extrait l'article avec [Readability.js](https://github.com/mozilla/readability), le moteur du mode Lecture de Firefox. Un bouton bascule entre la version du flux et l'article complet.
 - Mise en page soignée, claire ou sombre, avec une taille de texte réglable (⌘+ ou ⌘= / ⌘− / ⌘0), trois largeurs de texte et un choix de polices d'article. Les liens s'ouvrent dans ton navigateur par défaut.
-- **Imprimer / exporter en PDF** depuis la barre d'outils de l'article (fenêtre d'impression de macOS, puis son bouton « PDF »).
-- **Limites :** les articles réservés aux abonnés d'un site restent coupés, puisque le site ne fournit pas la suite. Les pages entièrement construites en JavaScript peuvent être mal extraites : le bouton « Ouvrir dans le navigateur » est là pour elles. Les vidéos intégrées (YouTube, Vimeo…) sont retirées de l'article, seul leur lien reste.
+- **Imprimer ou exporter en PDF** depuis la barre d'outils de l'article : le bouton PDF demande où enregistrer, puis écrit l'article dans un fichier avec la mise en page d'impression (sans barre latérale ni boutons).
+- **Limites :** les articles réservés aux abonnés d'un site restent coupés, puisque le site ne fournit pas la suite. Les pages entièrement construites en JavaScript peuvent être mal extraites : le bouton « Ouvrir dans le navigateur » est là pour elles. Les vidéos intégrées de YouTube, Vimeo et Dailymotion affichent un cadre « Lire la vidéo » et ne se chargent qu'au clic (et pas hors ligne) ; les autres lecteurs sont retirés de l'article, seul leur lien reste.
 
 ### 🧲 Articles similaires
 
@@ -111,7 +111,7 @@ Réglages › Flux › *Préparer les articles pour la lecture hors ligne* : apr
 Réglages › Synchronisation : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus, favoris et leurs tags**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/devices/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément. Le format est le même que celui de la version Swift.
 
 - Non synchronisés : réglages, historique et images.
-- **Limites :** iCloud Drive doit être activé ; les changements arrivent aussi vite qu'iCloud Drive transporte les fichiers (en général moins d'une minute). La première fois, macOS peut demander l'autorisation d'accéder à iCloud Drive : accepte, Flux réessaie tout seul. Le changement d'adresse d'un flux n'est pas repris.
+- **Limites :** iCloud Drive doit être activé ; les changements arrivent aussi vite qu'iCloud Drive transporte les fichiers (en général moins d'une minute). La première fois, macOS peut demander l'autorisation d'accéder à iCloud Drive : accepte, Flux réessaie tout seul.
 
 ### 💾 Sauvegarde dans iCloud Drive
 
@@ -136,7 +136,7 @@ Aucune, sauf une : si tu actives la synchro ou la sauvegarde, macOS demande une 
 
 ## 🔒 Confidentialité
 
-Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni statistiques d'usage, ni suivi. En dehors de la synchro facultative via ton propre iCloud Drive et de la recherche d'une nouvelle version sur GitHub, les seules requêtes réseau vont directement aux sites auxquels tu es abonné : leurs flux, les pages de leurs articles, leurs images et leurs favicons. Tout est stocké sur ton Mac :
+Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni statistiques d'usage, ni suivi. En dehors de la synchro facultative via ton propre iCloud Drive et de la recherche d'une nouvelle version sur GitHub, les seules requêtes réseau vont directement aux sites auxquels tu es abonné : leurs flux, les pages de leurs articles, leurs images et leurs favicons. Seule exception : une vidéo intégrée, où YouTube, Vimeo ou Dailymotion n'est contacté que si tu cliques sur « Lire ». Tout est stocké sur ton Mac :
 
 - articles, flux, dossiers et réglages : `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite` ;
 - miniatures et images : `~/Library/Application Support/io.github.aervorn.flux/images` ; images des favoris archivés : `…/archive` ;
@@ -172,6 +172,14 @@ Ton historique et tes temps de lecture sont importés aussi : tes statistiques c
 Flux recherche une nouvelle version au lancement (ou menu de l'app › **Rechercher les mises à jour…**) et propose de l'installer. Les mises à jour sont signées : Flux refuse tout fichier qui n'a pas été signé par l'auteur.
 
 ## 📝 Historique des versions
+
+### 0.9.0
+- **Les erreurs de flux dans la barre latérale** : une pastille d'avertissement apparaît à côté d'un flux qui n'a pas pu être actualisé ; survole-la pour lire le message.
+- **Icône et couleur d'un dossier** (clic droit sur un dossier) : symboles, emojis et palette de couleurs.
+- **Glisse un flux sur un dossier** (ou sur « Flux » pour le sortir), et un dossier fermé s'ouvre quand tu le survoles pendant le glissement.
+- **Vidéos intégrées** (YouTube, Vimeo, Dailymotion) lisibles dans l'article, chargées seulement au clic.
+- **Export PDF direct** depuis la barre d'outils de l'article, sans passer par la fenêtre d'impression.
+- Le **changement d'adresse d'un flux est maintenant transmis par la synchro** : tes autres Mac gardent les articles et leur état.
 
 ### 0.8.0
 - **Flux est maintenant construit avec Tauri** (cœur en Rust et interface en React) au lieu de SwiftUI : nouveau look avec un thème sombre, trois dispositions (liste, grille, grille pleine largeur) et des panneaux redimensionnables.

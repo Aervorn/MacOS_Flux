@@ -47,11 +47,11 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 ### 📰 Your feeds, your way
 
 - **Add a feed** by pasting its address, or simply the website's address: Flux finds the feed declared by the site, then tries the usual paths (`/feed`, `/rss`, `/atom.xml`…).
-- **Folders**, collapsible, with their own unread count. Right-click a feed to rename it, move it to a folder, open its website, copy its address or delete it.
+- **Folders**, collapsible, with their own unread count. Right-click a feed to rename it, move it to a folder, open its website, copy its address or delete it; or drag it onto a folder. Right-click a folder to change its icon (symbol or emoji) and color.
 - **OPML import and export** (app menu) to bring your subscriptions from another reader (NetNewsWire, Reeder, Feedly…) with their folders, or to back them up.
 - The site's **favicon** is shown next to each feed; the sidebar and the list can be resized, and the window remembers its size and position.
-- **Limitations:** nested folders in an OPML file are flattened to their closest folder. Changing a folder's icon or color and dragging a feed onto a folder aren't available yet.
-- **Change a feed's address** (right-click › Change address…): enter the new feed or site address; the articles, their read state and the favorites are kept. A change isn't carried over by sync.
+- **Limitations:** nested folders in an OPML file are flattened to their closest folder. Feeds are dragged one at a time. A feed whose last refresh failed gets a warning badge in the sidebar: hover it (or right-click › Show error…) for the message and the date of the last successful refresh; it only shows the last error, not a history.
+- **Change a feed's address** (right-click › Change address…): enter the new feed or site address; the articles, their read state and the favorites are kept, and the change is carried over by sync to your other Macs.
 
 ### 🖼️ A list you enjoy browsing
 
@@ -66,8 +66,8 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 
 - When a feed only provides an excerpt, Flux downloads the page and extracts the article with [Readability.js](https://github.com/mozilla/readability), the engine behind Firefox's Reader View. A button switches between the feed version and the full article.
 - Clean reading layout, light or dark, with an adjustable text size (⌘+ or ⌘= / ⌘− / ⌘0), three text widths and a choice of article fonts. Links open in your default browser.
-- **Print / export as PDF** from the article toolbar (macOS print dialog, then its “PDF” button).
-- **Limitations:** articles reserved for a site's subscribers stay cut, since the site itself doesn't serve the rest. Pages built entirely in JavaScript can be extracted poorly: the “Open in browser” button is there for those. Embedded videos (YouTube, Vimeo…) are removed from the article, only their link remains.
+- **Print or export as PDF** from the article toolbar: the PDF button asks where to save, then writes the article to a file with the print layout (no sidebar, no buttons).
+- **Limitations:** articles reserved for a site's subscribers stay cut, since the site itself doesn't serve the rest. Pages built entirely in JavaScript can be extracted poorly: the “Open in browser” button is there for those. Embedded videos from YouTube, Vimeo and Dailymotion show a “Play the video” box and only load when you click it (and not offline); other players are removed from the article, only their link remains.
 
 ### 🧲 Similar articles
 
@@ -111,7 +111,7 @@ Settings › Feeds › *Prepare articles for offline reading*: after each refres
 Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/devices/` and merges the others: when something changed on both Macs, the most recent change wins, item by item. The format is the same as the Swift version's.
 
 - Not synced: settings, history and images.
-- **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). The first time, macOS may ask permission to access iCloud Drive: allow it, Flux retries by itself. A feed's address change isn't carried over.
+- **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). The first time, macOS may ask permission to access iCloud Drive: allow it, Flux retries by itself.
 
 ### 💾 Backup to iCloud Drive
 
@@ -136,7 +136,7 @@ None, except one: if you turn on sync or backup, macOS asks once whether Flux ma
 
 ## 🔒 Privacy
 
-Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. Everything is stored on your Mac:
+Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. The one exception is an embedded video: YouTube, Vimeo or Dailymotion is only contacted if you click “Play”. Everything is stored on your Mac:
 
 - articles, feeds, folders and settings: `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite`;
 - thumbnails and images: `~/Library/Application Support/io.github.aervorn.flux/images`; archived favorites' images: `…/archive`;
@@ -172,6 +172,14 @@ Your reading history and reading times are imported too, so your statistics carr
 Flux checks for a new version at launch (or app menu › **Check for updates…**) and offers to install it. Updates are signed, and Flux refuses any file that wasn't signed by the author.
 
 ## 📝 Changelog
+
+### 0.9.0
+- **Feed errors in the sidebar**: a warning badge appears next to a feed that couldn't be refreshed; hover it for the message.
+- **Folder icon and color** (right-click a folder): symbols, emojis and a color palette.
+- **Drag a feed onto a folder** (or onto “Feeds” to take it out), and a closed folder opens when you hover it while dragging.
+- **Embedded videos** (YouTube, Vimeo, Dailymotion) can be played in the article, loaded only when you click.
+- **Direct PDF export** from the article toolbar, without going through the print dialog.
+- A feed's **address change is now carried over by sync**: your other Macs keep the articles and their state.
 
 ### 0.8.0
 - **Flux is now built with Tauri** (Rust core and React interface) instead of SwiftUI: a new look, with a dark theme, three layouts (list, grid, full-width grid) and resizable panels.

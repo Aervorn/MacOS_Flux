@@ -23,19 +23,20 @@ pnpm tauri dev                     # lance l'app en développement
 
 ## À améliorer (todo)
 
-- **Export PDF** : l'impression passe par la fenêtre native de macOS (il faut cliquer sur le petit bouton « PDF » en bas à gauche). Piste : un vrai « Exporter en PDF » direct via `WKWebView.createPDF` (code natif Rust/objc2).
-- **Vidéos intégrées** (iframes YouTube, Vimeo…) : retirées par le nettoyage du HTML ; seul le lien reste. Piste : autoriser une liste blanche de lecteurs.
-- **Menus contextuels** : faits pour les flux, dossiers, tags, articles et sélections multiples. Reste à faire : changer l'icône et la couleur d'un dossier, glisser-déposer un flux dans un dossier.
+- **Export PDF** : fait (`src-tauri/src/pdf.rs`) — fenêtre d'enregistrement, puis `NSPrintOperation` de la WKWebView en travail « enregistrer » (objc2, appels bruts), avec la mise en page d'impression. L'opération se termine en arrière-plan : on attend que le fichier cesse de grossir (40 s max).
+- **Vidéos intégrées** : faites (`src/reader/video.ts`) pour YouTube, Vimeo, Dailymotion — emplacement « Lire la vidéo », lecteur créé au clic (adresse reconstruite depuis l'identifiant, sandbox, youtube-nocookie). Les autres lecteurs (Twitch, PeerTube, lecteurs maison de certains journaux) restent des liens.
+- **Menus contextuels** : faits pour les flux, dossiers, tags, articles et sélections multiples. Faits aussi : icône (symbole ou emoji) et couleur d'un dossier (`FolderStyleDialog`), glisser-déposer d'un flux vers un dossier — suivi à la souris (le glisser-déposer HTML de la WebView refuse le dépôt) avec ouverture d'un dossier fermé après 0,6 s.
 - **Archivage des favoris** : fait (`archive.rs`) — images (miniature + 50 du texte) dans `archive/`, texte complet récupéré par l'interface (`offline.ts`). Un favori garde ce qui a pu être téléchargé à l'ajout ; pas de nouvel essai pour une page qui a échoué.
 - **Doublons par le sens** : fait (`semantic.rs`, NLEmbedding via objc2, macOS seulement). Les groupes existants ne sont recalculés qu'au changement de sensibilité.
 - **Filtres** : portent uniquement sur le titre (comme l'app Swift) ; pas de glisser-déposer ni d'ordre des règles (la plus ancienne l'emporte).
 - **Cache d'images** : limite 250 Mo–5 Go, suppression des moins récemment utilisées (mtime « touché » à chaque affichage), bouton Vider (`offline.rs`). L'archive des favoris est un autre dossier, jamais touchée.
-- **Erreurs de flux** : mémorisées en base (`last_error`) mais pas encore affichées dans la barre latérale.
+- **Erreurs de flux** : pastille dans la barre latérale (infobulle : message et date de la dernière actualisation réussie) et « Voir l’erreur… » dans le menu du flux. Seule la dernière erreur est conservée.
 - **Mode hors ligne** : fait. Texte complet des non lus et favoris (400 max) extrait par l'interface (Readability tourne dans la WebView), puis images ; détection de la connexion par une requête vers captive.apple.com (navigator.onLine est peu fiable dans la WebView). Une page dont l'extraction échoue n'est pas retentée avant le prochain lancement.
 
 ## Synchronisation iCloud (en cours)
 - Même format JSON v1 que l'app Swift, même dossier `iCloud Drive/Flux/devices/`.
-- Limites connues : changement d'adresse d'un flux (`previousURL`) pas repris (l'ancien flux est supprimé, le nouveau créé, l'état lu de ses articles est perdu) ; un fichier iCloud pas encore téléchargé est demandé via `brctl` mais n'est lu qu'à la synchro suivante ; la synchro bloque brièvement la base pendant qu'elle tourne.
+- Le changement d'adresse d'un flux (`previousURL`) est repris : l'autre Mac fait la même migration (`manage::migrate_feed`) avant le traitement des pierres tombales, donc articles, états et tags sont conservés. Si les deux adresses existent déjà sur l'autre Mac, l'ancienne est simplement supprimée.
+- Limites connues : un fichier iCloud pas encore téléchargé est demandé via `brctl` mais n'est lu qu'à la synchro suivante ; la synchro bloque brièvement la base pendant qu'elle tourne.
 - Testée à la main (lecture, ajout/suppression de flux) : OK.
 
 ## Sauvegarde iCloud (en cours)
@@ -52,4 +53,4 @@ pnpm tauri dev                     # lance l'app en développement
 - `src-tauri/Info.plist` contient la clé publique Sparkle de l'app Swift : c'est ce qui permet à Sparkle d'accepter le DMG Tauri comme mise à jour. Non testé de bout en bout avant la première release.
 
 ## Écarts avec l'app Swift
-Aucun écart de fonctions connu : statistiques, hors ligne, archive, raccourcis à une touche, sélection multiple, changement d'adresse, visite guidée et comparaison par le sens sont là. Restent les limites listées plus haut (changement d'adresse non transmis par la synchro, préchargement limité à 400 articles, etc.) et, côté clavier, des raccourcis lus par lettre (`e.key`) pour ⌘A à cause de l'AZERTY.
+Aucun écart de fonctions connu : statistiques, hors ligne, archive, raccourcis à une touche, sélection multiple, changement d'adresse, visite guidée et comparaison par le sens sont là. Restent les limites listées plus haut (préchargement limité à 400 articles, etc.) et, côté clavier, des raccourcis lus par lettre (`e.key`) pour ⌘A à cause de l'AZERTY.

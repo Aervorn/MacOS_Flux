@@ -740,8 +740,28 @@ fn merge(conn: &Connection, remote: &Snapshot, current: &mut Snapshot, now: f64)
     }
     current.tags = if current_tags.is_empty() { None } else { Some(current_tags) };
 
-    // Flux. Le changement d'adresse (`previousURL`) n'est pas encore repris : l'ancien flux est
-    // supprimé et le nouveau créé, ce qui perd l'état lu de ses articles.
+    // Changement d'adresse fait sur un autre Mac (`previousURL`) : on fait la même chose ici, pour
+    // garder les articles, leur état lu / favori, leurs tags et les règles de filtrage. Cela doit
+    // précéder la boucle suivante, qui supprimerait sinon l'ancien flux (son entrée est une pierre
+    // tombale) avant que ses articles aient pu être rattachés à la nouvelle adresse.
+    for (url, entry) in &remote.feeds {
+        let Some(old) = entry.previous_url.as_deref() else { continue };
+        if entry.deleted || old == url {
+            continue;
+        }
+        if current.feeds.get(url).is_some_and(|local| local.modified >= entry.modified) {
+            continue;
+        }
+        let has = |u: &str| -> Result<bool> {
+            Ok(conn.query_row("SELECT COUNT(*) FROM feeds WHERE url = ?1", params![u], |r| r.get::<_, i64>(0))? > 0)
+        };
+        if has(old)? && !has(url)? {
+            manage::migrate_feed(conn, old, url)?;
+            out.changed = true;
+        }
+    }
+
+    // Flux
     for (url, entry) in &remote.feeds {
         if current.feeds.get(url).is_some_and(|local| local.modified >= entry.modified) {
             continue;
@@ -956,6 +976,38 @@ mod tests {
         .unwrap();
         run(&b, dir.path(), 1300.0);
         assert_eq!(count(&b.0, "SELECT is_read FROM articles WHERE key = 'u1|1'"), 1);
+    }
+
+    #[test]
+    fn address_change_on_one_mac_keeps_articles_on_the_other() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = mac("A");
+        let b = mac("B");
+        a.0.execute_batch(
+            "INSERT INTO feeds (id, url, title, added_at) VALUES (1, 'u1', 'Korben', 0);
+             INSERT INTO articles (id, key, feed_id, feed_url, title, published) VALUES (1, 'u1|1', 1, 'u1', 'A', 10);",
+        )
+        .unwrap();
+        run(&a, dir.path(), 1000.0);
+        run(&b, dir.path(), 1100.0);
+        // B reçoit l'article et le met en favori
+        b.0.execute(
+            "INSERT INTO articles (key, feed_id, feed_url, title, published, is_starred) VALUES ('u1|1', (SELECT id FROM feeds WHERE url = 'u1'), 'u1', 'A', 10, 1)",
+            [],
+        )
+        .unwrap();
+        let article_id: i64 = count(&b.0, "SELECT id FROM articles WHERE key = 'u1|1'");
+
+        // A change l'adresse du flux, puis B se synchronise
+        manage::migrate_feed(&a.0, "u1", "u2").unwrap();
+        run(&a, dir.path(), 1200.0);
+        let r = run(&b, dir.path(), 1300.0);
+
+        assert!(r.changed);
+        assert!(r.new_feeds.is_empty(), "le flux n'est pas recréé : {:?}", r.new_feeds);
+        assert_eq!(count(&b.0, "SELECT COUNT(*) FROM feeds WHERE url = 'u1'"), 0);
+        assert_eq!(count(&b.0, "SELECT COUNT(*) FROM feeds WHERE url = 'u2' AND previous_url = 'u1'"), 1);
+        assert_eq!(count(&b.0, "SELECT id FROM articles WHERE key = 'u2|1' AND is_starred = 1"), article_id);
     }
 
     #[test]
