@@ -5,19 +5,20 @@ import { api } from "../api";
 import type { FilterInput, FilterRule, SidebarFeed } from "../api";
 import { errorMessage } from "../errors";
 import base from "./AddFeedDialog.module.css";
-import styles from "./FiltersDialog.module.css";
+import styles from "./FiltersPanel.module.css";
 
 interface Props {
   feeds: SidebarFeed[];
   /** Appelé après chaque modification (compteurs et liste à recharger). */
   onChanged: () => void;
-  onClose: () => void;
+  /** Prévient quand le formulaire s'ouvre ou se ferme (Échap ferme d'abord le formulaire). */
+  onEditingChange?: (editing: boolean) => void;
 }
 
 const EMPTY: FilterInput = { keyword: "", wholeWord: true, action: "hide", feedUrls: [] };
 
 /** Gestion des règles de filtres : liste, puis formulaire d'ajout ou de modification. */
-export default function FiltersDialog({ feeds, onChanged, onClose }: Props) {
+export default function FiltersPanel({ feeds, onChanged, onEditingChange }: Props) {
   const { t } = useTranslation();
   const [rules, setRules] = useState<FilterRule[]>([]);
   const [editing, setEditing] = useState<{ uid: string | null; form: FilterInput } | null>(null);
@@ -30,14 +31,17 @@ export default function FiltersDialog({ feeds, onChanged, onClose }: Props) {
   useEffect(load, [load]);
 
   useEffect(() => {
+    onEditingChange?.(editing !== null);
+  }, [editing, onEditingChange]);
+
+  useEffect(() => {
+    if (!editing) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      if (editing) setEditing(null);
-      else onClose();
+      if (e.key === "Escape") setEditing(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [editing, onClose]);
+  }, [editing]);
 
   // Aperçu : combien d'articles la règle toucherait.
   const form = editing?.form;
@@ -98,10 +102,7 @@ export default function FiltersDialog({ feeds, onChanged, onClose }: Props) {
     setEditing((cur) => (cur ? { ...cur, form: { ...cur.form, ...change } } : cur));
 
   return (
-    <div className={base.backdrop} onMouseDown={onClose}>
-      <div className={`${base.dialog} ${styles.dialog}`} onMouseDown={(e) => e.stopPropagation()}>
-        <h2 className={base.title}>{t("filters.title")}</h2>
-
+    <div className={styles.panel}>
         {!editing && (
           <>
             <div className={styles.list}>
@@ -154,9 +155,6 @@ export default function FiltersDialog({ feeds, onChanged, onClose }: Props) {
             <div className={base.actions}>
               <button className={base.button} onClick={() => setEditing({ uid: null, form: EMPTY })}>
                 <Plus size={14} /> {t("filters.add")}
-              </button>
-              <button className={base.primary} onClick={onClose}>
-                {t("filters.close")}
               </button>
             </div>
           </>
@@ -213,7 +211,6 @@ export default function FiltersDialog({ feeds, onChanged, onClose }: Props) {
             </div>
           </form>
         )}
-      </div>
     </div>
   );
 }

@@ -1,14 +1,13 @@
-.dialog {
-  width: 540px;
-  max-height: 80vh;
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .list {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 360px;
-  overflow-y: auto;
 }
 
 .rule {

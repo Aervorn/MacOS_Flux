@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { CheckCheck, Eye, EyeOff, LayoutGrid, List, PanelTop, Search } from "lucide-react";
+import { CheckCheck, Eye, EyeOff, LayoutGrid, List, Menu, PanelTop, Search } from "lucide-react";
 import type { ArticleLayout } from "../api";
 import styles from "./Toolbar.module.css";
 
@@ -13,9 +13,11 @@ interface Props {
   canHideRead: boolean;
   onToggleHideRead: () => void;
   onMarkAllRead: () => void;
+  /** Ouvre le menu de l'app (réglages, OPML, à propos). */
+  onMenu: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
-export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead, onMarkAllRead }: Props) {
+export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead, onMarkAllRead, onMenu }: Props) {
   const { t } = useTranslation();
 
   const layoutButton = (value: ArticleLayout, icon: React.ReactNode, label: string) => (
@@ -68,6 +70,10 @@ export default function Toolbar({ title, search, onSearch, layout, onLayout, hid
         {layoutButton("grid", <LayoutGrid size={16} />, t("toolbar.layoutGrid"))}
         {layoutButton("gridFull", <PanelTop size={16} />, t("toolbar.layoutGridFull"))}
       </div>
+
+      <button className={styles.iconButton} onClick={onMenu} title={t("settings.menu")} aria-label={t("settings.menu")}>
+        <Menu size={16} />
+      </button>
     </header>
   );
 }

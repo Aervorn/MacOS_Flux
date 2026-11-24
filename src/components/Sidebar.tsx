@@ -12,7 +12,7 @@ interface Props {
   onSelect: (s: Selection) => void;
   favoritesExpanded: boolean;
   onToggleFavorites: () => void;
-  footer: React.ReactNode;
+  footer?: React.ReactNode;
   refreshing: boolean;
   onRefresh: () => void;
   onAddFeed: () => void;
@@ -141,7 +141,7 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
         {data?.feeds.map((f) => feedRow(f, false))}
       </nav>
 
-      <div className={styles.footer}>{footer}</div>
+      {footer && <div className={styles.footer}>{footer}</div>}
     </aside>
   );
 }

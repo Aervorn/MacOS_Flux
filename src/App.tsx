@@ -2,14 +2,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api, sameSelection } from "./api";
 import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as SidebarData } from "./api";
-import { hasSavedLang, setLang, type Lang } from "./i18n";
+import { hasSavedLang, setLang } from "./i18n";
 import { errorMessage } from "./errors";
-import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "./theme";
+import { applyTheme, appearanceToMode, modeToAppearance } from "./theme";
 import ArticleList from "./components/ArticleList";
 import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
-import FiltersDialog from "./components/FiltersDialog";
+import SettingsDialog, { type Section } from "./components/SettingsDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
+import { Download, Info, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
@@ -17,14 +18,8 @@ import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import styles from "./App.module.css";
 
-const THEMES: { mode: ThemeMode; labelKey: string }[] = [
-  { mode: "light", labelKey: "settings.appearanceLight" },
-  { mode: "dark", labelKey: "settings.appearanceDark" },
-  { mode: "auto", labelKey: "settings.appearanceAuto" },
-];
-
 export default function App() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [sidebar, setSidebar] = useState<SidebarData | null>(null);
   const [selection, setSelection] = useState<Selection>({ kind: "all" });
@@ -40,7 +35,7 @@ export default function App() {
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const [asking, setAsking] = useState<Ask | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [settings, setSettings] = useState<Section | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
@@ -224,6 +219,28 @@ export default function App() {
     }
   };
 
+  const openAppMenu = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMenu({
+      x: rect.right - 230,
+      y: rect.bottom + 6,
+      items: [
+        { label: t("settings.open"), icon: <Settings size={16} />, onClick: () => setSettings("appearance") },
+        { label: t("settings.filters"), icon: <SlidersHorizontal size={16} />, onClick: () => setSettings("filters") },
+        "separator",
+        { label: t("settings.importOpml"), icon: <Download size={16} />, onClick: () => void importOpml() },
+        { label: t("settings.exportOpml"), icon: <Upload size={16} />, onClick: () => void exportOpml() },
+        "separator",
+        {
+          label: t("settings.about"),
+          icon: <Info size={16} />,
+          onClick: () =>
+            setNotice(info ? t("dev.version", { version: info.version, core: info.coreVersion }) : t("settings.aboutUnknown")),
+        },
+      ],
+    });
+  };
+
   const select = (s: Selection) => {
     if (sameSelection(s, selection)) return;
     setSelection(s);
@@ -278,90 +295,6 @@ export default function App() {
 
   const currentMode = appearanceToMode(prefs.appearance);
 
-  const footer = (
-    <div className={styles.footer}>
-      <span className={styles.label}>{t("settings.appearance")}</span>
-      <div className={styles.segmented}>
-        {THEMES.map(({ mode, labelKey }) => (
-          <button
-            key={mode}
-            className={currentMode === mode ? styles.segmentActive : styles.segment}
-            onClick={() => {
-              applyTheme(mode);
-              updatePrefs({ appearance: modeToAppearance(mode) });
-            }}
-          >
-            {t(labelKey)}
-          </button>
-        ))}
-      </div>
-      <span className={styles.label}>{t("settings.language")}</span>
-      <div className={styles.segmented}>
-        {(["fr", "en"] as Lang[]).map((lang) => (
-          <button
-            key={lang}
-            className={i18n.language === lang ? styles.segmentActive : styles.segment}
-            onClick={() => setLang(lang)}
-          >
-            {lang.toUpperCase()}
-          </button>
-        ))}
-      </div>
-
-      <span className={styles.label}>{t("settings.duplicates")}</span>
-      <div className={styles.segmented}>
-        {[
-          { level: -1, labelKey: "settings.dupOff" },
-          { level: 0, labelKey: "settings.dupLow" },
-          { level: 1, labelKey: "settings.dupNormal" },
-          { level: 2, labelKey: "settings.dupHigh" },
-        ].map(({ level, labelKey }) => {
-          const active = prefs.groupDuplicates ? prefs.duplicateSensitivity === level : level === -1;
-          return (
-            <button key={level} className={active ? styles.segmentActive : styles.segment} onClick={() => void setDuplicates(level)}>
-              {t(labelKey)}
-            </button>
-          );
-        })}
-      </div>
-      <button className={styles.devButton} onClick={() => setShowFilters(true)}>
-        {t("settings.filters")}
-      </button>
-      <button className={styles.devButton} onClick={() => void importOpml()}>
-        {t("settings.importOpml")}
-      </button>
-      <button className={styles.devButton} onClick={() => void exportOpml()}>
-        {t("settings.exportOpml")}
-      </button>
-
-      <details className={styles.dev}>
-        <summary>Dev</summary>
-        {info && <p className={styles.label}>{t("dev.version", { version: info.version, core: info.coreVersion })}</p>}
-        <button className={styles.devButton} onClick={printPage}>
-          {t("dev.print")}
-        </button>
-        <button className={styles.devButton} onClick={importData}>
-          {t("dev.import")}
-        </button>
-        {report && (
-          <p className={styles.label}>
-            {t("dev.importDone", {
-              articles: report.articles,
-              feeds: report.feeds,
-              folders: report.folders,
-              tags: report.favoriteTags,
-              rules: report.filterRules,
-            })}
-            {report.settingsImported && ` ${t("dev.importSettings")}`}
-            {report.warnings.length > 0 &&
-              ` ${t("dev.importWarnings", { count: report.warnings.length, list: report.warnings.join(" ; ") })}`}
-          </p>
-        )}
-        {message && <p className={styles.error}>{message}</p>}
-      </details>
-    </div>
-  );
-
   const list = (
     <div className={styles.scroll}>
       <ArticleList
@@ -383,7 +316,6 @@ export default function App() {
         onSelect={select}
         favoritesExpanded={prefs.favoritesExpanded}
         onToggleFavorites={() => updatePrefs({ favoritesExpanded: !prefs.favoritesExpanded })}
-        footer={footer}
         refreshing={refreshing}
         onRefresh={() => void refreshFeeds()}
         onAddFeed={() => setShowAddFeed(true)}
@@ -407,6 +339,7 @@ export default function App() {
           canHideRead={canHideRead}
           onToggleHideRead={() => updatePrefs({ hideRead: !prefs.hideRead })}
           onMarkAllRead={markAllRead}
+          onMenu={openAppMenu}
         />
 
         {prefs.articleLayout === "list" ? (
@@ -444,13 +377,24 @@ export default function App() {
         )}
       </main>
       {notice && <InfoDialog title={t("opml.title")} message={notice} onClose={() => setNotice(null)} />}
-      {showFilters && (
-        <FiltersDialog
+      {settings && (
+        <SettingsDialog
+          section={settings}
+          onSection={setSettings}
+          prefs={prefs}
+          onPrefs={updatePrefs}
+          themeMode={currentMode}
+          onTheme={(mode) => {
+            applyTheme(mode);
+            updatePrefs({ appearance: modeToAppearance(mode) });
+          }}
+          onDuplicates={(level) => void setDuplicates(level)}
           feeds={[...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])].sort((a, b) =>
             a.title.localeCompare(b.title),
           )}
           onChanged={refresh}
-          onClose={() => setShowFilters(false)}
+          dev={{ info, report, message, onPrint: printPage, onImportSwift: importData }}
+          onClose={() => setSettings(null)}
         />
       )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
