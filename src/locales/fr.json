@@ -1,0 +1,25 @@
+{
+  "app": { "name": "Flux" },
+  "sidebar": {
+    "allArticles": "Tous les articles",
+    "unread": "Non lus",
+    "favorites": "Favoris",
+    "feeds": "Flux"
+  },
+  "list": {
+    "emptyTitle": "Aucun article pour l'instant",
+    "emptyBody": "Le squelette est en place : les flux et les articles arrivent aux étapes suivantes."
+  },
+  "settings": {
+    "appearance": "Apparence",
+    "appearanceLight": "Clair",
+    "appearanceDark": "Sombre",
+    "appearanceAuto": "Automatique",
+    "language": "Langue"
+  },
+  "dev": {
+    "version": "Version {{version}} (cœur {{core}})",
+    "print": "Tester l'impression / PDF",
+    "printError": "Impression impossible : {{message}}"
+  }
+}

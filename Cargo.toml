@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = ["crates/flux-core", "src-tauri"]
+
+[workspace.package]
+version = "0.7.0"
+edition = "2021"
+license = "MIT"
+authors = ["Aervorn"]

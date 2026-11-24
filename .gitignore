@@ -71,3 +71,9 @@ Support/Info.plist
 # Script de release (scripts/make-dmg.sh)
 build/
 dist/
+
+# Version Tauri (branche tauri)
+node_modules/
+web-dist/
+target/
+src-tauri/gen/

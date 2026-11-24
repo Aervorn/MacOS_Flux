@@ -1,0 +1,25 @@
+{
+  "app": { "name": "Flux" },
+  "sidebar": {
+    "allArticles": "All articles",
+    "unread": "Unread",
+    "favorites": "Favorites",
+    "feeds": "Feeds"
+  },
+  "list": {
+    "emptyTitle": "No articles yet",
+    "emptyBody": "The skeleton is in place: feeds and articles come in the next steps."
+  },
+  "settings": {
+    "appearance": "Appearance",
+    "appearanceLight": "Light",
+    "appearanceDark": "Dark",
+    "appearanceAuto": "Automatic",
+    "language": "Language"
+  },
+  "dev": {
+    "version": "Version {{version}} (core {{core}})",
+    "print": "Test printing / PDF",
+    "printError": "Printing failed: {{message}}"
+  }
+}
