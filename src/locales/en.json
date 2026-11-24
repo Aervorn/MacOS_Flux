@@ -67,7 +67,9 @@
     "dupLow": "Low",
     "dupNormal": "Normal",
     "dupHigh": "High",
-    "filters": "Filters…"
+    "filters": "Filters…",
+    "importOpml": "Import feeds (OPML)…",
+    "exportOpml": "Export feeds (OPML)…"
   },
   "dev": {
     "version": "Version {{version}} (core {{core}})",
@@ -157,5 +159,11 @@
     "create": "Add",
     "deleteTitle": "Delete the rule “{{name}}”?",
     "deleteBody": "The articles it hid will come back."
+  },
+  "opml": {
+    "title": "OPML",
+    "none": "No subscriptions found in this file.",
+    "imported": "Import finished: {{added}} added, {{skipped}} skipped (already present or invalid). Articles will arrive shortly.",
+    "exported": "Subscriptions exported."
   }
 }

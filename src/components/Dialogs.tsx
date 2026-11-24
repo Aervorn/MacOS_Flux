@@ -101,3 +101,28 @@ export function ConfirmDialog({ title, message, confirmLabel, onConfirm, onClose
     </div>
   );
 }
+
+interface InfoProps {
+  title: string;
+  message: string;
+  onClose: () => void;
+}
+
+/** Message d'information avec un seul bouton. */
+export function InfoDialog({ title, message, onClose }: InfoProps) {
+  const { t } = useTranslation();
+  useEscape(onClose);
+  return (
+    <div className={styles.backdrop} onMouseDown={onClose}>
+      <div className={styles.dialog} onMouseDown={(e) => e.stopPropagation()}>
+        <h2 className={styles.title}>{title}</h2>
+        <p className={styles.help}>{message}</p>
+        <div className={styles.actions}>
+          <button type="button" className={styles.primary} autoFocus onClick={onClose}>
+            {t("filters.close")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

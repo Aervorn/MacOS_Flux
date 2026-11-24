@@ -67,7 +67,9 @@
     "dupLow": "Faible",
     "dupNormal": "Normale",
     "dupHigh": "Forte",
-    "filters": "Filtres…"
+    "filters": "Filtres…",
+    "importOpml": "Importer des flux (OPML)…",
+    "exportOpml": "Exporter les flux (OPML)…"
   },
   "dev": {
     "version": "Version {{version}} (cœur {{core}})",
@@ -157,5 +159,11 @@
     "create": "Ajouter",
     "deleteTitle": "Supprimer la règle « {{name}} » ?",
     "deleteBody": "Les articles qu'elle masquait réapparaissent."
+  },
+  "opml": {
+    "title": "OPML",
+    "none": "Aucun abonnement trouvé dans ce fichier.",
+    "imported": "Import terminé : {{added}} ajouté(s), {{skipped}} ignoré(s) (déjà présents ou invalides). Les articles arrivent dans quelques instants.",
+    "exported": "Abonnements exportés."
   }
 }

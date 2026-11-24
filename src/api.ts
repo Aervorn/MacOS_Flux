@@ -132,6 +132,11 @@ export interface FilterInput {
   feedUrls: string[];
 }
 
+export interface OpmlResult {
+  added: number;
+  skipped: number;
+}
+
 export interface TagInfo {
   uid: string;
   name: string;
@@ -220,6 +225,8 @@ export const api = {
   deleteFilter: (uid: string) => invoke<void>("delete_filter", { uid }),
   previewFilter: (keyword: string, wholeWord: boolean, feedUrls: string[]) =>
     invoke<number>("preview_filter", { keyword, wholeWord, feedUrls }),
+  importOpml: (path: string) => invoke<OpmlResult>("import_opml", { path }),
+  exportOpml: (path: string) => invoke<void>("export_opml", { path }),
   regroupDuplicates: () => invoke<void>("regroup_duplicates"),
   detachFromCluster: (key: string) => invoke<void>("detach_from_cluster", { key }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),

@@ -10,7 +10,8 @@ import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
 import FiltersDialog from "./components/FiltersDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
-import { ConfirmDialog, PromptDialog } from "./components/Dialogs";
+import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
+import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
@@ -40,6 +41,7 @@ export default function App() {
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const [asking, setAsking] = useState<Ask | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
   const selectedKeyRef = useRef<string | null>(null);
@@ -190,6 +192,38 @@ export default function App() {
     }
   };
 
+  const importOpml = async () => {
+    try {
+      const path = await openFile({
+        multiple: false,
+        directory: false,
+        filters: [{ name: "OPML", extensions: ["opml", "xml"] }],
+      });
+      if (typeof path !== "string") return;
+      const result = await api.importOpml(path);
+      setNotice(
+        result.added === 0 && result.skipped === 0
+          ? t("opml.none")
+          : t("opml.imported", { added: result.added, skipped: result.skipped }),
+      );
+      await loadSidebar();
+      if (result.added > 0) void refreshFeeds();
+    } catch (e) {
+      setMessage(errorMessage(e, t));
+    }
+  };
+
+  const exportOpml = async () => {
+    try {
+      const path = await saveFile({ defaultPath: "Flux.opml", filters: [{ name: "OPML", extensions: ["opml"] }] });
+      if (!path) return;
+      await api.exportOpml(path);
+      setNotice(t("opml.exported"));
+    } catch (e) {
+      setMessage(errorMessage(e, t));
+    }
+  };
+
   const select = (s: Selection) => {
     if (sameSelection(s, selection)) return;
     setSelection(s);
@@ -292,6 +326,12 @@ export default function App() {
       </div>
       <button className={styles.devButton} onClick={() => setShowFilters(true)}>
         {t("settings.filters")}
+      </button>
+      <button className={styles.devButton} onClick={() => void importOpml()}>
+        {t("settings.importOpml")}
+      </button>
+      <button className={styles.devButton} onClick={() => void exportOpml()}>
+        {t("settings.exportOpml")}
       </button>
 
       <details className={styles.dev}>
@@ -403,6 +443,7 @@ export default function App() {
           list
         )}
       </main>
+      {notice && <InfoDialog title={t("opml.title")} message={notice} onClose={() => setNotice(null)} />}
       {showFilters && (
         <FiltersDialog
           feeds={[...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])].sort((a, b) =>

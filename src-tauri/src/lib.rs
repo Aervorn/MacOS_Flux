@@ -276,6 +276,24 @@ fn detach_from_cluster(state: State<'_, AppState>, key: String) -> Result<(), St
     flux_core::cluster::detach(&conn, &key).map_err(|e| e.to_string())
 }
 
+/// Ajoute les flux d'un fichier OPML (sans les télécharger : l'interface actualise ensuite).
+#[tauri::command]
+fn import_opml(state: State<'_, AppState>, path: String) -> Result<flux_core::opml::ImportResult, String> {
+    let data = std::fs::read(&path).map_err(|e| e.to_string())?;
+    let conn = lock(&state)?;
+    flux_core::opml::import(&conn, &data).map_err(|e| e.to_string())
+}
+
+/// Écrit tous les abonnements dans un fichier OPML.
+#[tauri::command]
+fn export_opml(state: State<'_, AppState>, path: String) -> Result<(), String> {
+    let xml = {
+        let conn = lock(&state)?;
+        flux_core::opml::export(&conn).map_err(|e| e.to_string())?
+    };
+    std::fs::write(&path, xml).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn rename_tag(state: State<'_, AppState>, uid: String, name: String) -> Result<(), String> {
     let conn = lock(&state)?;
@@ -350,6 +368,7 @@ fn serve_image(
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .register_uri_scheme_protocol("flux-image", |ctx, request| serve_image(ctx, request))
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
@@ -398,6 +417,8 @@ pub fn run() {
             preview_filter,
             regroup_duplicates,
             detach_from_cluster,
+            import_opml,
+            export_opml,
             create_folder,
             print_page,
             dev_import_swift_data
