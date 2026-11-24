@@ -370,6 +370,20 @@ export default function App() {
       case "b": openInBrowser(); break;
     }
   };
+  // ⌘A vient du menu de macOS : texte d'un champ en cours de saisie, sinon tous les articles de la liste.
+  const selectAllRef = useRef<() => void>(() => undefined);
+  selectAllRef.current = () => {
+    const field = document.activeElement as HTMLElement | null;
+    if (field?.closest?.("input, textarea")) document.execCommand("selectAll");
+    else if (!modalOpen) setSelectedKeys(articles.map((a) => a.key));
+  };
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    listen("select-all", () => selectAllRef.current())
+      .then((un) => (off = un))
+      .catch(() => undefined);
+    return () => off?.();
+  }, []);
   useEffect(() => {
     const handler = (e: KeyboardEvent) => onKeyRef.current(e);
     window.addEventListener("keydown", handler);

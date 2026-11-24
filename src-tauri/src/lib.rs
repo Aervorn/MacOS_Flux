@@ -759,6 +759,34 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .register_uri_scheme_protocol("flux-image", |ctx, request| serve_image(ctx, request))
         .setup(|app| {
+            // Menu par défaut de macOS, mais « Tout sélectionner » (⌘A) est géré par l'interface :
+            // il sélectionne les articles de la liste, ou le texte d'un champ en cours de saisie.
+            {
+                use tauri::menu::{Menu, MenuItem, MenuItemKind};
+                use tauri::Emitter;
+                let menu = Menu::default(app.handle())?;
+                let select_all = MenuItem::with_id(app, "select_all", "Select All", true, Some("CmdOrCtrl+A"))?;
+                for item in menu.items()? {
+                    if let MenuItemKind::Submenu(sub) = item {
+                        let entries = sub.items()?;
+                        for (i, entry) in entries.iter().enumerate() {
+                            if let MenuItemKind::Predefined(p) = entry {
+                                if p.text().map(|t| t == "Select All").unwrap_or(false) {
+                                    sub.remove(p)?;
+                                    sub.insert(&select_all, i)?;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                app.set_menu(menu)?;
+                app.on_menu_event(|app, event| {
+                    if event.id().as_ref() == "select_all" {
+                        let _ = app.emit("select-all", ());
+                    }
+                });
+            }
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             // Restauration préparée : appliquée avant d'ouvrir la base
