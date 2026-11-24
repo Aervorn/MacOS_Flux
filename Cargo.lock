@@ -941,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "flux"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "flux-core",
  "objc2",
@@ -958,7 +958,7 @@ dependencies = [
 
 [[package]]
 name = "flux-core"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "chrono",
  "futures",

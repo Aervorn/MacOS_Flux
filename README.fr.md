@@ -173,7 +173,7 @@ Flux recherche une nouvelle version au lancement (ou menu de l'app › **Recherc
 
 ## 📝 Historique des versions
 
-### 0.9.0
+### 0.8.1
 - **Les erreurs de flux dans la barre latérale** : une pastille d'avertissement apparaît à côté d'un flux qui n'a pas pu être actualisé ; survole-la pour lire le message.
 - **Icône et couleur d'un dossier** (clic droit sur un dossier) : symboles, emojis et palette de couleurs.
 - **Glisse un flux sur un dossier** (ou sur « Flux » pour le sortir), et un dossier fermé s'ouvre quand tu le survoles pendant le glissement.

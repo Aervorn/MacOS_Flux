@@ -173,7 +173,7 @@ Flux checks for a new version at launch (or app menu › **Check for updates…*
 
 ## 📝 Changelog
 
-### 0.9.0
+### 0.8.1
 - **Feed errors in the sidebar**: a warning badge appears next to a feed that couldn't be refreshed; hover it for the message.
 - **Folder icon and color** (right-click a folder): symbols, emojis and a color palette.
 - **Drag a feed onto a folder** (or onto “Feeds” to take it out), and a closed folder opens when you hover it while dragging.
