@@ -22,6 +22,7 @@ import Toolbar from "./components/Toolbar";
 import Onboarding from "./components/Onboarding";
 import StatsDialog from "./components/StatsDialog";
 import AboutDialog from "./components/AboutDialog";
+import { prepareOffline } from "./offline";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -148,7 +149,7 @@ export default function App() {
         setRefreshing(false);
       }
       // Lecture hors ligne (si activée) et taille du cache d'images : sans bloquer l'interface
-      api.offlineMaintain().catch(() => undefined);
+      void prepareOffline();
     },
     [refresh, t, checkOnline],
   );

@@ -210,6 +210,14 @@ export interface OfflineInfo {
   working: boolean;
 }
 
+export interface PendingText {
+  key: string;
+  link: string;
+  title: string;
+  summary: string;
+  contentHtml: string | null;
+}
+
 export interface AddedFeed {
   url: string;
   title: string;
@@ -258,6 +266,12 @@ export interface BackupInfo {
   backups: BackupFile[];
 }
 
+/** Nouveau favori : on récupère son texte complet (import dynamique : `offline` dépend de `api`), puis on archive. */
+async function archiveSoon(): Promise<void> {
+  await import("./offline").then((m) => m.prepareOffline()).catch(() => undefined);
+  await api.archivePending().catch(() => undefined);
+}
+
 export const api = {
   backupStatus: () => invoke<BackupInfo>("backup_status"),
   backupNow: () => invoke<void>("backup_now"),
@@ -286,18 +300,19 @@ export const api = {
     invoke<number>("mark_all_read", { selection, hideTaggedFavorites }),
   setStarred: (keys: string[], starred: boolean) =>
     invoke<void>("set_starred", { keys, starred }).then(() => {
-      if (starred) void api.archivePending().catch(() => undefined);
+      if (starred) void archiveSoon();
     }),
   createTag: (name: string) => invoke<TagInfo | null>("create_tag", { name }),
   setTag: (uid: string, on: boolean, keys: string[]) =>
     invoke<void>("set_tag", { uid, on, keys }).then(() => {
-      if (on) void api.archivePending().catch(() => undefined); // étiqueter un article en fait un favori
+      if (on) void archiveSoon(); // étiqueter un article en fait un favori
     }),
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
   archiveStatus: () => invoke<ArchiveInfo>("archive_status"),
   archivePending: () => invoke<number>("archive_pending"),
   isOnline: () => invoke<boolean>("is_online"),
   offlineStatus: () => invoke<OfflineInfo>("offline_status"),
+  offlinePendingTexts: () => invoke<PendingText[]>("offline_pending_texts"),
   offlineMaintain: () => invoke<void>("offline_maintain"),
   clearImageCache: () => invoke<void>("clear_image_cache"),
   readingStats: (days: number) =>

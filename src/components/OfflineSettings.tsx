@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, type OfflineInfo, type Prefs } from "../api";
+import { onOfflineProgress, prepareOffline, type OfflineProgress } from "../offline";
 import styles from "./SettingsDialog.module.css";
 
 interface Props {
@@ -22,6 +23,8 @@ function size(bytes: number): string {
 export default function OfflineSettings({ prefs, onPrefs, toggle, select }: Props) {
   const { t } = useTranslation();
   const [info, setInfo] = useState<OfflineInfo | null>(null);
+  const [progress, setProgress] = useState<OfflineProgress>(null);
+  useEffect(() => onOfflineProgress(setProgress), []);
 
   const load = useCallback(() => api.offlineStatus().then(setInfo).catch(() => undefined), []);
   useEffect(() => {
@@ -38,8 +41,7 @@ export default function OfflineSettings({ prefs, onPrefs, toggle, select }: Prop
   // Après un changement de réglage, on laisse le temps de l'enregistrer puis on applique.
   const apply = () =>
     setTimeout(() => {
-      api
-        .offlineMaintain()
+      prepareOffline()
         .catch(() => undefined)
         .finally(() => void load());
       void load();
@@ -56,7 +58,11 @@ export default function OfflineSettings({ prefs, onPrefs, toggle, select }: Prop
           if (offlineEnabled) apply();
         })}
         <p className={styles.help}>{t("settings.offlineHelp")}</p>
-        {info?.working && <p className={styles.help}>{t("settings.cachePreparing")}</p>}
+        {progress ? (
+          <p className={styles.help}>{t("settings.offlineArticles", { done: progress.done, total: progress.total })}</p>
+        ) : (
+          info?.working && <p className={styles.help}>{t("settings.cachePreparing")}</p>
+        )}
       </div>
       <div className={styles.row}>
         <span className={styles.label}>{t("settings.cacheLimit")}</span>

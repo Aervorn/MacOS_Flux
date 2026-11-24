@@ -283,6 +283,18 @@ async fn offline_maintain(state: State<'_, AppState>) -> Result<(), String> {
     Ok(())
 }
 
+/// Articles dont l'interface doit récupérer le texte complet pour la lecture hors ligne
+/// et pour l'archive des favoris (liste vide si ni l'un ni l'autre n'est activé).
+#[tauri::command]
+fn offline_pending_texts(state: State<'_, AppState>) -> Result<Vec<flux_core::offline::PendingText>, String> {
+    let prefs = current_prefs(&state)?;
+    if !prefs.offline_enabled && !prefs.archive_favorites {
+        return Ok(Vec::new());
+    }
+    let conn = lock(&state)?;
+    flux_core::offline::pending_texts(&conn, !prefs.offline_enabled).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn clear_image_cache(state: State<'_, AppState>) {
     flux_core::offline::clear(&state.images.own);
@@ -954,6 +966,7 @@ pub fn run() {
             is_online,
             offline_status,
             offline_maintain,
+            offline_pending_texts,
             clear_image_cache,
             add_feed,
             refresh_all,

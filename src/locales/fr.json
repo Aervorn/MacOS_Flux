@@ -123,7 +123,7 @@
     "sectionSync": "Synchronisation",
     "sectionBackup": "Sauvegarde",
     "archiveFavorites": "Archiver les images des favoris",
-    "archiveHelp": "Les images d’un favori sont conservées à part : la limite du cache et « Vider le cache » n’y touchent pas. Le texte complet n’est archivé que si l’article a déjà été ouvert dans Flux.",
+    "archiveHelp": "Les images d’un favori sont conservées à part : la limite du cache et « Vider le cache » n’y touchent pas. Son texte complet est aussi récupéré.",
     "archiving": "Archivage en cours…",
     "archivePending_other": "{{count}} favoris à archiver",
     "archiveDone_other": "{{count}} favoris archivés ({{size}})",
@@ -131,14 +131,15 @@
     "archivePending_one": "{{count}} favori à archiver",
     "archiveDone_one": "{{count}} favori archivé ({{size}})",
     "offlineEnabled": "Préparer les articles pour la lecture hors ligne",
-    "offlineHelp": "Après chaque actualisation, Flux télécharge les images des articles non lus et des favoris. Le texte complet d’un article n’est récupéré que lorsque tu l’ouvres.",
+    "offlineHelp": "Après chaque actualisation, Flux télécharge le texte complet et les images des articles non lus et des favoris (400 au plus). Quelques sites (abonnés, pages vides) ne s’y prêtent pas.",
     "cacheLimit": "Taille maximale du cache d’images",
     "cacheLimitHelp": "Quand la limite est dépassée, les images les moins récemment utilisées sont supprimées. Les favoris archivés ne sont jamais supprimés.",
     "cacheSize": "Cache d’images : {{size}}",
     "cacheClear": "Vider le cache",
     "cachePreparing": "Préparation…",
     "cacheMb": "{{count}} Mo",
-    "cacheGb": "{{count}} Go"
+    "cacheGb": "{{count}} Go",
+    "offlineArticles": "Articles complets : {{done}} sur {{total}}"
   },
   "addFeed": {
     "title": "Ajouter un flux",

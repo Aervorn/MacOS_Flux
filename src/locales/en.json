@@ -123,7 +123,7 @@
     "sectionSync": "Sync",
     "sectionBackup": "Backup",
     "archiveFavorites": "Archive favorites’ images",
-    "archiveHelp": "A favorite’s images are kept separately: the cache size limit and “Clear cache” never touch them. The full text is only archived if the article has already been opened in Flux.",
+    "archiveHelp": "A favorite’s images are kept separately: the cache size limit and “Clear cache” never touch them. Its full text is fetched too.",
     "archiving": "Archiving…",
     "archivePending_other": "{{count}} favorites to archive",
     "archiveDone_other": "{{count}} favorites archived ({{size}})",
@@ -131,14 +131,15 @@
     "archivePending_one": "{{count}} favorite to archive",
     "archiveDone_one": "{{count}} favorite archived ({{size}})",
     "offlineEnabled": "Prepare articles for offline reading",
-    "offlineHelp": "After each refresh, Flux downloads the images of unread articles and favorites. An article’s full text is only fetched when you open it.",
+    "offlineHelp": "After each refresh, Flux downloads the full text and images of unread articles and favorites (up to 400). Some sites (subscribers only, empty pages) can’t be fetched.",
     "cacheLimit": "Maximum image cache size",
     "cacheLimitHelp": "When the limit is exceeded, the least recently used images are deleted. Archived favorites are never deleted.",
     "cacheSize": "Image cache: {{size}}",
     "cacheClear": "Clear cache",
     "cachePreparing": "Preparing…",
     "cacheMb": "{{count}} MB",
-    "cacheGb": "{{count}} GB"
+    "cacheGb": "{{count}} GB",
+    "offlineArticles": "Full articles: {{done}} of {{total}}"
   },
   "addFeed": {
     "title": "Add a feed",

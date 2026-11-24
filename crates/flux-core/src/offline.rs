@@ -1,9 +1,8 @@
 //! Lecture hors ligne : préparation des images des articles à lire, et gestion de la taille
 //! du cache d'images (suppression des moins récemment utilisées, bouton « Vider »).
 //!
-//! Limite : le texte complet d'un article n'est téléchargé que par le lecteur (Readability.js
-//! tourne dans l'interface). Hors ligne, un article jamais ouvert s'affiche donc avec le contenu
-//! que son flux fournit, images comprises.
+//! Le texte complet des articles est récupéré par l'interface (Readability.js y tourne) : ce
+//! module ne fait que lui dire lesquels manquent (`pending_texts`).
 
 use std::collections::HashSet;
 use std::fs;
@@ -26,6 +25,39 @@ const CONCURRENCY: usize = 6;
 
 fn lock(db: &Mutex<Connection>) -> Result<MutexGuard<'_, Connection>> {
     db.lock().map_err(|_| Error::Other("base de données verrouillée".into()))
+}
+
+/// Article dont le texte complet manque (il n'est récupéré que par l'interface, qui seule
+/// sait extraire l'article d'une page).
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingText {
+    pub key: String,
+    pub link: String,
+    pub title: String,
+    pub summary: String,
+    pub content_html: Option<String>,
+}
+
+/// Articles non lus et favoris sans texte complet (seulement les favoris si `starred_only`),
+/// du plus récent au plus ancien.
+pub fn pending_texts(conn: &Connection, starred_only: bool) -> Result<Vec<PendingText>> {
+    let mut stmt = conn.prepare(
+        "SELECT key, link, title, summary, content_html FROM articles
+         WHERE link IS NOT NULL AND link != '' AND full_html IS NULL
+           AND (is_starred = 1 OR (?2 = 0 AND is_read = 0 AND is_hidden = 0 AND is_duplicate = 0))
+         ORDER BY published DESC LIMIT ?1",
+    )?;
+    let rows = stmt.query_map(rusqlite::params![MAX_ARTICLES as i64, i64::from(starred_only)], |r| {
+        Ok(PendingText {
+            key: r.get(0)?,
+            link: r.get(1)?,
+            title: r.get(2)?,
+            summary: r.get::<_, Option<String>>(3)?.unwrap_or_default(),
+            content_html: r.get(4)?,
+        })
+    })?;
+    Ok(rows.collect::<std::result::Result<_, _>>()?)
 }
 
 /// Télécharge les images des articles non lus et des favoris qui ne sont pas encore en cache.
