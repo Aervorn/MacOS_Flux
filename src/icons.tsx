@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Apple, Archive, Atom, Bike, Book, Bookmark, Briefcase, Building2, Camera, Car, Cloud, Cpu,
@@ -100,4 +101,34 @@ const COLORS: Record<string, string> = {
 /** Couleur d'un dossier (couleur d'accent si aucune). */
 export function folderColor(colorName: string | null): string {
   return (colorName && COLORS[colorName]) || "var(--accent)";
+}
+
+/** Noms d'icônes proposés dans le sélecteur de dossier (les symboles de l'app Swift). */
+export const SYMBOL_NAMES = Object.keys(SYMBOLS);
+/** Noms de couleurs de la palette. */
+export const COLOR_NAMES = Object.keys(COLORS);
+/** Quelques emojis proposés pour un dossier. */
+export const EMOJIS = [
+  "📁", "📰", "📚", "📖", "🔖", "⭐", "❤️", "🔥", "💡", "📢", "🌍", "🏠", "🏢", "💼", "🎓", "👥",
+  "💬", "💻", "🖥️", "📱", "🍎", "🤖", "🧠", "🔒", "🛡️", "🔧", "🛠️", "🔬", "🚀", "🎮", "🧩", "🎬",
+  "📺", "🎵", "🎧", "📷", "🎨", "✏️", "🌿", "🐾", "☀️", "🛒", "💳", "📈", "🚗", "✈️", "🚲", "🏃",
+  "⚽", "🍴", "☕", "🏡",
+];
+
+/** Vrai si le symbole enregistré est un emoji (et non un nom de symbole de l'app Swift). */
+export function isEmoji(symbol: string | null): boolean {
+  return !!symbol && !(symbol in SYMBOLS) && /\p{Extended_Pictographic}/u.test(symbol);
+}
+
+/** Icône d'un dossier : un emoji tel quel, sinon l'icône Lucide teintée de la couleur du dossier. */
+export function folderGlyph(symbol: string | null, colorName: string | null, size = 16): ReactNode {
+  if (isEmoji(symbol)) {
+    return (
+      <span style={{ width: size, height: size, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: size - 2, lineHeight: 1 }}>
+        {symbol}
+      </span>
+    );
+  }
+  const Icon = folderIcon(symbol);
+  return <Icon size={size} color={folderColor(colorName)} />;
 }

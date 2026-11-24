@@ -133,6 +133,20 @@ pub fn delete_folder(conn: &Connection, uid: &str) -> Result<()> {
     Ok(())
 }
 
+/// Change l'icône et la couleur d'un dossier (None : valeur par défaut).
+/// L'icône est un nom de symbole connu ou un emoji ; la couleur, un nom de la palette.
+pub fn set_folder_style(conn: &Connection, uid: &str, symbol: Option<&str>, color: Option<&str>) -> Result<()> {
+    let clean = |v: Option<&str>| v.map(str::trim).filter(|v| !v.is_empty()).map(str::to_string);
+    let changed = conn.execute(
+        "UPDATE folders SET symbol = ?2, color_name = ?3 WHERE uid = ?1",
+        params![uid, clean(symbol), clean(color)],
+    )?;
+    if changed == 0 {
+        return Err(Error::Other("dossier introuvable".into()));
+    }
+    Ok(())
+}
+
 pub fn set_folder_expanded(conn: &Connection, uid: &str, expanded: bool) -> Result<()> {
     conn.execute("UPDATE folders SET is_expanded = ?2 WHERE uid = ?1", params![uid, expanded])?;
     Ok(())
@@ -173,6 +187,20 @@ mod tests {
 
     fn one<T: rusqlite::types::FromSql>(c: &Connection, sql: &str) -> T {
         c.query_row(sql, [], |r| r.get(0)).unwrap()
+    }
+
+    #[test]
+    fn sets_and_clears_folder_style() {
+        let c = fixture();
+        set_folder_style(&c, "F1", Some("🍎"), Some("red")).unwrap();
+        let (sym, col): (Option<String>, Option<String>) =
+            c.query_row("SELECT symbol, color_name FROM folders WHERE uid = 'F1'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        assert_eq!((sym.as_deref(), col.as_deref()), (Some("🍎"), Some("red")));
+        set_folder_style(&c, "F1", None, Some("  ")).unwrap();
+        let (sym, col): (Option<String>, Option<String>) =
+            c.query_row("SELECT symbol, color_name FROM folders WHERE uid = 'F1'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        assert_eq!((sym, col), (None, None));
+        assert!(set_folder_style(&c, "absent", None, None).is_err());
     }
 
     #[test]

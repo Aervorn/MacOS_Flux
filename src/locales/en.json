@@ -11,7 +11,10 @@
     "noFeeds": "No feeds yet.",
     "addFeed": "Add a feed",
     "refresh": "Refresh feeds",
-    "addFolder": "New folder"
+    "addFolder": "New folder",
+    "feedError": "This feed couldn’t be refreshed",
+    "lastSuccess": "Last successful refresh: {{date}}",
+    "neverRefreshed": "Never refreshed successfully."
   },
   "list": {
     "emptyTitle": "No articles yet",
@@ -179,7 +182,9 @@
     "openBrowser": "Open in browser",
     "copyLink": "Copy link",
     "detachCluster": "Remove from group",
-    "changeAddress": "Change address…"
+    "changeAddress": "Change address…",
+    "showError": "Show error…",
+    "folderStyle": "Icon and color…"
   },
   "dialogs": {
     "renameFeed": "Rename feed",
@@ -198,7 +203,12 @@
     "deleteFolderBody": "The feeds in the folder are not deleted: they go back to the top level.",
     "deleteTagTitle": "Delete the tag “{{name}}”?",
     "deleteTagBody": "The articles stay in favorites, without this tag.",
-    "changeAddress": "Change the feed address"
+    "changeAddress": "Change the feed address",
+    "folderStyleTitle": "Folder icon and color",
+    "folderColor": "Color",
+    "folderIcon": "Icon",
+    "folderEmoji": "Emoji",
+    "folderDefaultColor": "Default"
   },
   "filters": {
     "title": "Filters",

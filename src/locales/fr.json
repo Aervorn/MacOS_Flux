@@ -11,7 +11,10 @@
     "noFeeds": "Aucun flux pour l'instant.",
     "addFeed": "Ajouter un flux",
     "refresh": "Actualiser les flux",
-    "addFolder": "Nouveau dossier"
+    "addFolder": "Nouveau dossier",
+    "feedError": "Ce flux n’a pas pu être actualisé",
+    "lastSuccess": "Dernière actualisation réussie : {{date}}",
+    "neverRefreshed": "Jamais actualisé avec succès."
   },
   "list": {
     "emptyTitle": "Aucun article pour l'instant",
@@ -179,7 +182,9 @@
     "openBrowser": "Ouvrir dans le navigateur",
     "copyLink": "Copier le lien",
     "detachCluster": "Sortir du groupe",
-    "changeAddress": "Modifier l’adresse…"
+    "changeAddress": "Modifier l’adresse…",
+    "showError": "Voir l’erreur…",
+    "folderStyle": "Icône et couleur…"
   },
   "dialogs": {
     "renameFeed": "Renommer le flux",
@@ -198,7 +203,12 @@
     "deleteFolderBody": "Les flux du dossier ne sont pas supprimés : ils reviennent à la racine.",
     "deleteTagTitle": "Supprimer le tag « {{name}} » ?",
     "deleteTagBody": "Les articles gardent leur place dans les favoris, sans ce tag.",
-    "changeAddress": "Modifier l’adresse du flux"
+    "changeAddress": "Modifier l’adresse du flux",
+    "folderStyleTitle": "Icône et couleur du dossier",
+    "folderColor": "Couleur",
+    "folderIcon": "Icône",
+    "folderEmoji": "Emoji",
+    "folderDefaultColor": "Par défaut"
   },
   "filters": {
     "title": "Filtres",

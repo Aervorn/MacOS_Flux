@@ -15,6 +15,7 @@ import SettingsDialog, { type Section } from "./components/SettingsDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
 import { BarChart3, Compass, Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
+import FolderStyleDialog from "./components/FolderStyleDialog";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, articlesMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
@@ -668,6 +669,9 @@ export default function App() {
         onFeedMenu={(e, feed) => openMenu(e, feedMenu(menuContext(), feed))}
         onFolderMenu={(e, folder) => openMenu(e, folderMenu(menuContext(), folder))}
         onTagMenu={(e, tag) => openMenu(e, tagMenu(menuContext(), tag))}
+        onMoveFeed={(url, folderUid) => {
+          api.moveFeed(url, folderUid).then(refresh).catch((err) => setNotice(errorMessage(err, t)));
+        }}
         onToggleFolder={(uid, open) => {
           api.setFolderExpanded(uid, open).catch(() => undefined);
         }}
@@ -803,6 +807,19 @@ export default function App() {
           message={asking.message}
           confirmLabel={asking.confirmLabel}
           onConfirm={asking.onConfirm}
+          onClose={() => setAsking(null)}
+        />
+      )}
+      {asking?.kind === "info" && <InfoDialog title={asking.title} message={asking.message} onClose={() => setAsking(null)} />}
+      {asking?.kind === "folderStyle" && (
+        <FolderStyleDialog
+          name={asking.folder.name}
+          symbol={asking.folder.symbol}
+          colorName={asking.folder.colorName}
+          onSubmit={(symbol, color) => {
+            setAsking(null);
+            asking.onSubmit(symbol, color);
+          }}
           onClose={() => setAsking(null)}
         />
       )}

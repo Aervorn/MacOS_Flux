@@ -40,6 +40,10 @@ pub struct SidebarFeed {
     pub title: String,
     pub site_url: Option<String>,
     pub unread: i64,
+    /// Message de la dernière actualisation ratée (None si elle a réussi).
+    pub error: Option<String>,
+    /// Date de la dernière actualisation réussie (secondes).
+    pub last_refreshed: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -95,19 +99,21 @@ pub fn sidebar(conn: &Connection) -> Result<Sidebar> {
     // Flux avec leur dossier
     let mut feeds_by_folder: HashMap<Option<i64>, Vec<SidebarFeed>> = HashMap::new();
     {
-        let mut stmt = conn.prepare("SELECT url, COALESCE(custom_title, title), site_url, folder_id FROM feeds")?;
+        let mut stmt = conn.prepare("SELECT url, COALESCE(custom_title, title), site_url, folder_id, last_error, last_refreshed FROM feeds")?;
         let rows = stmt.query_map([], |r| {
             Ok((
                 r.get::<_, String>(0)?,
                 r.get::<_, String>(1)?,
                 r.get::<_, Option<String>>(2)?,
                 r.get::<_, Option<i64>>(3)?,
+                r.get::<_, Option<String>>(4)?,
+                r.get::<_, Option<f64>>(5)?,
             ))
         })?;
         for row in rows {
-            let (url, title, site_url, folder) = row?;
+            let (url, title, site_url, folder, error, last_refreshed) = row?;
             let unread = counts.get(&url).copied().unwrap_or(0);
-            feeds_by_folder.entry(folder).or_default().push(SidebarFeed { url, title, site_url, unread });
+            feeds_by_folder.entry(folder).or_default().push(SidebarFeed { url, title, site_url, unread, error: error.filter(|e| !e.is_empty()), last_refreshed });
         }
     }
     for feeds in feeds_by_folder.values_mut() {

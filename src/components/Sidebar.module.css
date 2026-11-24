@@ -150,3 +150,23 @@
 .footer {
   padding-top: 12px;
 }
+
+.errorBadge {
+  display: inline-flex;
+  flex: none;
+  color: #ff9f0a;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sb-gap, 2px);
+  border-radius: 8px;
+}
+
+.dropTarget {
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}

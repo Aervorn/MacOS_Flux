@@ -28,6 +28,8 @@
   margin: 0;
   font-size: 13px;
   color: var(--text-secondary);
+  white-space: pre-line;
+  user-select: text;
 }
 
 .field {

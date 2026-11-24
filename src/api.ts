@@ -54,6 +54,10 @@ export interface SidebarFeed {
   title: string;
   siteUrl: string | null;
   unread: number;
+  /** Message de la dernière actualisation ratée. */
+  error: string | null;
+  /** Dernière actualisation réussie (secondes). */
+  lastRefreshed: number | null;
 }
 
 export interface SidebarFolder {
@@ -326,6 +330,8 @@ export const api = {
   deleteFeed: (url: string) => invoke<void>("delete_feed", { url }),
   createFolder: (name: string) => invoke<string | null>("create_folder", { name }),
   renameFolder: (uid: string, name: string) => invoke<void>("rename_folder", { uid, name }),
+  setFolderStyle: (uid: string, symbol: string | null, color: string | null) =>
+    invoke<void>("set_folder_style", { uid, symbol, color }),
   deleteFolder: (uid: string) => invoke<void>("delete_folder", { uid }),
   setFolderExpanded: (uid: string, expanded: boolean) => invoke<void>("set_folder_expanded", { uid, expanded }),
   renameTag: (uid: string, name: string) => invoke<void>("rename_tag", { uid, name }),

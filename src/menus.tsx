@@ -1,13 +1,16 @@
 import type { TFunction } from "i18next";
-import { CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Globe, Link, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
+import { AlertTriangle, CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Globe, Link, Palette, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
 import { api } from "./api";
+import i18n from "./i18n";
 import type { ArticleDetail, ArticleRow, Selection, SidebarFeed, SidebarFolder, SidebarTag, Sidebar } from "./api";
 import type { MenuItem } from "./components/ContextMenu";
 
 /** Fenêtres que les menus peuvent ouvrir. */
 export type Ask =
   | { kind: "prompt"; title: string; initial?: string; placeholder?: string; confirmLabel: string; allowEmpty?: boolean; onSubmit: (v: string) => void }
-  | { kind: "confirm"; title: string; message: string; confirmLabel: string; onConfirm: () => void };
+  | { kind: "confirm"; title: string; message: string; confirmLabel: string; onConfirm: () => void }
+  | { kind: "info"; title: string; message: string }
+  | { kind: "folderStyle"; folder: SidebarFolder; onSubmit: (symbol: string | null, color: string | null) => void };
 
 export interface MenuContext {
   t: TFunction;
@@ -32,11 +35,31 @@ function folderOf(sidebar: Sidebar | null, feedUrl: string): string | null {
   return sidebar?.folders.find((f) => f.feeds.some((x) => x.url === feedUrl))?.uid ?? null;
 }
 
+/** Texte de l'erreur d'un flux, avec la date de la dernière actualisation réussie. */
+export function feedErrorDetail(t: TFunction, error: string, lastRefreshed: number | null): string {
+  const since = lastRefreshed
+    ? t("sidebar.lastSuccess", { date: new Date(lastRefreshed * 1000).toLocaleString(i18n.language) })
+    : t("sidebar.neverRefreshed");
+  return `${error}\n${since}`;
+}
+
 export function feedMenu(ctx: MenuContext, feed: SidebarFeed): MenuItem[] {
   const { t } = ctx;
   const current = folderOf(ctx.sidebar, feed.url);
   const move = (uid: string | null) => run(ctx, () => api.moveFeed(feed.url, uid));
+  const errorItems: MenuItem[] = feed.error
+    ? [
+        {
+          label: t("menu.showError"),
+          icon: <AlertTriangle size={16} />,
+          onClick: () =>
+            ctx.ask({ kind: "info", title: t("sidebar.feedError"), message: feedErrorDetail(t, feed.error ?? "", feed.lastRefreshed) }),
+        },
+        "separator",
+      ]
+    : [];
   return [
+    ...errorItems,
     {
       label: t("menu.rename"),
       icon: <Pencil size={16} />,
@@ -130,6 +153,16 @@ export function folderMenu(ctx: MenuContext, folder: SidebarFolder): MenuItem[] 
           initial: folder.name,
           confirmLabel: t("dialogs.save"),
           onSubmit: (name) => run(ctx, () => api.renameFolder(folder.uid, name)),
+        }),
+    },
+    {
+      label: t("menu.folderStyle"),
+      icon: <Palette size={16} />,
+      onClick: () =>
+        ctx.ask({
+          kind: "folderStyle",
+          folder,
+          onSubmit: (symbol, color) => run(ctx, () => api.setFolderStyle(folder.uid, symbol, color)),
         }),
     },
     {

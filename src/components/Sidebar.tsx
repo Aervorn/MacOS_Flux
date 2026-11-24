@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
 import type { Selection, Sidebar as SidebarData, SidebarFeed, SidebarFolder, SidebarTag } from "../api";
 import { sameSelection } from "../api";
 import Favicon from "./Favicon";
-import { folderColor, folderIcon } from "../icons";
+import { folderGlyph } from "../icons";
+import { feedErrorDetail } from "../menus";
 import styles from "./Sidebar.module.css";
 
 interface Props {
@@ -22,7 +23,11 @@ interface Props {
   onFolderMenu: (e: React.MouseEvent, folder: SidebarFolder) => void;
   onTagMenu: (e: React.MouseEvent, tag: SidebarTag) => void;
   onToggleFolder: (uid: string, open: boolean) => void;
+  /** Un flux a été déposé sur un dossier (null : à la racine). */
+  onMoveFeed: (url: string, folderUid: string | null) => void;
 }
+
+const FEED_MIME = "application/x-flux-feed";
 
 function Count({ n }: { n: number }) {
   return n > 0 ? <span className={styles.count}>{n}</span> : null;
@@ -36,10 +41,38 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
   onFolderMenu,
   onTagMenu,
   onToggleFolder,
+  onMoveFeed,
 }: Props) {
   const { t } = useTranslation();
   // L'état ouvert/fermé des dossiers n'est pas encore enregistré : on part de celui de l'app Swift.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  // Glisser-déposer d'un flux vers un dossier : `dragging` est le flux en cours de glissement,
+  // `dropKey` la cible survolée (uid du dossier, ou "root").
+  const dragging = useRef<string | null>(null);
+  const [dropKey, setDropKey] = useState<string | null>(null);
+
+  const currentFolder = (url: string) => data?.folders.find((f) => f.feeds.some((x) => x.url === url))?.uid ?? null;
+
+  const dropProps = (key: string, folderUid: string | null) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!dragging.current) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      if (dropKey !== key) setDropKey(key);
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropKey((k) => (k === key ? null : k));
+    },
+    onDrop: (e: React.DragEvent) => {
+      const url = dragging.current;
+      dragging.current = null;
+      setDropKey(null);
+      if (!url) return;
+      e.preventDefault();
+      if (currentFolder(url) !== folderUid) onMoveFeed(url, folderUid);
+    },
+  });
 
   const row = (
     sel: Selection,
@@ -48,21 +81,46 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
     count = 0,
     indent = false,
     onMenu?: (e: React.MouseEvent) => void,
+    feed?: SidebarFeed,
   ) => (
     <button
       key={JSON.stringify(sel)}
       className={`${styles.row} ${sameSelection(selection, sel) ? styles.active : ""} ${indent ? styles.indent : ""}`}
       onClick={() => onSelect(sel)}
       onContextMenu={onMenu}
+      draggable={!!feed}
+      onDragStart={
+        feed
+          ? (e) => {
+              dragging.current = feed.url;
+              e.dataTransfer.effectAllowed = "move";
+              e.dataTransfer.setData(FEED_MIME, feed.url);
+              e.dataTransfer.setData("text/plain", feed.title);
+            }
+          : undefined
+      }
+      onDragEnd={
+        feed
+          ? () => {
+              dragging.current = null;
+              setDropKey(null);
+            }
+          : undefined
+      }
     >
       <span className={styles.icon}>{icon}</span>
       <span className={styles.label}>{label}</span>
+      {feed?.error && (
+        <span className={styles.errorBadge} title={`${t("sidebar.feedError")}\n${feedErrorDetail(t, feed.error, feed.lastRefreshed)}`}>
+          <AlertTriangle size={14} />
+        </span>
+      )}
       <Count n={count} />
     </button>
   );
 
   const feedRow = (f: SidebarFeed, indent: boolean) =>
-    row({ kind: "feed", url: f.url }, <Favicon siteUrl={f.siteUrl} />, f.title, f.unread, indent, (e) => onFeedMenu(e, f));
+    row({ kind: "feed", url: f.url }, <Favicon siteUrl={f.siteUrl} />, f.title, f.unread, indent, (e) => onFeedMenu(e, f), f);
 
   const isOpen = (uid: string, expanded: boolean) => (uid in collapsed ? !collapsed[uid] : expanded);
 
@@ -106,20 +164,23 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
 
         {row({ kind: "history" }, <History size={16} />, t("sidebar.history"))}
 
-        <div className={styles.section}>{t("sidebar.feeds")}</div>
-        {data && data.folders.length === 0 && data.feeds.length === 0 && (
-          <p className={styles.hint}>{t("sidebar.noFeeds")}</p>
-        )}
+        <div className={`${styles.section} ${dropKey === "root" ? styles.dropTarget : ""}`} {...dropProps("root", null)}>
+          {t("sidebar.feeds")}
+        </div>
+        {data && data.folders.length === 0 && data.feeds.length === 0 && <p className={styles.hint}>{t("sidebar.noFeeds")}</p>}
 
         {data?.folders.map((folder) => {
-          const Icon = folderIcon(folder.symbol);
           const open = isOpen(folder.uid, folder.isExpanded);
           return (
-            <div key={folder.uid}>
+            <div
+              key={folder.uid}
+              className={`${styles.block} ${dropKey === folder.uid ? styles.dropTarget : ""}`}
+              {...dropProps(folder.uid, folder.uid)}
+            >
               <div className={styles.group}>
                 {row(
                   { kind: "folder", uid: folder.uid },
-                  <Icon size={16} color={folderColor(folder.colorName)} />,
+                  folderGlyph(folder.symbol, folder.colorName),
                   folder.name,
                   folder.unread,
                   false,
@@ -141,7 +202,11 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
           );
         })}
 
-        {data?.feeds.map((f) => feedRow(f, false))}
+        {data && data.feeds.length > 0 && (
+          <div className={`${styles.block} ${dropKey === "root" ? styles.dropTarget : ""}`} {...dropProps("root", null)}>
+            {data.feeds.map((f) => feedRow(f, false))}
+          </div>
+        )}
       </nav>
 
       {footer && <div className={styles.footer}>{footer}</div>}

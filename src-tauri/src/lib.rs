@@ -363,6 +363,12 @@ fn rename_folder(state: State<'_, AppState>, uid: String, name: String) -> Resul
 }
 
 #[tauri::command]
+fn set_folder_style(state: State<'_, AppState>, uid: String, symbol: Option<String>, color: Option<String>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::set_folder_style(&conn, &uid, symbol.as_deref(), color.as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn delete_folder(state: State<'_, AppState>, uid: String) -> Result<(), String> {
     let conn = lock(&state)?;
     flux_core::manage::delete_folder(&conn, &uid).map_err(|e| e.to_string())
@@ -974,6 +980,7 @@ pub fn run() {
             move_feed,
             delete_feed,
             rename_folder,
+            set_folder_style,
             delete_folder,
             set_folder_expanded,
             rename_tag,
