@@ -39,8 +39,8 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 | <img src="docs/reader_en.png" width="400" alt="Reading an article" /> | <img src="docs/similar_articles_en.png" width="400" alt="Similar articles grouped" /> |
 | **Reading settings** | **Filter rules** |
 | <img src="docs/parameter_reading_en.png" width="400" alt="Reading settings" /> | <img src="docs/exclusion_rules_en.png" width="400" alt="Filter rules" /> |
-| **iCloud sync** | |
-| <img src="docs/sync_en.png" width="400" alt="iCloud sync settings" /> | |
+| **iCloud sync** | **Reading statistics** |
+| <img src="docs/sync_en.png" width="400" alt="iCloud sync settings" /> | <img src="docs/reading_statistics_en.png" width="400" alt="Reading statistics" /> |
 
 ## ✨ Features
 
@@ -50,7 +50,8 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 - **Folders**, collapsible, with their own unread count. Right-click a feed to rename it, move it to a folder, open its website, copy its address or delete it.
 - **OPML import and export** (app menu) to bring your subscriptions from another reader (NetNewsWire, Reeder, Feedly…) with their folders, or to back them up.
 - The site's **favicon** is shown next to each feed; the sidebar and the list can be resized, and the window remembers its size and position.
-- **Limitations:** nested folders in an OPML file are flattened to their closest folder. Changing a feed's address, changing a folder's icon or color and dragging a feed onto a folder aren't available yet.
+- **Limitations:** nested folders in an OPML file are flattened to their closest folder. Changing a folder's icon or color and dragging a feed onto a folder aren't available yet.
+- **Change a feed's address** (right-click › Change address…): enter the new feed or site address; the articles, their read state and the favorites are kept. A change isn't carried over by sync.
 
 ### 🖼️ A list you enjoy browsing
 
@@ -58,6 +59,8 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 - Thumbnails come from the feed (`media:thumbnail`, `enclosure`…), from the first image of the article, or as a last resort from the page's `og:image`.
 - **Search** the articles of the current view, **hide read articles** with one button, **mark all as read**.
 - Views: All articles, Unread, Favorites, History, folders, feeds and tags.
+- **Keyboard:** J / K (or the arrows) move through the list, Space scrolls the article and moves on to the next one at the bottom, M toggles read, S toggles favorite, B opens the article in your browser. Also ⌘A (select all), ⌘N (add a feed), ⌘R (refresh), ⇧⌘K (mark all as read), ⌥⌘S (statistics).
+- **Multiple selection:** ⌘-click or ⇧-click to select several articles, then right-click to mark them as read, favorite them or tag them at once.
 
 ### 📖 The full article, in the app
 
@@ -72,7 +75,8 @@ When several sources publish the same story within 48 hours, Flux groups them: o
 
 - Articles are grouped when they point to the same link, or when their titles share enough distinctive words. Four levels in the app menu › Settings: off, low, normal, high.
 - Right-click › Remove from group when two different stories got grouped.
-- **Limitations:** the comparison only looks at the words of the titles, not at their meaning (the Swift version also compared the meaning with Apple's language models), so it misses duplicates whose titles are worded very differently.
+- Titles worded differently are also compared **by meaning**, with Apple's on-device language models (as in the Swift version).
+- **Limitations:** the meaning comparison needs the language model of the title's language on your Mac (French and English work); without it, only the words and links count. The result is never perfect, hence the sensitivity levels.
 
 ### 🚫 Keyword filters
 
@@ -87,7 +91,20 @@ Rules (menu › Filters) act on articles by a keyword in their title, ignoring c
 - **Tags** to organize favorites (right-click on an article › Tags, or the tag button in the article toolbar). Tags are listed in the sidebar.
 - **History** lists the articles you've opened, most recent first.
 - **Mark articles as read** immediately, after a few seconds, or never; optionally mark old articles as read automatically; delete read articles after a delay you choose (never for favorites).
-- **Limitations:** adding a favorite doesn't yet archive its full text and images permanently. There's no offline mode: images inside articles load from the web when you read them.
+- **Archive:** a favorite's images (thumbnail and up to 50 images of the text) are kept in a permanent folder that neither the cache limit nor “Clear cache” touches, and its full text is fetched when you add it. Removing the favorite releases them.
+- **Limitations:** an archived favorite only has what Flux could download when you added it (a page reserved for subscribers, or an image since removed from the site, can't be recovered).
+
+### 📊 Reading statistics
+
+App menu › Reading statistics (⌥⌘S): articles read, time spent reading, estimated reading time (230 words per minute) and average per day, over 7 days, 30 days, 90 days or 12 months, with a chart of the articles read per day (per week over 12 months) and your most read and most active sources. An article counts as read once it has been open for 3 seconds.
+
+- **Limitations:** the time spent on an article is capped at 30 minutes per visit. Only what Flux recorded is counted: the openings imported from the Swift version are included, but nothing before that.
+
+### 📴 Offline reading
+
+Settings › Feeds › *Prepare articles for offline reading*: after each refresh, Flux downloads the full text and the images of your unread articles and favorites (up to 400), so you can read them without a connection. The image cache is kept under the size you choose (250 MB to 5 GB, 1 GB by default): the least recently used images are deleted first, and a button empties the cache. An **Offline** badge appears in the toolbar when there's no connection, and Flux refreshes by itself when it comes back.
+
+- **Limitations:** articles reserved for subscribers and pages that can't be extracted stay as the feed provides them. Preparation downloads data after every refresh, only for the articles that don't have their full text yet.
 
 ### ☁️ Sync between Macs
 
@@ -105,7 +122,7 @@ Settings › Backup: once a day, Flux stores a complete copy of its database (fe
 
 ### ⚙️ Settings
 
-Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, summary in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity.
+Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, summary in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity, offline preparation and image cache size, favorites archive. A short **tour** of Flux opens on first launch (app menu › Discover Flux to see it again).
 
 ## 🧩 Compatibility
 
@@ -122,7 +139,7 @@ None, except one: if you turn on sync or backup, macOS asks once whether Flux ma
 Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. Everything is stored on your Mac:
 
 - articles, feeds, folders and settings: `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite`;
-- thumbnails: `~/Library/Application Support/io.github.aervorn.flux/images`;
+- thumbnails and images: `~/Library/Application Support/io.github.aervorn.flux/images`; archived favorites' images: `…/archive`;
 - sync and backup (if turned on): `iCloud Drive/Flux/`, stored in your own iCloud.
 
 ## 📥 Installation
@@ -148,7 +165,7 @@ Flux collects nothing and sends nothing about you. There is no account, no analy
 
 Updating from inside the old app installs the new Flux in its place. On first launch, if Flux finds your old data, it offers to **import** your feeds, folders, articles, favorites, tags, filter rules and settings (your old data is only read, never changed). You can also start the import later from the app menu. The import is only offered while the new database is empty.
 
-Some features of the Swift version aren't in this one yet: reading statistics, offline preparation, favorites archive, single-key keyboard shortcuts (j/k/m/s/b), multiple selection, changing a feed's address, the first-launch tour. See the [releases](https://github.com/Aervorn/MacOS_Flux/releases) for what comes next.
+Your reading history and reading times are imported too, so your statistics carry on.
 
 ## 🔄 Updating
 
@@ -161,7 +178,7 @@ Flux checks for a new version at launch (or app menu › **Check for updates…*
 - **Your data comes with you**: the first launch offers to import everything from the Swift version (feeds, folders, articles, favorites, tags, filter rules, settings).
 - Same iCloud sync format as before, and a new daily backup to iCloud Drive (separate folder: backups from the Swift version can't be restored here).
 - Automatic updates with the Tauri updater, signed with a new key.
-- Not available yet in this version: reading statistics, offline preparation, favorites archive, single-key shortcuts, multiple selection, changing a feed's address.
+- Everything from the Swift version is back: reading statistics, offline reading, favorites archive, single-key shortcuts (J/K/M/S/B), multiple selection, changing a feed's address and the first-launch tour. Similar articles are compared by meaning again too.
 - The Swift source stays available in the `swift/` folder and at the `swift-final` tag.
 
 ### Swift versions

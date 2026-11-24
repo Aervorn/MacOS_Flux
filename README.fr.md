@@ -39,8 +39,8 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 | <img src="docs/reader_fr.png" width="400" alt="Lecture d'un article" /> | <img src="docs/similar_articles_fr.png" width="400" alt="Articles similaires regroupés" /> |
 | **Réglages de lecture** | **Règles de filtrage** |
 | <img src="docs/parameter_reading_fr.png" width="400" alt="Réglages de lecture" /> | <img src="docs/exclusion_rules_fr.png" width="400" alt="Règles de filtrage" /> |
-| **Synchronisation iCloud** | |
-| <img src="docs/sync_fr.png" width="400" alt="Réglages de synchronisation iCloud" /> | |
+| **Synchronisation iCloud** | **Statistiques de lecture** |
+| <img src="docs/sync_fr.png" width="400" alt="Réglages de synchronisation iCloud" /> | <img src="docs/reading_statistics_fr.png" width="400" alt="Statistiques de lecture" /> |
 
 ## ✨ Fonctionnalités
 
@@ -50,7 +50,8 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 - **Des dossiers**, repliables, avec leur nombre de non-lus. Clic droit sur un flux pour le renommer, le ranger dans un dossier, ouvrir son site, copier son adresse ou le supprimer.
 - **Import et export OPML** (menu de l'app) pour reprendre tes abonnements depuis un autre lecteur (NetNewsWire, Reeder, Feedly…) avec leurs dossiers, ou les sauvegarder.
 - Le **favicon** du site s'affiche à côté de chaque flux ; la barre latérale et la liste se redimensionnent, et la fenêtre retient sa taille et sa position.
-- **Limites :** les dossiers imbriqués d'un fichier OPML sont aplatis dans le dossier le plus proche. Changer l'adresse d'un flux, changer l'icône ou la couleur d'un dossier et glisser un flux dans un dossier ne sont pas encore disponibles.
+- **Limites :** les dossiers imbriqués d'un fichier OPML sont aplatis dans le dossier le plus proche. Changer l'icône ou la couleur d'un dossier et glisser un flux dans un dossier ne sont pas encore disponibles.
+- **Changer l'adresse d'un flux** (clic droit › Modifier l’adresse…) : saisis la nouvelle adresse du flux ou du site ; les articles, leur état de lecture et les favoris sont conservés. La synchro ne transmet pas ce changement.
 
 ### 🖼️ Une liste agréable à parcourir
 
@@ -58,6 +59,8 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 - Les miniatures viennent du flux (`media:thumbnail`, `enclosure`…), de la première image de l'article ou, en dernier recours, de l'`og:image` de la page.
 - **Recherche** dans les articles de la vue en cours, bouton pour **masquer les articles lus**, **tout marquer comme lu**.
 - Vues : Tous les articles, Non lus, Favoris, Historique, dossiers, flux et tags.
+- **Clavier :** J / K (ou les flèches) pour parcourir la liste, Espace pour faire défiler l'article puis passer au suivant en bas, M pour lu / non lu, S pour favori, B pour ouvrir l'article dans ton navigateur. Aussi ⌘A (tout sélectionner), ⌘N (ajouter un flux), ⌘R (actualiser), ⇧⌘K (tout marquer comme lu), ⌥⌘S (statistiques).
+- **Sélection multiple :** ⌘-clic ou ⇧-clic pour sélectionner plusieurs articles, puis clic droit pour les marquer comme lus, les mettre en favoris ou leur ajouter un tag d'un coup.
 
 ### 📖 L'article complet, dans l'app
 
@@ -72,7 +75,8 @@ Quand plusieurs sources publient le même sujet en moins de 48 heures, Flux les 
 
 - Les articles sont regroupés quand ils pointent vers le même lien, ou que leurs titres partagent assez de mots distinctifs. Quatre niveaux dans le menu de l'app › Réglages : désactivé, faible, normal, élevé.
 - Clic droit › Retirer du groupe quand deux sujets différents ont été regroupés.
-- **Limites :** la comparaison ne regarde que les mots des titres, pas leur sens (la version Swift comparait aussi le sens avec les modèles de langue d'Apple) : elle rate donc des doublons dont les titres sont formulés très différemment.
+- Les titres formulés différemment sont aussi comparés **par le sens**, avec les modèles de langue d'Apple calculés sur ton Mac (comme dans la version Swift).
+- **Limites :** la comparaison par le sens demande le modèle de la langue du titre sur ton Mac (le français et l'anglais fonctionnent) ; sans lui, seuls les mots et les liens comptent. Le résultat n'est jamais parfait, d'où les niveaux de sensibilité.
 
 ### 🚫 Filtres par mots-clés
 
@@ -87,7 +91,20 @@ Des règles (menu › Filtres) agissent sur les articles selon un mot-clé dans 
 - **Des tags** pour ranger tes favoris (clic droit sur un article › Tags, ou bouton tag de la barre d'outils de l'article). Les tags sont listés dans la barre latérale.
 - L'**historique** liste les articles ouverts, du plus récent au plus ancien.
 - **Marquer les articles comme lus** tout de suite, après quelques secondes, ou jamais ; en option, marquer automatiquement les vieux articles comme lus ; supprimer les articles lus après le délai de ton choix (jamais pour les favoris).
-- **Limites :** ajouter un favori n'archive pas encore définitivement son texte complet et ses images. Il n'y a pas de mode hors ligne : les images à l'intérieur des articles se chargent depuis le web à la lecture.
+- **Archive :** les images d'un favori (miniature et jusqu'à 50 images du texte) sont conservées dans un dossier permanent que ni la limite du cache ni « Vider le cache » ne touchent, et son texte complet est récupéré à l'ajout. Retirer le favori les libère.
+- **Limites :** un favori archivé n'a que ce que Flux a pu télécharger à son ajout (une page réservée aux abonnés, ou une image retirée du site depuis, ne se récupère pas).
+
+### 📊 Statistiques de lecture
+
+Menu de l'app › Statistiques de lecture (⌥⌘S) : articles lus, temps passé à lire, temps de lecture estimé (230 mots par minute) et moyenne par jour, sur 7 jours, 30 jours, 90 jours ou 12 mois, avec un graphique des articles lus par jour (par semaine sur 12 mois) et tes sources les plus lues et les plus actives. Un article compte comme lu une fois ouvert pendant 3 secondes.
+
+- **Limites :** le temps passé sur un article est plafonné à 30 minutes par visite. Seul ce que Flux a enregistré est compté : les ouvertures importées de la version Swift sont incluses, mais rien avant.
+
+### 📴 Lecture hors ligne
+
+Réglages › Flux › *Préparer les articles pour la lecture hors ligne* : après chaque actualisation, Flux télécharge le texte complet et les images de tes articles non lus et de tes favoris (400 au plus), pour que tu les lises sans connexion. Le cache d'images reste sous la taille choisie (de 250 Mo à 5 Go, 1 Go par défaut) : les images les moins récemment utilisées partent d'abord, et un bouton vide le cache. Une pastille **Hors ligne** apparaît dans la barre d'outils quand il n'y a pas de connexion, et Flux actualise tout seul à son retour.
+
+- **Limites :** les articles réservés aux abonnés et les pages impossibles à extraire restent tels que le flux les fournit. La préparation télécharge des données après chaque actualisation, mais seulement pour les articles qui n'ont pas encore leur texte complet.
 
 ### ☁️ Synchronisation entre Mac
 
@@ -105,7 +122,7 @@ Réglages › Sauvegarde : une fois par jour, Flux stocke une copie complète de
 
 ### ⚙️ Réglages
 
-Apparence (automatique, clair, sombre), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons.
+Apparence (automatique, clair, sombre), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons, préparation hors ligne et taille du cache d'images, archive des favoris. Une courte **visite guidée** de Flux s'ouvre au premier lancement (menu de l'app › Découvrir Flux pour la revoir).
 
 ## 🧩 Compatibilité
 
@@ -122,7 +139,7 @@ Aucune, sauf une : si tu actives la synchro ou la sauvegarde, macOS demande une 
 Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni statistiques d'usage, ni suivi. En dehors de la synchro facultative via ton propre iCloud Drive et de la recherche d'une nouvelle version sur GitHub, les seules requêtes réseau vont directement aux sites auxquels tu es abonné : leurs flux, les pages de leurs articles, leurs images et leurs favicons. Tout est stocké sur ton Mac :
 
 - articles, flux, dossiers et réglages : `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite` ;
-- miniatures : `~/Library/Application Support/io.github.aervorn.flux/images` ;
+- miniatures et images : `~/Library/Application Support/io.github.aervorn.flux/images` ; images des favoris archivés : `…/archive` ;
 - synchro et sauvegarde (si activées) : `iCloud Drive/Flux/`, stockés dans ton propre iCloud.
 
 ## 📥 Installation
@@ -148,7 +165,7 @@ Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni sta
 
 Mettre à jour depuis l'ancienne app installe le nouveau Flux à sa place. Au premier lancement, si Flux retrouve tes anciennes données, il te propose de les **importer** : flux, dossiers, articles, favoris, tags, règles de filtrage et réglages (tes anciennes données sont seulement lues, jamais modifiées). Tu peux aussi lancer l'import plus tard depuis le menu de l'app. L'import n'est proposé que tant que la nouvelle base est vide.
 
-Certaines fonctions de la version Swift ne sont pas encore dans celle-ci : statistiques de lecture, préparation hors ligne, archive des favoris, raccourcis clavier à une touche (j/k/m/s/b), sélection multiple, changement d'adresse d'un flux, visite guidée du premier lancement. Les [versions](https://github.com/Aervorn/MacOS_Flux/releases) diront ce qui arrive ensuite.
+Ton historique et tes temps de lecture sont importés aussi : tes statistiques continuent.
 
 ## 🔄 Mettre à jour
 
@@ -161,7 +178,7 @@ Flux recherche une nouvelle version au lancement (ou menu de l'app › **Recherc
 - **Tes données suivent** : le premier lancement propose d'importer tout ce que contenait la version Swift (flux, dossiers, articles, favoris, tags, règles de filtrage, réglages).
 - Même format de synchronisation iCloud qu'avant, et une nouvelle sauvegarde quotidienne dans iCloud Drive (dossier séparé : les sauvegardes de la version Swift ne se restaurent pas ici).
 - Mises à jour automatiques avec l'updater de Tauri, signées avec une nouvelle clé.
-- Pas encore disponible dans cette version : statistiques de lecture, préparation hors ligne, archive des favoris, raccourcis à une touche, sélection multiple, changement d'adresse d'un flux.
+- Tout ce que faisait la version Swift est de retour : statistiques de lecture, lecture hors ligne, archive des favoris, raccourcis à une touche (J/K/M/S/B), sélection multiple, changement d'adresse d'un flux et visite guidée du premier lancement. Les articles similaires sont aussi comparés par le sens, comme avant.
 - Le code Swift reste disponible dans le dossier `swift/` et au tag `swift-final`.
 
 ### Versions Swift
