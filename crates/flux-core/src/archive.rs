@@ -86,9 +86,8 @@ async fn archive_image(images: &ImageDirs, url: &str) -> bool {
     sniff_mime(&response.data).is_some() && fs::write(&target, &response.data).is_ok()
 }
 
-/// Archive les favoris qui ne le sont pas encore. `progress(fait, total)` est appelé après
-/// chaque article. Renvoie le nombre d'articles archivés.
-pub async fn run(db: &Mutex<Connection>, images: &ImageDirs, progress: impl Fn(usize, usize)) -> Result<usize> {
+/// Archive les favoris qui ne le sont pas encore. Renvoie le nombre d'articles archivés.
+pub async fn run(db: &Mutex<Connection>, images: &ImageDirs) -> Result<usize> {
     struct Todo {
         key: String,
         image_url: Option<String>,
@@ -102,14 +101,17 @@ pub async fn run(db: &Mutex<Connection>, images: &ImageDirs, progress: impl Fn(u
         let rows = stmt.query_map([], |r| Ok(Todo { key: r.get(0)?, image_url: r.get(1)?, body: r.get(2)? }))?;
         rows.collect::<std::result::Result<_, _>>()?
     };
-    let total = todo.len();
     let mut done = 0;
-    for (i, article) in todo.iter().enumerate() {
+    for article in todo.iter() {
         let urls = article_images(article.image_url.as_deref(), article.body.as_deref());
-        let results: Vec<bool> = stream::iter(urls.iter().map(|u| archive_image(images, u)))
-            .buffer_unordered(CONCURRENCY)
-            .collect()
-            .await;
+        // Chaque téléchargement possède ses données (évite un souci de durées de vie avec Tauri)
+        let results: Vec<bool> = stream::iter(urls.into_iter().map(|u| {
+            let images = images.clone();
+            async move { archive_image(&images, &u).await }
+        }))
+        .buffer_unordered(CONCURRENCY)
+        .collect()
+        .await;
         // Un article n'est marqué archivé que si sa miniature l'est ; les images du texte
         // introuvables (supprimées du site) ne bloquent pas.
         let thumb_ok = match article.image_url.as_deref().filter(|u| !u.is_empty()) {
@@ -122,7 +124,6 @@ pub async fn run(db: &Mutex<Connection>, images: &ImageDirs, progress: impl Fn(u
             let changed = conn.execute("UPDATE articles SET is_archived = 1 WHERE key = ?1 AND is_starred = 1", params![article.key])?;
             done += changed;
         }
-        progress(i + 1, total);
     }
     Ok(done)
 }

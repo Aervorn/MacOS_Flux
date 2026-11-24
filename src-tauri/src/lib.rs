@@ -206,7 +206,7 @@ async fn archive_pending(state: State<'_, AppState>) -> Result<usize, String> {
     if !current_prefs(&state)?.archive_favorites || state.archiving.swap(true, Ordering::SeqCst) {
         return Ok(0);
     }
-    let result = flux_core::archive::run(&state.db, &state.images, |_, _| {}).await;
+    let result = flux_core::archive::run(&state.db, &state.images).await;
     state.archiving.store(false, Ordering::SeqCst);
     result.map_err(|e| e.to_string())
 }
