@@ -57,7 +57,8 @@
     "newTag": "Nouveau tag…",
     "newTagName": "Nom du tag",
     "create": "Créer",
-    "noTags": "Aucun tag"
+    "noTags": "Aucun tag",
+    "offlineFull": "Hors ligne : l’article complet n’est pas disponible. Tu vois ce que le flux fournit."
   },
   "settings": {
     "appearance": "Apparence",
@@ -351,5 +352,8 @@
     "license": "(Mozilla, Apache 2.0)",
     "source": "Code source sur GitHub",
     "close": "Fermer"
+  },
+  "offline": {
+    "refresh": "Pas de connexion à Internet : les flux seront actualisés dès son retour."
   }
 }

@@ -123,6 +123,12 @@ fn get_article(state: State<'_, AppState>, key: String) -> Result<Option<Article
     flux_core::articles::get_article(&conn, &key).map_err(|e| e.to_string())
 }
 
+/// Y a-t-il une connexion à Internet ?
+#[tauri::command]
+async fn is_online() -> bool {
+    flux_core::net::is_online().await
+}
+
 /// Télécharge la page d'un article (pour en extraire le texte complet côté interface).
 #[tauri::command]
 async fn fetch_page(url: String) -> Result<FetchedPage, String> {
@@ -853,24 +859,41 @@ pub fn run() {
             // Menu par défaut de macOS, mais « Tout sélectionner » (⌘A) est géré par l'interface :
             // il sélectionne les articles de la liste, ou le texte d'un champ en cours de saisie.
             {
-                use tauri::menu::{Menu, MenuItem, MenuItemKind};
+                use tauri::menu::{MenuBuilder, MenuItem, SubmenuBuilder};
                 use tauri::Emitter;
-                let menu = Menu::default(app.handle())?;
+                // Menu construit de zéro (plutôt que modifié) : « Tout sélectionner » (⌘A) est géré
+                // par l'interface, il sélectionne les articles de la liste ou le texte d'un champ.
                 let select_all = MenuItem::with_id(app, "select_all", "Select All", true, Some("CmdOrCtrl+A"))?;
-                for item in menu.items()? {
-                    if let MenuItemKind::Submenu(sub) = item {
-                        let entries = sub.items()?;
-                        for (i, entry) in entries.iter().enumerate() {
-                            if let MenuItemKind::Predefined(p) = entry {
-                                if p.text().map(|t| t == "Select All").unwrap_or(false) {
-                                    sub.remove(p)?;
-                                    sub.insert(&select_all, i)?;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                let app_menu = SubmenuBuilder::new(app, "Flux")
+                    .about(None)
+                    .separator()
+                    .services()
+                    .separator()
+                    .hide()
+                    .hide_others()
+                    .show_all()
+                    .separator()
+                    .quit()
+                    .build()?;
+                let edit_menu = SubmenuBuilder::new(app, "Edit")
+                    .undo()
+                    .redo()
+                    .separator()
+                    .cut()
+                    .copy()
+                    .paste()
+                    .item(&select_all)
+                    .build()?;
+                let view_menu = SubmenuBuilder::new(app, "View").fullscreen().build()?;
+                let window_menu = SubmenuBuilder::new(app, "Window")
+                    .minimize()
+                    .maximize()
+                    .separator()
+                    .close_window()
+                    .build()?;
+                let menu = MenuBuilder::new(app)
+                    .items(&[&app_menu, &edit_menu, &view_menu, &window_menu])
+                    .build()?;
                 app.set_menu(menu)?;
                 app.on_menu_event(|app, event| {
                     if event.id().as_ref() == "select_all" {
@@ -928,6 +951,7 @@ pub fn run() {
             reading_stats,
             archive_status,
             archive_pending,
+            is_online,
             offline_status,
             offline_maintain,
             clear_image_cache,

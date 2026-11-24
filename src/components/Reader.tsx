@@ -91,13 +91,17 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
       } catch (e) {
         if (isCancelled()) return;
         setStatus("error");
-        setError(errorMessage(e, t));
+        setError(await failureMessage(e));
       }
     }
     return () => {
       cancelled = true;
     };
   }, [articleKey, t]);
+
+  // Échec du téléchargement : sans connexion, on le dit simplement plutôt que d'afficher l'erreur réseau.
+  const failureMessage = async (e: unknown) =>
+    (await api.isOnline().catch(() => true)) ? errorMessage(e, t) : t("detail.offlineFull");
 
   const loadFullNow = useCallback(async () => {
     if (!detail?.link) return;
@@ -122,7 +126,7 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
       setStatus("idle");
     } catch (e) {
       setStatus("error");
-      setError(errorMessage(e, t));
+      setError(await failureMessage(e));
     }
   }, [detail, t]);
 

@@ -53,6 +53,13 @@ fn client() -> &'static reqwest::Client {
     })
 }
 
+/// Y a-t-il une connexion à Internet ? Essaie la page de test d'Apple (4 s au plus) :
+/// n'importe quelle réponse HTTP prouve que le réseau passe.
+pub async fn is_online() -> bool {
+    let Ok(client) = reqwest::Client::builder().timeout(Duration::from_secs(4)).build() else { return true };
+    client.get("https://captive.apple.com/hotspot-detect.html").send().await.is_ok()
+}
+
 /// Réponse brute : contenu et adresse finale (après redirections).
 pub struct Response {
     pub data: Vec<u8>,

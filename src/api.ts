@@ -296,6 +296,7 @@ export const api = {
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
   archiveStatus: () => invoke<ArchiveInfo>("archive_status"),
   archivePending: () => invoke<number>("archive_pending"),
+  isOnline: () => invoke<boolean>("is_online"),
   offlineStatus: () => invoke<OfflineInfo>("offline_status"),
   offlineMaintain: () => invoke<void>("offline_maintain"),
   clearImageCache: () => invoke<void>("clear_image_cache"),

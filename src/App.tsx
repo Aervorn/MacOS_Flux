@@ -124,36 +124,55 @@ export default function App() {
   };
 
   // Actualisation de tous les flux, puis compteurs et liste à jour.
-  const refreshFeeds = useCallback(async () => {
-    if (!navigator.onLine) return; // hors ligne : on garde ce qui est déjà là
-    setRefreshing(true);
-    try {
-      const report = await api.refreshAll();
-      if (report.added > 0 || report.failed > 0) refresh();
-    } catch (e) {
-      setNotice(errorMessage(e, t));
-    } finally {
-      setRefreshing(false);
-    }
-    // Lecture hors ligne (si activée) et taille du cache d'images : sans bloquer l'interface
-    api.offlineMaintain().catch(() => undefined);
-  }, [refresh, t]);
+  // Connexion : on vérifie vraiment (le navigateur intégré ne prévient pas toujours d'une coupure).
+  const [online, setOnline] = useState(true);
+  const checkOnline = useCallback(async () => {
+    const ok = await api.isOnline().catch(() => navigator.onLine);
+    setOnline(ok);
+    return ok;
+  }, []);
+
+  const refreshFeeds = useCallback(
+    async (manual = false) => {
+      if (!(await checkOnline())) {
+        if (manual) setNotice(t("offline.refresh"));
+        return; // hors ligne : on garde ce qui est déjà là
+      }
+      setRefreshing(true);
+      try {
+        const report = await api.refreshAll();
+        if (report.added > 0 || report.failed > 0) refresh();
+      } catch (e) {
+        setNotice(errorMessage(e, t));
+      } finally {
+        setRefreshing(false);
+      }
+      // Lecture hors ligne (si activée) et taille du cache d'images : sans bloquer l'interface
+      api.offlineMaintain().catch(() => undefined);
+    },
+    [refresh, t, checkOnline],
+  );
 
   // Connexion perdue ou retrouvée : indicateur « Hors ligne », et actualisation au retour.
-  const [online, setOnline] = useState(navigator.onLine);
+  const wasOnline = useRef(true);
   useEffect(() => {
-    const on = () => {
-      setOnline(true);
-      void refreshFeedsRef.current();
-    };
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
+    const check = () =>
+      void checkOnline().then((ok) => {
+        if (ok && !wasOnline.current) void refreshFeedsRef.current();
+        wasOnline.current = ok;
+      });
+    check();
+    const id = setInterval(check, 15_000);
+    window.addEventListener("online", check);
+    window.addEventListener("offline", check);
+    window.addEventListener("focus", check);
     return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
+      clearInterval(id);
+      window.removeEventListener("online", check);
+      window.removeEventListener("offline", check);
+      window.removeEventListener("focus", check);
     };
-  }, []);
+  }, [checkOnline]);
   const refreshFeedsRef = useRef(refreshFeeds);
   refreshFeedsRef.current = refreshFeeds;
 
@@ -348,7 +367,7 @@ export default function App() {
         else setShowAddFeed(true);
       } else if (e.code === "KeyR" && !e.shiftKey) {
         e.preventDefault();
-        void refreshFeeds();
+        void refreshFeeds(true);
       } else if (e.code === "KeyK" && e.shiftKey) {
         e.preventDefault();
         void markAllRead();
@@ -641,7 +660,7 @@ export default function App() {
         favoritesExpanded={prefs.favoritesExpanded}
         onToggleFavorites={() => updatePrefs({ favoritesExpanded: !prefs.favoritesExpanded })}
         refreshing={refreshing}
-        onRefresh={() => void refreshFeeds()}
+        onRefresh={() => void refreshFeeds(true)}
         onAddFeed={() => setShowAddFeed(true)}
         onAddFolder={createFolder}
         onFeedMenu={(e, feed) => openMenu(e, feedMenu(menuContext(), feed))}
