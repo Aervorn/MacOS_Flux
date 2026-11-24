@@ -960,6 +960,8 @@ version = "0.8.0"
 dependencies = [
  "chrono",
  "futures",
+ "objc2",
+ "objc2-foundation",
  "plist",
  "quick-xml 0.37.5",
  "regex",

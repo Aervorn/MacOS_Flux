@@ -21,6 +21,7 @@ pub mod import;
 pub mod manage;
 pub mod opml;
 pub mod refresh;
+pub mod semantic;
 pub mod stats;
 pub mod net;
 pub mod offline;

@@ -1,12 +1,12 @@
 //! Repère les articles qui parlent de la même actualité dans plusieurs sources.
 //!
-//! Reprend `DuplicateDetector.swift` et le regroupement de `FeedStore.swift`, sans la comparaison
-//! « par le sens » (NLEmbedding n'existe pas hors macOS) : seuls restent les liens identiques et
-//! le recouvrement des mots importants des titres. Deux articles de flux différents, publiés à
+//! Reprend `DuplicateDetector.swift` et le regroupement de `FeedStore.swift`. La comparaison
+//! « par le sens » (plongements de phrases d'Apple, voir `semantic`) ne joue que sur macOS.
+//! Deux articles de flux différents, publiés à
 //! moins de 48 h d'écart, sont regroupés :
 //! - s'ils pointent vers le même lien (republication) ;
 //! - ou s'ils partagent au moins deux mots importants (hors mots du moment) et que leurs titres
-//!   se recouvrent assez, les mots rares comptant davantage.
+//!   se recouvrent assez, les mots rares comptant davantage, ou ont un sens assez proche.
 //!
 //! Le résultat n'est jamais parfait : la sensibilité règle le compromis.
 
@@ -19,6 +19,7 @@ use crate::error::Result;
 use crate::feeds::now;
 use crate::prefs::Prefs;
 use crate::query::fold;
+use crate::semantic::Embedder;
 
 /// Fenêtre de comparaison entre deux articles (48 h).
 pub const WINDOW: f64 = 48.0 * 3600.0;
@@ -29,6 +30,14 @@ const REGROUP_PERIOD: f64 = 7.0 * 86_400.0;
 fn word_threshold(sensitivity: u32) -> f64 {
     [0.5, 0.4, 0.32][sensitivity.min(2) as usize]
 }
+
+/// Ressemblance minimale (cosinus) entre le sens de deux titres (faible, normale, forte).
+fn meaning_threshold(sensitivity: u32) -> f64 {
+    [0.88, 0.83, 0.78][sensitivity.min(2) as usize]
+}
+
+/// Recouvrement minimal des mots pour qu'on compare aussi le sens des titres.
+const MEANING_MIN_OVERLAP: f64 = 0.25;
 
 /// Part minimale du titre le plus court retrouvée dans l'autre (au moins trois mots rares en commun) :
 /// rattrape les titres dont l'un est bien plus long que l'autre (« Michel Dumas, chef star des réseaux est mort »
@@ -52,10 +61,11 @@ struct Item {
 struct Signature {
     words: HashSet<String>,
     link: Option<String>,
+    title: String,
 }
 
 fn signature(title: &str, link: Option<&str>) -> Signature {
-    Signature { words: significant_words(title), link: link.and_then(normalized_link) }
+    Signature { words: significant_words(title), link: link.and_then(normalized_link), title: title.to_string() }
 }
 
 /// Mots du titre sans majuscules, accents, mots courants ni pluriels simples.
@@ -93,6 +103,8 @@ struct Detector {
     coverage: f64,
     document_count: usize,
     document_frequency: HashMap<String, usize>,
+    meaning: f64,
+    embedder: Embedder,
 }
 
 impl Detector {
@@ -103,7 +115,7 @@ impl Detector {
                 *document_frequency.entry(w.clone()).or_default() += 1;
             }
         }
-        Detector { threshold: word_threshold(sensitivity), coverage: coverage_threshold(sensitivity), document_count: signatures.len().max(1), document_frequency }
+        Detector { threshold: word_threshold(sensitivity), coverage: coverage_threshold(sensitivity), document_count: signatures.len().max(1), document_frequency, meaning: meaning_threshold(sensitivity), embedder: Embedder::default() }
     }
 
     fn frequency(&self, word: &str) -> usize {
@@ -145,6 +157,14 @@ impl Detector {
             let shortest = weight_of(a).min(weight_of(b)).max(0.0001);
             if shared_weight / shortest >= self.coverage {
                 return Some(1.0 + overlap);
+            }
+        }
+        // Titres formulés différemment : on compare aussi leur sens, s'ils se recoupent déjà un peu.
+        if overlap >= MEANING_MIN_OVERLAP {
+            if let Some(similarity) = self.embedder.similarity(&a.title, &b.title) {
+                if similarity >= self.meaning {
+                    return Some(similarity);
+                }
             }
         }
         None
