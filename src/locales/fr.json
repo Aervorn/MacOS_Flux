@@ -10,7 +10,8 @@
     "feeds": "Flux",
     "noFeeds": "Aucun flux pour l'instant.",
     "addFeed": "Ajouter un flux",
-    "refresh": "Actualiser les flux"
+    "refresh": "Actualiser les flux",
+    "addFolder": "Nouveau dossier"
   },
   "list": {
     "emptyTitle": "Aucun article pour l'instant",
@@ -86,5 +87,42 @@
     "notAFeed": "Aucun flux RSS ou Atom trouvé à cette adresse.",
     "alreadyExists": "Ce flux est déjà dans ta liste.",
     "http": "Le serveur a répondu avec l'erreur {{code}}."
+  },
+  "menu": {
+    "rename": "Renommer",
+    "markAllRead": "Tout marquer comme lu",
+    "moveTo": "Déplacer vers",
+    "noFolder": "Aucun dossier",
+    "openWebsite": "Ouvrir le site",
+    "copyFeedUrl": "Copier l'adresse du flux",
+    "deleteFeed": "Supprimer le flux",
+    "deleteFolder": "Supprimer le dossier",
+    "deleteTag": "Supprimer le tag",
+    "markRead": "Marquer comme lu",
+    "markUnread": "Marquer comme non lu",
+    "favorite": "Ajouter aux favoris",
+    "unfavorite": "Retirer des favoris",
+    "tags": "Tags",
+    "newTag": "Nouveau tag…",
+    "openBrowser": "Ouvrir dans le navigateur",
+    "copyLink": "Copier le lien"
+  },
+  "dialogs": {
+    "renameFeed": "Renommer le flux",
+    "renameFolder": "Renommer le dossier",
+    "renameTag": "Renommer le tag",
+    "newFolder": "Nouveau dossier",
+    "folderName": "Nom du dossier",
+    "newTag": "Nouveau tag",
+    "tagName": "Nom du tag",
+    "save": "Enregistrer",
+    "create": "Créer",
+    "delete": "Supprimer",
+    "deleteFeedTitle": "Supprimer « {{name}} » ?",
+    "deleteFeedBody": "Le flux et ses articles seront supprimés. Les favoris restent dans Favoris.",
+    "deleteFolderTitle": "Supprimer le dossier « {{name}} » ?",
+    "deleteFolderBody": "Les flux du dossier ne sont pas supprimés : ils reviennent à la racine.",
+    "deleteTagTitle": "Supprimer le tag « {{name}} » ?",
+    "deleteTagBody": "Les articles gardent leur place dans les favoris, sans ce tag."
   }
 }

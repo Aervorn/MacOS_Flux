@@ -11,9 +11,10 @@ interface Props {
   selectedKey: string | null;
   showSummary: boolean;
   onSelect: (key: string) => void;
+  onMenu: (e: React.MouseEvent, article: ArticleRow) => void;
 }
 
-export default function ArticleList({ articles, layout, selectedKey, showSummary, onSelect }: Props) {
+export default function ArticleList({ articles, layout, selectedKey, showSummary, onSelect, onMenu }: Props) {
   const { t, i18n } = useTranslation();
 
   if (articles.length === 0) {
@@ -39,6 +40,7 @@ export default function ArticleList({ articles, layout, selectedKey, showSummary
             key={a.key}
             className={`${grid ? styles.card : styles.item} ${selected ? styles.selected : ""} ${a.isRead ? styles.read : ""}`}
             onClick={() => onSelect(a.key)}
+            onContextMenu={(e) => onMenu(e, a)}
           >
             <Thumb thumb={a.thumb} className={grid ? styles.cardThumb : styles.itemThumb} />
             <div className={styles.body}>

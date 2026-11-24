@@ -25,9 +25,8 @@ pnpm tauri dev                     # lance l'app en développement
 
 - **Export PDF** : l'impression passe par la fenêtre native de macOS (il faut cliquer sur le petit bouton « PDF » en bas à gauche). Piste : un vrai « Exporter en PDF » direct via `WKWebView.createPDF` (code natif Rust/objc2).
 - **Vidéos intégrées** (iframes YouTube, Vimeo…) : retirées par le nettoyage du HTML ; seul le lien reste. Piste : autoriser une liste blanche de lecteurs.
-- **Menu contextuel** sur les articles (clic droit : lu/non lu, favori, tags…) : reporté après les actions, **à faire avant la release finale**.
+- **Menus contextuels** : faits pour les flux, dossiers, tags et articles. Reste à faire : changer l'icône et la couleur d'un dossier, changer l'adresse d'un flux, glisser-déposer un flux dans un dossier, menu sur plusieurs articles sélectionnés.
 - **Archivage des favoris** : mettre un article en favori ne télécharge pas encore son texte complet ni ses images dans l'archive permanente (dépend du téléchargement des images, étape suivante).
-- **Tags** : création et attribution faites ; renommer / supprimer un tag viendra avec les menus contextuels de la barre latérale.
 - **Nouveaux articles : pas encore de filtres ni de détection de doublons** (règles « masquer / marquer lu » et regroupement « Aussi publié par » arrivent aux étapes suivantes) : un article qui devrait être masqué par une règle apparaît pour l'instant.
 - **Cache d'images** : les miniatures des nouveaux articles sont téléchargées dans notre dossier (`images/`), mais le cache n'est pas encore limité en taille (réglage « limite du cache »). Les images à l'intérieur des articles se chargent en ligne à la lecture.
 - **Erreurs de flux** : mémorisées en base (`last_error`) mais pas encore affichées dans la barre latérale.

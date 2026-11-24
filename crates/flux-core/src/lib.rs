@@ -14,6 +14,7 @@ pub mod feeds;
 pub mod html;
 pub mod images;
 pub mod import;
+pub mod manage;
 pub mod refresh;
 pub mod net;
 pub mod prefs;

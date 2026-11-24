@@ -188,6 +188,61 @@ async fn refresh_all(state: State<'_, AppState>) -> Result<RefreshReport, String
     result
 }
 
+#[tauri::command]
+fn rename_feed(state: State<'_, AppState>, url: String, name: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::rename_feed(&conn, &url, &name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn move_feed(state: State<'_, AppState>, url: String, folder_uid: Option<String>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::move_feed(&conn, &url, folder_uid.as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_feed(state: State<'_, AppState>, url: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::delete_feed(&conn, &url).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn rename_folder(state: State<'_, AppState>, uid: String, name: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::rename_folder(&conn, &uid, &name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_folder(state: State<'_, AppState>, uid: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::delete_folder(&conn, &uid).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_folder_expanded(state: State<'_, AppState>, uid: String, expanded: bool) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::set_folder_expanded(&conn, &uid, expanded).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn rename_tag(state: State<'_, AppState>, uid: String, name: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::rename_tag(&conn, &uid, &name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_tag(state: State<'_, AppState>, uid: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::manage::delete_tag(&conn, &uid).map_err(|e| e.to_string())
+}
+
+/// Crée un dossier et renvoie son uid (None si le nom est vide).
+#[tauri::command]
+fn create_folder(state: State<'_, AppState>, name: String) -> Result<Option<String>, String> {
+    let conn = lock(&state)?;
+    flux_core::manage::create_folder(&conn, &name).map_err(|e| e.to_string())
+}
+
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
 /// native de la webview.
 #[tauri::command]
@@ -276,6 +331,15 @@ pub fn run() {
             add_reading_seconds,
             add_feed,
             refresh_all,
+            rename_feed,
+            move_feed,
+            delete_feed,
+            rename_folder,
+            delete_folder,
+            set_folder_expanded,
+            rename_tag,
+            delete_tag,
+            create_folder,
             print_page,
             dev_import_swift_data
         ])

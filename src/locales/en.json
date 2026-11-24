@@ -10,7 +10,8 @@
     "feeds": "Feeds",
     "noFeeds": "No feeds yet.",
     "addFeed": "Add a feed",
-    "refresh": "Refresh feeds"
+    "refresh": "Refresh feeds",
+    "addFolder": "New folder"
   },
   "list": {
     "emptyTitle": "No articles yet",
@@ -86,5 +87,42 @@
     "notAFeed": "No RSS or Atom feed found at this address.",
     "alreadyExists": "This feed is already in your list.",
     "http": "The server answered with error {{code}}."
+  },
+  "menu": {
+    "rename": "Rename",
+    "markAllRead": "Mark all as read",
+    "moveTo": "Move to",
+    "noFolder": "No folder",
+    "openWebsite": "Open website",
+    "copyFeedUrl": "Copy feed URL",
+    "deleteFeed": "Delete feed",
+    "deleteFolder": "Delete folder",
+    "deleteTag": "Delete tag",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "tags": "Tags",
+    "newTag": "New tag…",
+    "openBrowser": "Open in browser",
+    "copyLink": "Copy link"
+  },
+  "dialogs": {
+    "renameFeed": "Rename feed",
+    "renameFolder": "Rename folder",
+    "renameTag": "Rename tag",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "newTag": "New tag",
+    "tagName": "Tag name",
+    "save": "Save",
+    "create": "Create",
+    "delete": "Delete",
+    "deleteFeedTitle": "Delete “{{name}}”?",
+    "deleteFeedBody": "The feed and its articles will be deleted. Favorites stay in Favorites.",
+    "deleteFolderTitle": "Delete the folder “{{name}}”?",
+    "deleteFolderBody": "The feeds in the folder are not deleted: they go back to the top level.",
+    "deleteTagTitle": "Delete the tag “{{name}}”?",
+    "deleteTagBody": "The articles stay in favorites, without this tag."
   }
 }

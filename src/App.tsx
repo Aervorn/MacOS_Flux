@@ -8,6 +8,9 @@ import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "
 import ArticleList from "./components/ArticleList";
 import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
+import ContextMenu, { type MenuItem } from "./components/ContextMenu";
+import { ConfirmDialog, PromptDialog } from "./components/Dialogs";
+import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import styles from "./App.module.css";
@@ -33,6 +36,8 @@ export default function App() {
   const [message, setMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddFeed, setShowAddFeed] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
+  const [asking, setAsking] = useState<Ask | null>(null);
 
   // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
   const selectedKeyRef = useRef<string | null>(null);
@@ -120,6 +125,43 @@ export default function App() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshMinutes]);
+
+  const menuContext = (): MenuContext => ({
+    t,
+    sidebar,
+    selection,
+    refresh,
+    select: (s) => {
+      setSelection(s);
+      setSelectedKey(null);
+    },
+    ask: setAsking,
+    fail: (e) => setMessage(errorMessage(e, t)),
+    hideTaggedFavorites: prefs?.hideTaggedFavorites ?? false,
+  });
+
+  const openMenu = (e: React.MouseEvent, items: MenuItem[]) => {
+    e.preventDefault();
+    setMenu({ x: e.clientX, y: e.clientY, items });
+  };
+
+  const openArticleMenu = async (e: React.MouseEvent, article: ArticleRow) => {
+    e.preventDefault();
+    const { clientX: x, clientY: y } = e;
+    const detail = await api.article(article.key).catch(() => null);
+    setMenu({ x, y, items: articleMenu(menuContext(), article, detail) });
+  };
+
+  const createFolder = () =>
+    setAsking({
+      kind: "prompt",
+      title: t("dialogs.newFolder"),
+      placeholder: t("dialogs.folderName"),
+      confirmLabel: t("dialogs.create"),
+      onSubmit: (name) => {
+        api.createFolder(name).then(refresh).catch((err) => setMessage(errorMessage(err, t)));
+      },
+    });
 
   const updatePrefs = (patch: Partial<Prefs>) => {
     if (!prefs) return;
@@ -248,6 +290,7 @@ export default function App() {
         selectedKey={selectedKey}
         showSummary={prefs.showSummary}
         onSelect={setSelectedKey}
+        onMenu={(e, article) => void openArticleMenu(e, article)}
       />
     </div>
   );
@@ -264,6 +307,13 @@ export default function App() {
         refreshing={refreshing}
         onRefresh={() => void refreshFeeds()}
         onAddFeed={() => setShowAddFeed(true)}
+        onAddFolder={createFolder}
+        onFeedMenu={(e, feed) => openMenu(e, feedMenu(menuContext(), feed))}
+        onFolderMenu={(e, folder) => openMenu(e, folderMenu(menuContext(), folder))}
+        onTagMenu={(e, tag) => openMenu(e, tagMenu(menuContext(), tag))}
+        onToggleFolder={(uid, open) => {
+          api.setFolderExpanded(uid, open).catch(() => undefined);
+        }}
       />
 
       <main className={styles.main}>
@@ -313,6 +363,30 @@ export default function App() {
           list
         )}
       </main>
+      {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
+      {asking?.kind === "prompt" && (
+        <PromptDialog
+          title={asking.title}
+          initial={asking.initial}
+          placeholder={asking.placeholder}
+          confirmLabel={asking.confirmLabel}
+          allowEmpty={asking.allowEmpty}
+          onSubmit={(value) => {
+            setAsking(null);
+            asking.onSubmit(value);
+          }}
+          onClose={() => setAsking(null)}
+        />
+      )}
+      {asking?.kind === "confirm" && (
+        <ConfirmDialog
+          title={asking.title}
+          message={asking.message}
+          confirmLabel={asking.confirmLabel}
+          onConfirm={asking.onConfirm}
+          onClose={() => setAsking(null)}
+        />
+      )}
       {showAddFeed && (
         <AddFeedDialog
           folders={sidebar?.folders ?? []}
