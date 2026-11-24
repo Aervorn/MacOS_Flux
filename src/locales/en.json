@@ -119,7 +119,8 @@
     "fontAtkinson": "Hyperlegible, for low vision",
     "fontSystemSerif": "Georgia, nothing extra loaded",
     "fontMono": "Geist Mono",
-    "sectionSync": "Sync"
+    "sectionSync": "Sync",
+    "sectionBackup": "Backup"
   },
   "dev": {
     "version": "Version {{version}} (core {{core}})",
@@ -227,5 +228,26 @@
     "noOther": "No other Mac seen yet.",
     "now": "Sync now",
     "icloudUnavailable": "iCloud Drive is not turned on on this Mac."
+  },
+  "backup": {
+    "enable": "Daily backup to iCloud Drive",
+    "help": "One archive per day, stored in iCloud Drive/Flux/Sauvegardes Tauri. Unlike sync, it's a frozen snapshot: a deletion never erases anything from it.",
+    "keep": "Backups kept",
+    "keepCount": "Last {{count}}",
+    "includeArchive": "Include favorites' images",
+    "includeArchiveHelp": "Thumbnails of your favorites, so they come back after a restore without being downloaded again.",
+    "working": "Working…",
+    "last": "Last backup: {{date}}",
+    "never": "No backup yet.",
+    "now": "Back up now",
+    "available": "Available backups",
+    "none": "No backups yet.",
+    "notDownloaded": "not downloaded yet",
+    "restore": "Restore",
+    "restoreTitle": "Restore a backup",
+    "restoreConfirm": "Restore “{{name}}”? Flux will restart. Your current database is set aside, and the restored content will be sent to your other Macs if they sync.",
+    "relaunchManually": "Backup ready. Quit and reopen Flux to apply it.",
+    "quitNow": "Quit Flux",
+    "later": "Later"
   }
 }

@@ -119,7 +119,8 @@
     "fontAtkinson": "Très lisible, pour la basse vision",
     "fontSystemSerif": "Georgia, rien à charger",
     "fontMono": "Geist Mono",
-    "sectionSync": "Synchronisation"
+    "sectionSync": "Synchronisation",
+    "sectionBackup": "Sauvegarde"
   },
   "dev": {
     "version": "Version {{version}} (cœur {{core}})",
@@ -227,5 +228,26 @@
     "noOther": "Aucun autre Mac vu pour l'instant.",
     "now": "Synchroniser maintenant",
     "icloudUnavailable": "iCloud Drive n'est pas activé sur ce Mac."
+  },
+  "backup": {
+    "enable": "Sauvegarde quotidienne dans iCloud Drive",
+    "help": "Une archive par jour, rangée dans iCloud Drive/Flux/Sauvegardes Tauri. Contrairement à la synchronisation, c'est une photo figée : une suppression n'y efface rien.",
+    "keep": "Sauvegardes conservées",
+    "keepCount": "{{count}} dernières",
+    "includeArchive": "Inclure les images des favoris",
+    "includeArchiveHelp": "Les miniatures de tes favoris, pour les retrouver après une restauration sans les retélécharger.",
+    "working": "Opération en cours…",
+    "last": "Dernière sauvegarde : {{date}}",
+    "never": "Pas encore de sauvegarde.",
+    "now": "Sauvegarder maintenant",
+    "available": "Sauvegardes disponibles",
+    "none": "Aucune sauvegarde pour l'instant.",
+    "notDownloaded": "pas encore téléchargée",
+    "restore": "Restaurer",
+    "restoreTitle": "Restaurer une sauvegarde",
+    "restoreConfirm": "Restaurer « {{name}} » ? Flux va redémarrer. Ta base actuelle est mise de côté, et le contenu restauré sera envoyé aux autres Mac s'ils synchronisent.",
+    "relaunchManually": "Sauvegarde prête. Quitte puis relance Flux pour l'appliquer.",
+    "quitNow": "Quitter Flux",
+    "later": "Plus tard"
   }
 }

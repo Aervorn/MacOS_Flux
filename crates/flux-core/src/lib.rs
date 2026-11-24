@@ -6,6 +6,7 @@
 //! `cluster`, `images`, `sync`, `backup`, `opml`.
 
 pub mod actions;
+pub mod backup;
 pub mod articles;
 pub mod cluster;
 pub mod db;

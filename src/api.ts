@@ -202,7 +202,31 @@ export interface SyncStatus {
   icloudAvailable: boolean;
 }
 
+/** Miroir de `BackupInfo` (src-tauri). */
+export interface BackupFile {
+  name: string;
+  device: string;
+  path: string;
+  size: number;
+  /** Secondes Unix */
+  modified: number;
+  downloaded: boolean;
+}
+
+export interface BackupInfo {
+  working: boolean;
+  error: string | null;
+  lastBackup: number | null;
+  icloudAvailable: boolean;
+  backups: BackupFile[];
+}
+
 export const api = {
+  backupStatus: () => invoke<BackupInfo>("backup_status"),
+  backupNow: () => invoke<void>("backup_now"),
+  quitApp: () => invoke<void>("quit_app"),
+  /** Renvoie vrai si l'app se relance toute seule (faux en développement). */
+  restoreBackup: (path: string) => invoke<boolean>("restore_backup", { path }),
   syncStatus: () => invoke<SyncStatus>("sync_status"),
   syncNow: () => invoke<void>("sync_now"),
   syncApply: (enabled: boolean) => invoke<void>("sync_apply", { enabled }),

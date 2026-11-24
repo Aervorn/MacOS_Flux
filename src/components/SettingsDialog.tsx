@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BookOpen, Cloud, Palette, Rss, SlidersHorizontal, Terminal, X } from "lucide-react";
+import { Archive, BookOpen, Cloud, Palette, Rss, SlidersHorizontal, Terminal, X } from "lucide-react";
 import type { AppInfo, ImportReport, Prefs, SidebarFeed } from "../api";
 import { setLang, type Lang } from "../i18n";
 import type { ThemeMode } from "../theme";
 import { ARTICLE_FONTS, UI_FONTS } from "../fonts";
 import FiltersPanel from "./FiltersPanel";
+import BackupSection from "./BackupSection";
 import SyncSection from "./SyncSection";
 import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
-export type Section = "appearance" | "reading" | "feeds" | "filters" | "sync" | "dev";
+export type Section = "appearance" | "reading" | "feeds" | "filters" | "sync" | "backup" | "dev";
 
 const SECTIONS: { id: Section; icon: React.ReactNode; labelKey: string }[] = [
   { id: "appearance", icon: <Palette size={16} />, labelKey: "settings.sectionAppearance" },
@@ -18,6 +19,7 @@ const SECTIONS: { id: Section; icon: React.ReactNode; labelKey: string }[] = [
   { id: "feeds", icon: <Rss size={16} />, labelKey: "settings.sectionFeeds" },
   { id: "filters", icon: <SlidersHorizontal size={16} />, labelKey: "settings.sectionFilters" },
   { id: "sync", icon: <Cloud size={16} />, labelKey: "settings.sectionSync" },
+  { id: "backup", icon: <Archive size={16} />, labelKey: "settings.sectionBackup" },
   { id: "dev", icon: <Terminal size={16} />, labelKey: "settings.sectionDev" },
 ];
 
@@ -248,6 +250,8 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
         return <FiltersPanel feeds={feeds} onChanged={onChanged} onEditingChange={setFiltersEditing} />;
       case "sync":
         return <SyncSection prefs={prefs} onPrefs={onPrefs} />;
+      case "backup":
+        return <BackupSection prefs={prefs} onPrefs={onPrefs} />;
       case "dev":
         return (
           <>

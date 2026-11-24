@@ -37,3 +37,8 @@ pnpm tauri dev                     # lance l'app en développement
 - Même format JSON v1 que l'app Swift, même dossier `iCloud Drive/Flux/devices/`.
 - Limites connues : changement d'adresse d'un flux (`previousURL`) pas repris (l'ancien flux est supprimé, le nouveau créé, l'état lu de ses articles est perdu) ; un fichier iCloud pas encore téléchargé est demandé via `brctl` mais n'est lu qu'à la synchro suivante ; la synchro bloque brièvement la base pendant qu'elle tourne.
 - Testée à la main (lecture, ajout/suppression de flux) : OK.
+
+## Sauvegarde iCloud (en cours)
+- Une archive `.zip` par jour dans `iCloud Drive/Flux/Sauvegardes Tauri/<Mac>/` (dossier distinct de celui de l'app Swift : formats incompatibles). Contient la base SQLite (réglages compris), `Infos.json` et, en option, les images des favoris.
+- Restauration appliquée au lancement suivant (base actuelle gardée dans `before-restore/`, identifiant de synchro conservé, mémoire de synchro effacée). En développement (`tauri dev`), la relance est manuelle.
+- Limites : une restauration ne peut pas lire les sauvegardes de l'app Swift (utiliser l'import de données Swift) ; archive pas encore téléchargée d'iCloud : attente jusqu'à 2 minutes ; images des favoris limitées à ce qui est dans les dossiers d'images connus.

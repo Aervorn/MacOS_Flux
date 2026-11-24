@@ -25,6 +25,27 @@ struct AppState {
     refreshing: AtomicBool,
     /// État de la synchronisation iCloud (affiché dans les réglages).
     sync: Mutex<SyncStatus>,
+    /// État de la sauvegarde iCloud (affiché dans les réglages).
+    backup: Mutex<BackupStatus>,
+}
+
+#[derive(Default, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BackupStatus {
+    working: bool,
+    /// Code d'erreur (`icloud_unavailable`) ou message
+    error: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BackupInfo {
+    working: bool,
+    error: Option<String>,
+    /// Secondes Unix de la dernière sauvegarde réussie
+    last_backup: Option<f64>,
+    icloud_available: bool,
+    backups: Vec<flux_core::backup::BackupFile>,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -445,6 +466,129 @@ fn sync_loop(app: tauri::AppHandle) {
     }
 }
 
+// --- Sauvegarde iCloud ---
+
+fn run_backup(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    {
+        let mut st = state.backup.lock().map_err(|_| "état verrouillé".to_string())?;
+        if st.working {
+            return Ok(());
+        }
+        st.working = true;
+        st.error = None;
+    }
+    let result = (|| -> Result<(), String> {
+        if !flux_core::sync::is_icloud_available() {
+            return Err("icloud_unavailable".to_string());
+        }
+        // La base n'est bloquée que le temps de la copie ; la compression se fait ensuite.
+        let (staging, dest, keep) = {
+            let conn = state.db.lock().map_err(|_| "base de données verrouillée".to_string())?;
+            let prefs = flux_core::db::load_prefs(&conn).map_err(|e| e.to_string())?;
+            let dev = flux_core::sync::device(&conn).map_err(|e| e.to_string())?;
+            let staging = flux_core::backup::stage(
+                &conn,
+                &state.images,
+                prefs.backup_include_archive,
+                &dev.name,
+                &app.package_info().version.to_string(),
+            )
+            .map_err(|e| e.to_string())?;
+            (staging, flux_core::backup::device_dir(&flux_core::backup::backups_root(), &dev.name), prefs.backup_keep)
+        };
+        flux_core::backup::pack(&staging, &dest, &flux_core::backup::stamp_now(), keep).map_err(|e| e.to_string())?;
+        let conn = state.db.lock().map_err(|_| "base de données verrouillée".to_string())?;
+        flux_core::backup::record_backup(&conn, flux_core::feeds::now()).map_err(|e| e.to_string())
+    })();
+    let mut st = state.backup.lock().map_err(|_| "état verrouillé".to_string())?;
+    st.working = false;
+    if let Err(e) = &result {
+        st.error = Some(e.clone());
+    }
+    result
+}
+
+#[tauri::command]
+fn backup_status(state: State<'_, AppState>) -> Result<BackupInfo, String> {
+    let st = state.backup.lock().map_err(|_| "état verrouillé".to_string())?.clone();
+    let last_backup = {
+        let conn = lock(&state)?;
+        flux_core::backup::last_backup(&conn).map_err(|e| e.to_string())?
+    };
+    Ok(BackupInfo {
+        working: st.working,
+        error: st.error,
+        last_backup,
+        icloud_available: flux_core::sync::is_icloud_available(),
+        backups: flux_core::backup::list_backups(&flux_core::backup::backups_root()),
+    })
+}
+
+#[tauri::command]
+fn backup_now(app: tauri::AppHandle) -> Result<(), String> {
+    run_backup(&app)
+}
+
+/// Prépare la restauration, puis relance l'app pour l'appliquer. En développement, la relance
+/// est laissée à l'utilisateur (renvoie false) : `tauri dev` ne survit pas à un redémarrage.
+#[tauri::command]
+fn restore_backup(app: tauri::AppHandle, state: State<'_, AppState>, path: String) -> Result<bool, String> {
+    let zip = PathBuf::from(&path);
+    // Uniquement une archive rangée dans le dossier des sauvegardes
+    if !zip.starts_with(flux_core::backup::backups_root()) || zip.components().any(|c| c.as_os_str() == "..") {
+        return Err("Chemin de sauvegarde invalide.".to_string());
+    }
+    let data_dir = state.db_path.parent().ok_or("dossier de données introuvable")?.to_path_buf();
+    {
+        let mut st = state.backup.lock().map_err(|_| "état verrouillé".to_string())?;
+        st.working = true;
+        st.error = None;
+    }
+    let result = flux_core::backup::prepare_restore(&data_dir, &zip).map_err(|e| e.to_string());
+    let mut st = state.backup.lock().map_err(|_| "état verrouillé".to_string())?;
+    st.working = false;
+    if let Err(e) = &result {
+        st.error = Some(e.clone());
+    }
+    drop(st);
+    result?;
+    if cfg!(debug_assertions) {
+        Ok(false)
+    } else {
+        app.restart()
+    }
+}
+
+/// Quitte l'app (après une restauration préparée en développement, où la relance est manuelle).
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+/// Sauvegarde automatique : vérifie une minute après le lancement, puis toutes les heures.
+fn backup_loop(app: tauri::AppHandle) {
+    std::thread::sleep(std::time::Duration::from_secs(60));
+    loop {
+        let due = {
+            let state = app.state::<AppState>();
+            let due = match state.db.lock() {
+                Ok(conn) => {
+                    let enabled = flux_core::db::load_prefs(&conn).map(|p| p.backup_enabled).unwrap_or(false);
+                    let last = flux_core::backup::last_backup(&conn).ok().flatten().unwrap_or(0.0);
+                    enabled && flux_core::feeds::now() - last >= 86_400.0
+                }
+                Err(_) => false,
+            };
+            due && flux_core::sync::is_icloud_available()
+        };
+        if due {
+            let _ = run_backup(&app);
+        }
+        std::thread::sleep(std::time::Duration::from_secs(3600));
+    }
+}
+
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
 /// native de la webview.
 #[tauri::command]
@@ -506,6 +650,10 @@ pub fn run() {
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
+            // Restauration préparée : appliquée avant d'ouvrir la base
+            if let Err(e) = flux_core::backup::apply_pending_restore(&dir) {
+                eprintln!("restauration : {e}");
+            }
             let db_path = dir.join("flux.sqlite");
             let conn = flux_core::db::open(&db_path)?;
             let swift = app.path().home_dir()?.join("Library/Application Support/Flux");
@@ -519,9 +667,12 @@ pub fn run() {
                 images,
                 refreshing: AtomicBool::new(false),
                 sync: Mutex::new(SyncStatus::default()),
+                backup: Mutex::new(BackupStatus::default()),
             });
             let handle = app.handle().clone();
             std::thread::spawn(move || sync_loop(handle));
+            let handle = app.handle().clone();
+            std::thread::spawn(move || backup_loop(handle));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -561,6 +712,10 @@ pub fn run() {
             sync_status,
             sync_now,
             sync_apply,
+            backup_status,
+            backup_now,
+            restore_backup,
+            quit_app,
             import_opml,
             export_opml,
             create_folder,
