@@ -249,7 +249,7 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
       case "filters":
         return <FiltersPanel feeds={feeds} onChanged={onChanged} onEditingChange={setFiltersEditing} />;
       case "sync":
-        return <SyncSection prefs={prefs} onPrefs={onPrefs} />;
+        return <SyncSection prefs={prefs} onPrefs={onPrefs} onChanged={onChanged} />;
       case "backup":
         return <BackupSection prefs={prefs} onPrefs={onPrefs} />;
       case "dev":

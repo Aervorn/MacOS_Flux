@@ -29,7 +29,8 @@ export default function BackupSection({ prefs, onPrefs }: Props) {
     return () => clearInterval(id);
   }, [load]);
 
-  const errorText = (e: string | null) => (e === "icloud_unavailable" ? t("sync.icloudUnavailable") : e);
+  const errorText = (e: string | null) =>
+    e === "icloud_unavailable" ? t("sync.icloudUnavailable") : e === "icloud_permission" ? t("sync.permission") : e;
   const date = (secs: number) => formatPublished(secs, i18n.language);
 
   const backupNow = async () => {

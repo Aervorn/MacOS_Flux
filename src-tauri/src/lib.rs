@@ -351,6 +351,16 @@ fn create_folder(state: State<'_, AppState>, name: String) -> Result<Option<Stri
 
 // --- Synchronisation iCloud ---
 
+/// Une erreur « Operation not permitted » dans iCloud Drive vient presque toujours de
+/// l'autorisation macOS (Réglages Système > Confidentialité et sécurité) : code dédié.
+fn icloud_error(e: String) -> String {
+    if e.contains("Operation not permitted") || e.contains("Permission denied") {
+        "icloud_permission".to_string()
+    } else {
+        e
+    }
+}
+
 /// Une synchro complète ; prévient l'interface si la base a changé.
 fn run_sync(app: &tauri::AppHandle) -> Result<(), String> {
     let state = app.state::<AppState>();
@@ -369,7 +379,7 @@ fn run_sync(app: &tauri::AppHandle) -> Result<(), String> {
         let prefs = flux_core::db::load_prefs(&conn).map_err(|e| e.to_string())?;
         let dev = flux_core::sync::device(&conn).map_err(|e| e.to_string())?;
         flux_core::sync::sync(&conn, &flux_core::sync::devices_dir(), &dev, prefs.retention_days, flux_core::feeds::now())
-            .map_err(|e| e.to_string())
+            .map_err(|e| icloud_error(e.to_string()))
     })();
     let mut st = state.sync.lock().map_err(|_| "état verrouillé".to_string())?;
     st.syncing = false;
@@ -453,7 +463,8 @@ fn sync_loop(app: tauri::AppHandle) {
         if last_remote_check.elapsed() >= Duration::from_secs(30) {
             last_remote_check = Instant::now();
             let now: HashMap<PathBuf, f64> = flux_core::sync::remote_files(&dir, &dev_id).into_iter().collect();
-            if now != seen {
+            let has_error = state.sync.lock().map(|s| s.error.is_some()).unwrap_or(false);
+            if now != seen || has_error {
                 due = true;
             }
         }
@@ -497,7 +508,7 @@ fn run_backup(app: &tauri::AppHandle) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
             (staging, flux_core::backup::device_dir(&flux_core::backup::backups_root(), &dev.name), prefs.backup_keep)
         };
-        flux_core::backup::pack(&staging, &dest, &flux_core::backup::stamp_now(), keep).map_err(|e| e.to_string())?;
+        flux_core::backup::pack(&staging, &dest, &flux_core::backup::stamp_now(), keep).map_err(|e| icloud_error(e.to_string()))?;
         let conn = state.db.lock().map_err(|_| "base de données verrouillée".to_string())?;
         flux_core::backup::record_backup(&conn, flux_core::feeds::now()).map_err(|e| e.to_string())
     })();

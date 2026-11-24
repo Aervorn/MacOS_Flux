@@ -227,7 +227,8 @@
     "updated": "updated {{date}}",
     "noOther": "No other Mac seen yet.",
     "now": "Sync now",
-    "icloudUnavailable": "iCloud Drive is not turned on on this Mac."
+    "icloudUnavailable": "iCloud Drive is not turned on on this Mac.",
+    "permission": "Flux doesn't have permission to access iCloud Drive. Open System Settings > Privacy & Security > Files & Folders (or Full Disk Access), allow Flux, then try again: sync retries on its own every 30 seconds."
   },
   "backup": {
     "enable": "Daily backup to iCloud Drive",

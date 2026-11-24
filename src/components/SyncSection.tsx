@@ -7,13 +7,16 @@ import styles from "./SettingsDialog.module.css";
 interface Props {
   prefs: Prefs;
   onPrefs: (patch: Partial<Prefs>) => void;
+  /** Recharge la barre latérale et la liste (la synchro a pu changer des choses). */
+  onChanged: () => void;
 }
 
 /** Réglages > Synchronisation : activer la synchro iCloud Drive et voir où elle en est. */
-export default function SyncSection({ prefs, onPrefs }: Props) {
+export default function SyncSection({ prefs, onPrefs, onChanged }: Props) {
   const { t, i18n } = useTranslation();
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
 
   const load = useCallback(() => api.syncStatus().then(setStatus).catch(() => undefined), []);
   useEffect(() => {
@@ -25,10 +28,12 @@ export default function SyncSection({ prefs, onPrefs }: Props) {
   const toggle = async (enabled: boolean) => {
     onPrefs({ syncEnabled: enabled });
     setBusy(true);
+    setFailure(null);
     try {
       await api.syncApply(enabled);
-    } catch {
-      /* l'erreur s'affiche dans l'état */
+      onChanged();
+    } catch (e) {
+      setFailure(String(e));
     } finally {
       setBusy(false);
       void load();
@@ -37,17 +42,20 @@ export default function SyncSection({ prefs, onPrefs }: Props) {
 
   const syncNow = async () => {
     setBusy(true);
+    setFailure(null);
     try {
       await api.syncNow();
-    } catch {
-      /* idem */
+      onChanged();
+    } catch (e) {
+      setFailure(String(e));
     } finally {
       setBusy(false);
       void load();
     }
   };
 
-  const error = status?.error ? (status.error === "icloud_unavailable" ? t("sync.icloudUnavailable") : status.error) : null;
+  const raw = status?.error ?? failure;
+  const error = raw ? (raw === "icloud_unavailable" ? t("sync.icloudUnavailable") : raw === "icloud_permission" ? t("sync.permission") : raw) : null;
   const date = (secs: number) => formatPublished(secs, i18n.language);
 
   return (

@@ -18,7 +18,7 @@
   gap: 12px;
   width: 100%;
   padding: 10px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 10px;
   background: transparent;
   color: inherit;
@@ -52,7 +52,7 @@
   gap: 7px;
   min-width: 0;
   padding: 6px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 12px;
   background: transparent;
   color: inherit;
@@ -63,6 +63,11 @@
 .card:hover,
 .card.selected {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.item.selected,
+.card.selected {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
 }
 
 .cardMedia {
