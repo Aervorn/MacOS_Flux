@@ -28,3 +28,7 @@ pnpm tauri dev                     # lance l'app en développement
 - **Menu contextuel** sur les articles (clic droit : lu/non lu, favori, tags…) : reporté après les actions, **à faire avant la release finale**.
 - **Archivage des favoris** : mettre un article en favori ne télécharge pas encore son texte complet ni ses images dans l'archive permanente (dépend du téléchargement des images, étape suivante).
 - **Tags** : création et attribution faites ; renommer / supprimer un tag viendra avec les menus contextuels de la barre latérale.
+- **Nouveaux articles : pas encore de filtres ni de détection de doublons** (règles « masquer / marquer lu » et regroupement « Aussi publié par » arrivent aux étapes suivantes) : un article qui devrait être masqué par une règle apparaît pour l'instant.
+- **Cache d'images** : les miniatures des nouveaux articles sont téléchargées dans notre dossier (`images/`), mais le cache n'est pas encore limité en taille (réglage « limite du cache »). Les images à l'intérieur des articles se chargent en ligne à la lecture.
+- **Erreurs de flux** : mémorisées en base (`last_error`) mais pas encore affichées dans la barre latérale.
+- **Pas de mode hors ligne ni de préparation hors ligne** (réglage `offlineEnabled`).

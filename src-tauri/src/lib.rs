@@ -1,10 +1,13 @@
 use std::borrow::Cow;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use flux_core::actions::TagInfo;
 use flux_core::articles::ArticleDetail;
+use flux_core::images::ImageDirs;
 use flux_core::import::ImportReport;
+use flux_core::refresh::{AddedFeed, RefreshReport};
 use flux_core::net::FetchedPage;
 use flux_core::prefs::Prefs;
 use flux_core::query::{ArticleRow, ListQuery, Selection, Sidebar};
@@ -15,6 +18,10 @@ use tauri::{Manager, State};
 struct AppState {
     db: Mutex<Connection>,
     db_path: PathBuf,
+    /// Images des articles : notre dossier, puis ceux de l'app Swift (lecture seule).
+    images: ImageDirs,
+    /// Une actualisation à la fois.
+    refreshing: AtomicBool,
 }
 
 fn lock<'a>(state: &'a State<'_, AppState>) -> Result<std::sync::MutexGuard<'a, Connection>, String> {
@@ -152,6 +159,35 @@ fn add_reading_seconds(state: State<'_, AppState>, key: String, seconds: f64) ->
     flux_core::actions::add_reading_seconds(&conn, &key, seconds).map_err(|e| e.to_string())
 }
 
+/// Prefs lues dans la base, sans garder le verrou.
+fn current_prefs(state: &State<'_, AppState>) -> Result<Prefs, String> {
+    let conn = lock(state)?;
+    flux_core::db::load_prefs(&conn).map_err(|e| e.to_string())
+}
+
+/// Ajoute un flux (adresse du flux ou du site) et importe ses articles.
+#[tauri::command]
+async fn add_feed(state: State<'_, AppState>, input: String, folder_uid: Option<String>) -> Result<AddedFeed, String> {
+    let prefs = current_prefs(&state)?;
+    flux_core::refresh::add_feed(&state.db, &input, folder_uid.as_deref(), &prefs, &state.images)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Actualise tous les flux (sans effet si une actualisation est déjà en cours).
+#[tauri::command]
+async fn refresh_all(state: State<'_, AppState>) -> Result<RefreshReport, String> {
+    if state.refreshing.swap(true, Ordering::SeqCst) {
+        return Ok(RefreshReport::default());
+    }
+    let result = match current_prefs(&state) {
+        Ok(prefs) => flux_core::refresh::refresh_all(&state.db, &prefs, &state.images).await.map_err(|e| e.to_string()),
+        Err(e) => Err(e),
+    };
+    state.refreshing.store(false, Ordering::SeqCst);
+    result
+}
+
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
 /// native de la webview.
 #[tauri::command]
@@ -188,10 +224,8 @@ fn serve_image(
     request: tauri::http::Request<Vec<u8>>,
 ) -> tauri::http::Response<Cow<'static, [u8]>> {
     let name = request.uri().path().trim_start_matches('/').to_string();
-    let found = ctx.app_handle().path().home_dir().ok().and_then(|home| {
-        let base = home.join("Library/Application Support/Flux");
-        flux_core::images::read_cached(&[base.join("Archive"), base.join("Images")], &name)
-    });
+    let state = ctx.app_handle().state::<AppState>();
+    let found = flux_core::images::read_cached(&state.images.read_order(), &name);
     match found {
         Some((data, mime)) => tauri::http::Response::builder()
             .status(200)
@@ -215,7 +249,12 @@ pub fn run() {
             std::fs::create_dir_all(&dir)?;
             let db_path = dir.join("flux.sqlite");
             let conn = flux_core::db::open(&db_path)?;
-            app.manage(AppState { db: Mutex::new(conn), db_path });
+            let swift = app.path().home_dir()?.join("Library/Application Support/Flux");
+            let images = ImageDirs {
+                own: dir.join("images"),
+                others: vec![swift.join("Archive"), swift.join("Images")],
+            };
+            app.manage(AppState { db: Mutex::new(conn), db_path, images, refreshing: AtomicBool::new(false) });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -235,6 +274,8 @@ pub fn run() {
             set_tag,
             record_opened,
             add_reading_seconds,
+            add_feed,
+            refresh_all,
             print_page,
             dev_import_swift_data
         ])

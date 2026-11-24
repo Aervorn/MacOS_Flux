@@ -3,9 +3,11 @@ import { useTranslation } from "react-i18next";
 import { api, sameSelection } from "./api";
 import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as SidebarData } from "./api";
 import { hasSavedLang, setLang, type Lang } from "./i18n";
+import { errorMessage } from "./errors";
 import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "./theme";
 import ArticleList from "./components/ArticleList";
 import Sidebar from "./components/Sidebar";
+import AddFeedDialog from "./components/AddFeedDialog";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import styles from "./App.module.css";
@@ -29,6 +31,8 @@ export default function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showAddFeed, setShowAddFeed] = useState(false);
 
   // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
   const selectedKeyRef = useRef<string | null>(null);
@@ -93,6 +97,29 @@ export default function App() {
       setMessage(String(e));
     }
   };
+
+  // Actualisation de tous les flux, puis compteurs et liste à jour.
+  const refreshFeeds = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const report = await api.refreshAll();
+      if (report.added > 0 || report.failed > 0) refresh();
+    } catch (e) {
+      setMessage(errorMessage(e, t));
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refresh, t]);
+
+  // Au lancement (une fois les réglages chargés), puis à intervalle régulier.
+  const refreshMinutes = prefs?.refreshMinutes ?? null;
+  useEffect(() => {
+    if (refreshMinutes === null) return;
+    void refreshFeeds();
+    const id = setInterval(() => void refreshFeeds(), Math.max(refreshMinutes, 5) * 60_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshMinutes]);
 
   const updatePrefs = (patch: Partial<Prefs>) => {
     if (!prefs) return;
@@ -234,6 +261,9 @@ export default function App() {
         favoritesExpanded={prefs.favoritesExpanded}
         onToggleFavorites={() => updatePrefs({ favoritesExpanded: !prefs.favoritesExpanded })}
         footer={footer}
+        refreshing={refreshing}
+        onRefresh={() => void refreshFeeds()}
+        onAddFeed={() => setShowAddFeed(true)}
       />
 
       <main className={styles.main}>
@@ -283,6 +313,18 @@ export default function App() {
           list
         )}
       </main>
+      {showAddFeed && (
+        <AddFeedDialog
+          folders={sidebar?.folders ?? []}
+          initialFolderUid={selection.kind === "folder" ? selection.uid : null}
+          onClose={() => setShowAddFeed(false)}
+          onAdded={(feedUrl) => {
+            setShowAddFeed(false);
+            refresh();
+            select({ kind: "feed", url: feedUrl });
+          }}
+        />
+      )}
     </div>
   );
 }

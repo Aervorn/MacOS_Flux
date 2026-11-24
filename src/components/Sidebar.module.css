@@ -6,9 +6,41 @@
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px 16px;
+}
+
+.brandName {
+  flex: 1;
   font-size: 18px;
   font-weight: 600;
-  padding: 8px 12px 16px;
+}
+
+.headerButton {
+  display: inline-flex;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.headerButton:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .nav {

@@ -53,6 +53,24 @@ pub fn sniff_mime(data: &[u8]) -> Option<&'static str> {
     None
 }
 
+/// Dossiers d'images : le nôtre (lecture et écriture), puis ceux de l'app Swift (lecture seule).
+#[derive(Debug, Clone, Default)]
+pub struct ImageDirs {
+    pub own: PathBuf,
+    pub others: Vec<PathBuf>,
+}
+
+impl ImageDirs {
+    /// Ordre de lecture : le nôtre d'abord.
+    pub fn read_order(&self) -> Vec<PathBuf> {
+        std::iter::once(self.own.clone()).chain(self.others.iter().cloned()).collect()
+    }
+
+    pub fn has(&self, name: &str) -> bool {
+        self.read_order().iter().any(|d| d.join(name).is_file())
+    }
+}
+
 /// Lit une image dans les dossiers donnés (dans l'ordre : archive d'abord), en lecture seule.
 pub fn read_cached(dirs: &[PathBuf], name: &str) -> Option<(Vec<u8>, &'static str)> {
     if !is_cache_name(name) {

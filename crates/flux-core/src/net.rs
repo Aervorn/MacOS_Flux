@@ -6,7 +6,7 @@ use std::time::Duration;
 use reqwest::header::{ACCEPT, ACCEPT_LANGUAGE};
 use serde::Serialize;
 
-use crate::error::{Error, Result};
+use crate::error::{Error, FeedError, Result};
 
 /// User-Agent de Safari : certains sites (Cloudflare…) bloquent les clients inconnus.
 const USER_AGENT: &str =
@@ -37,34 +37,65 @@ pub fn decode_html(bytes: &[u8]) -> String {
     }
 }
 
-pub async fn fetch_page(url: &str) -> Result<FetchedPage> {
+const PAGE_ACCEPT: &str = "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8";
+const FEED_ACCEPT: &str = "application/rss+xml, application/atom+xml, application/feed+json, application/xml, text/xml, application/json;q=0.9, text/html;q=0.9, */*;q=0.8";
+const IMAGE_ACCEPT: &str = "image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,*/*;q=0.5";
+
+/// Client partagé (connexions réutilisées).
+fn client() -> &'static reqwest::Client {
+    static CLIENT: std::sync::OnceLock<reqwest::Client> = std::sync::OnceLock::new();
+    CLIENT.get_or_init(|| {
+        reqwest::Client::builder()
+            .user_agent(USER_AGENT)
+            .timeout(Duration::from_secs(20))
+            .build()
+            .expect("client HTTP")
+    })
+}
+
+/// Réponse brute : contenu et adresse finale (après redirections).
+pub struct Response {
+    pub data: Vec<u8>,
+    pub final_url: String,
+}
+
+/// Télécharge une adresse http(s). Une réponse hors 2xx est une erreur.
+pub async fn get(url: &str, accept: &str, max_bytes: usize) -> Result<Response> {
     if !is_http_url(url) {
-        return Err(Error::Other("adresse non prise en charge".into()));
+        return Err(Error::Feed(FeedError::InvalidUrl));
     }
-    let client = reqwest::Client::builder()
-        .user_agent(USER_AGENT)
-        .timeout(Duration::from_secs(20))
-        .build()?;
-    let response = client
+    let response = client()
         .get(url.trim())
-        .header(ACCEPT, "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8")
+        .header(ACCEPT, accept)
         .header(ACCEPT_LANGUAGE, "fr-FR,fr;q=0.9,en;q=0.8")
         .send()
         .await?;
-
     let status = response.status();
     if !status.is_success() {
-        return Err(Error::Other(format!("le serveur a répondu avec l'erreur {}", status.as_u16())));
+        return Err(Error::Feed(FeedError::Http(status.as_u16())));
     }
     let final_url = response.url().to_string();
-    if response.content_length().is_some_and(|n| n as usize > MAX_PAGE_BYTES) {
-        return Err(Error::Other("page trop volumineuse".into()));
+    if response.content_length().is_some_and(|n| n as usize > max_bytes) {
+        return Err(Error::Other("réponse trop volumineuse".into()));
     }
     let bytes = response.bytes().await?;
-    if bytes.len() > MAX_PAGE_BYTES {
-        return Err(Error::Other("page trop volumineuse".into()));
+    if bytes.len() > max_bytes {
+        return Err(Error::Other("réponse trop volumineuse".into()));
     }
-    Ok(FetchedPage { html: decode_html(&bytes), final_url })
+    Ok(Response { data: bytes.to_vec(), final_url })
+}
+
+pub async fn get_feed(url: &str) -> Result<Response> {
+    get(url, FEED_ACCEPT, 30 << 20).await
+}
+
+pub async fn get_image(url: &str) -> Result<Response> {
+    get(url, IMAGE_ACCEPT, 8 << 20).await
+}
+
+pub async fn fetch_page(url: &str) -> Result<FetchedPage> {
+    let r = get(url, PAGE_ACCEPT, MAX_PAGE_BYTES).await?;
+    Ok(FetchedPage { html: decode_html(&r.data), final_url: r.final_url })
 }
 
 #[cfg(test)]

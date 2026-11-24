@@ -8,7 +8,9 @@
     "favorites": "Favorites",
     "history": "History",
     "feeds": "Feeds",
-    "noFeeds": "No feeds yet."
+    "noFeeds": "No feeds yet.",
+    "addFeed": "Add a feed",
+    "refresh": "Refresh feeds"
   },
   "list": {
     "emptyTitle": "No articles yet",
@@ -69,5 +71,20 @@
     "importSettings": "Settings imported.",
     "importWarnings": "{{count}} warning(s): {{list}}",
     "importError": "Import failed: {{message}}"
+  },
+  "addFeed": {
+    "title": "Add a feed",
+    "help": "Paste the address of the RSS or Atom feed, or just the site's address: the feed will be detected automatically.",
+    "folder": "Folder",
+    "noFolder": "None",
+    "cancel": "Cancel",
+    "add": "Add",
+    "adding": "Adding…"
+  },
+  "errors": {
+    "invalidUrl": "Invalid address.",
+    "notAFeed": "No RSS or Atom feed found at this address.",
+    "alreadyExists": "This feed is already in your list.",
+    "http": "The server answered with error {{code}}."
   }
 }

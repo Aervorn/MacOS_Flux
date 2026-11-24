@@ -8,7 +8,9 @@
     "favorites": "Favoris",
     "history": "Historique",
     "feeds": "Flux",
-    "noFeeds": "Aucun flux pour l'instant."
+    "noFeeds": "Aucun flux pour l'instant.",
+    "addFeed": "Ajouter un flux",
+    "refresh": "Actualiser les flux"
   },
   "list": {
     "emptyTitle": "Aucun article pour l'instant",
@@ -69,5 +71,20 @@
     "importSettings": "Réglages importés.",
     "importWarnings": "{{count}} avertissement(s) : {{list}}",
     "importError": "Import impossible : {{message}}"
+  },
+  "addFeed": {
+    "title": "Ajouter un flux",
+    "help": "Colle l'adresse du flux RSS ou Atom, ou simplement celle du site : le flux sera détecté automatiquement.",
+    "folder": "Dossier",
+    "noFolder": "Aucun",
+    "cancel": "Annuler",
+    "add": "Ajouter",
+    "adding": "Ajout…"
+  },
+  "errors": {
+    "invalidUrl": "Adresse invalide.",
+    "notAFeed": "Aucun flux RSS ou Atom trouvé à cette adresse.",
+    "alreadyExists": "Ce flux est déjà dans ta liste.",
+    "http": "Le serveur a répondu avec l'erreur {{code}}."
   }
 }

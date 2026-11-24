@@ -144,6 +144,19 @@ export interface ImportReport {
   warnings: string[];
 }
 
+export interface AddedFeed {
+  url: string;
+  title: string;
+  articles: number;
+}
+
+export interface RefreshReport {
+  feeds: number;
+  added: number;
+  failed: number;
+  offline: boolean;
+}
+
 export interface AppInfo {
   version: string;
   coreVersion: string;
@@ -172,6 +185,8 @@ export const api = {
   setTag: (uid: string, on: boolean, keys: string[]) => invoke<void>("set_tag", { uid, on, keys }),
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
   addReadingSeconds: (key: string, seconds: number) => invoke<void>("add_reading_seconds", { key, seconds }),
+  addFeed: (input: string, folderUid: string | null) => invoke<AddedFeed>("add_feed", { input, folderUid }),
+  refreshAll: () => invoke<RefreshReport>("refresh_all"),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
   devImport: () => invoke<ImportReport>("dev_import_swift_data"),

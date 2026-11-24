@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileText, Minus, Plus, Printer, Rss, Star, Tag } from "lucide-react";
 import { api } from "../api";
 import type { ArticleDetail, Prefs, SidebarTag } from "../api";
+import { errorMessage } from "../errors";
 import { formatPublished } from "../format";
 import { extractArticle } from "../reader/extract";
 import { cachedImageSrc, restoreOnError, rewriteImages } from "../reader/images";
@@ -90,7 +91,7 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
       } catch (e) {
         if (isCancelled()) return;
         setStatus("error");
-        setError(String(e instanceof Error ? e.message : e));
+        setError(errorMessage(e, t));
       }
     }
     return () => {
@@ -121,7 +122,7 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
       setStatus("idle");
     } catch (e) {
       setStatus("error");
-      setError(String(e instanceof Error ? e.message : e));
+      setError(errorMessage(e, t));
     }
   }, [detail, t]);
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronRight, CircleDot, History, Inbox, Rss, Star, Tag } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleDot, History, Inbox, Plus, RefreshCw, Rss, Star, Tag } from "lucide-react";
 import type { Selection, Sidebar as SidebarData, SidebarFeed } from "../api";
 import { sameSelection } from "../api";
 import { folderColor, folderIcon } from "../icons";
@@ -13,13 +13,16 @@ interface Props {
   favoritesExpanded: boolean;
   onToggleFavorites: () => void;
   footer: React.ReactNode;
+  refreshing: boolean;
+  onRefresh: () => void;
+  onAddFeed: () => void;
 }
 
 function Count({ n }: { n: number }) {
   return n > 0 ? <span className={styles.count}>{n}</span> : null;
 }
 
-export default function Sidebar({ data, selection, onSelect, favoritesExpanded, onToggleFavorites, footer }: Props) {
+export default function Sidebar({ data, selection, onSelect, favoritesExpanded, onToggleFavorites, footer, refreshing, onRefresh, onAddFeed }: Props) {
   const { t } = useTranslation();
   // L'état ouvert/fermé des dossiers n'est pas encore enregistré : on part de celui de l'app Swift.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -43,7 +46,21 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
 
   return (
     <aside className={styles.sidebar} data-noprint>
-      <div className={styles.brand}>{t("app.name")}</div>
+      <div className={styles.brand}>
+        <span className={styles.brandName}>{t("app.name")}</span>
+        <button className={styles.headerButton} onClick={onAddFeed} title={t("sidebar.addFeed")} aria-label={t("sidebar.addFeed")}>
+          <Plus size={16} />
+        </button>
+        <button
+          className={`${styles.headerButton} ${refreshing ? styles.spinning : ""}`}
+          onClick={onRefresh}
+          disabled={refreshing}
+          title={t("sidebar.refresh")}
+          aria-label={t("sidebar.refresh")}
+        >
+          <RefreshCw size={16} />
+        </button>
+      </div>
 
       <nav className={styles.nav}>
         {row({ kind: "all" }, <Inbox size={16} />, t("sidebar.allArticles"))}
