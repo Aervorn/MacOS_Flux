@@ -9,7 +9,7 @@ Rust (rustup, cibles `aarch64-apple-darwin` et `x86_64-apple-darwin`), Node, pnp
 ## Commandes
 ```bash
 pnpm install                       # dépendances du front
-pnpm tauri icon Design/icon.png    # génère src-tauri/icons (une seule fois)
+pnpm tauri icon Design/icon.png    # régénère src-tauri/icons ; supprimer ensuite tout sauf 32x32, 128x128, 128x128@2x, icon.icns, icon.png
 pnpm check:i18n                    # fr.json et en.json ont les mêmes clés
 cargo test -p flux-core            # tests du cœur Rust
 pnpm tauri dev                     # lance l'app en développement
