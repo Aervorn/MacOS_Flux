@@ -61,7 +61,12 @@
     "newTagName": "Nom du tag",
     "create": "Créer",
     "noTags": "Aucun tag",
-    "offlineFull": "Hors ligne : l’article complet n’est pas disponible. Tu vois ce que le flux fournit."
+    "offlineFull": "Hors ligne : l’article complet n’est pas disponible. Tu vois ce que le flux fournit.",
+    "playVideo": "Lire la vidéo {{provider}}",
+    "videoNote": "Le lecteur de {{provider}} ne se charge qu’au clic.",
+    "exportPdf": "Exporter en PDF",
+    "pdfSaved": "PDF enregistré : {{name}}",
+    "pdfFailed": "Export PDF impossible : {{message}}. Tu peux utiliser « Imprimer » à la place."
   },
   "settings": {
     "appearance": "Apparence",

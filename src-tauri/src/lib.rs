@@ -1,3 +1,5 @@
+mod pdf;
+
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -727,6 +729,26 @@ fn print_page(window: tauri::WebviewWindow) -> Result<(), String> {
     window.print().map_err(|e| e.to_string())
 }
 
+/// Exporte l'article affiché en PDF : demande où l'enregistrer, puis imprime dans le fichier.
+/// Renvoie le chemin du PDF, ou `None` si l'utilisateur annule.
+#[tauri::command]
+async fn export_pdf(app: tauri::AppHandle, window: tauri::WebviewWindow, title: String) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let chosen = app
+        .dialog()
+        .file()
+        .set_file_name(pdf::file_name(&title))
+        .add_filter("PDF", &["pdf"])
+        .blocking_save_file();
+    let Some(chosen) = chosen else { return Ok(None) };
+    let path = chosen.into_path().map_err(|e| e.to_string())?;
+    let target = path.clone();
+    tauri::async_runtime::spawn_blocking(move || pdf::export(&window, &target))
+        .await
+        .map_err(|e| e.to_string())??;
+    Ok(Some(path.to_string_lossy().to_string()))
+}
+
 /// Chemins de l'app Swift (version précédente de Flux).
 fn swift_paths(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf, PathBuf), String> {
     let home = app.path().home_dir().map_err(|e| e.to_string())?;
@@ -1003,6 +1025,7 @@ pub fn run() {
             export_opml,
             create_folder,
             print_page,
+            export_pdf,
             change_feed_address,
             check_update,
             install_update,

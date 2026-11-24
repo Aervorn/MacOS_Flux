@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { extractArticle, firstUsableImage } from "./extract";
 import { bodyHtml, heroAlreadyInBody, sanitizeArticle } from "./sanitize";
+import { parseEmbed } from "./video";
 import { buildSearchText, looksLikeExcerpt, plainText, wordCount } from "./text";
 
 describe("sanitizeArticle", () => {
@@ -70,5 +71,32 @@ describe("extractArticle", () => {
   it("ignores tracking pixels", () => {
     expect(firstUsableImage('<img src="https://t.example/pixel.gif"><img src="https://e.com/ok.jpg">')).toBe("https://e.com/ok.jpg");
     expect(firstUsableImage('<img src="https://e.com/x.jpg" width="1" height="1">')).toBeNull();
+  });
+});
+
+describe("vidéos intégrées", () => {
+  const labels = { play: (p: string) => `Lire ${p}`, note: (p: string) => `Au clic : ${p}` };
+
+  it("recognises the three allowed players and rebuilds their address", () => {
+    expect(parseEmbed("https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0")?.src).toBe("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    expect(parseEmbed("//player.vimeo.com/video/123456789?h=abcd1234")?.src).toBe("https://player.vimeo.com/video/123456789?h=abcd1234");
+    expect(parseEmbed("https://www.dailymotion.com/embed/video/x8abcd")?.watch).toBe("https://www.dailymotion.com/video/x8abcd");
+  });
+
+  it("refuses other hosts, odd paths and non-http schemes", () => {
+    expect(parseEmbed("https://evil.example/embed/dQw4w9WgXcQ")).toBeNull();
+    expect(parseEmbed("https://youtube.com.evil.example/embed/dQw4w9WgXcQ")).toBeNull();
+    expect(parseEmbed("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBeNull();
+    expect(parseEmbed("javascript:alert(1)")).toBeNull();
+  });
+
+  it("replaces an allowed frame by a click-to-play box and drops the others", () => {
+    const out = sanitizeArticle(
+      '<p>a</p><iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe><iframe src="https://evil.example/x"></iframe>',
+      labels,
+    );
+    expect(out).toContain('class="flux-video"');
+    expect(out).toContain("Lire YouTube");
+    expect(out).not.toMatch(/<iframe|evil\.example/i);
   });
 });

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileText, Minus, Plus, Printer, Rss, Star, Tag } from "lucide-react";
+import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileDown, FileText, Minus, Plus, Printer, Rss, Star, Tag } from "lucide-react";
 import { api } from "../api";
 import type { ArticleDetail, Prefs, SidebarTag } from "../api";
 import { errorMessage } from "../errors";
@@ -8,6 +8,7 @@ import { formatPublished } from "../format";
 import { extractArticle } from "../reader/extract";
 import { cachedImageSrc, restoreOnError, rewriteImages } from "../reader/images";
 import { bodyHtml, heroAlreadyInBody, sanitizeArticle } from "../reader/sanitize";
+import { createPlayer, parseEmbed } from "../reader/video";
 import { looksLikeExcerpt } from "../reader/text";
 import styles from "./Reader.module.css";
 
@@ -41,6 +42,7 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
   const bodyRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tagMenu, setTagMenu] = useState(false);
+  const [pdf, setPdf] = useState<{ busy: boolean; message: string | null; failed: boolean }>({ busy: false, message: null, failed: false });
   const [newTag, setNewTag] = useState("");
   const onChangedRef = useRef(onChanged);
   onChangedRef.current = onChanged;
@@ -224,7 +226,15 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
         : "",
     [detail, showFull],
   );
-  const safeBody = useMemo(() => sanitizeArticle(rawBody), [rawBody]);
+  const safeBody = useMemo(
+    () =>
+      sanitizeArticle(rawBody, {
+        play: (provider) => t("detail.playVideo", { provider }),
+        note: (provider) => t("detail.videoNote", { provider }),
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rawBody, i18n.language],
+  );
 
   // Images du corps : copie en cache locale si elle existe.
   useEffect(() => {
@@ -268,7 +278,30 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
     return () => window.removeEventListener("keydown", onKey);
   }, [prefs.readerFontSize, setFont, onClose]);
 
+  const exportPdf = () => {
+    if (!detail || pdf.busy) return;
+    setPdf({ busy: true, message: null, failed: false });
+    api
+      .exportPdf(detail.title)
+      .then((path) => {
+        const name = path ? path.split("/").pop() ?? path : null;
+        setPdf({ busy: false, message: name ? t("detail.pdfSaved", { name }) : null, failed: false });
+      })
+      .catch((err) => setPdf({ busy: false, message: t("detail.pdfFailed", { message: String(err) }), failed: true }));
+  };
+
   const onBodyClick = (e: React.MouseEvent) => {
+    // Vidéo : le lecteur n'est chargé qu'au clic. L'adresse est revérifiée ici, jamais prise telle quelle.
+    const box = (e.target as HTMLElement).closest<HTMLElement>(".flux-video");
+    if (box) {
+      e.preventDefault();
+      const embed = parseEmbed(box.dataset.embed ?? "");
+      if (embed) {
+        box.replaceChildren(createPlayer(embed));
+        box.classList.add("flux-video-playing");
+      }
+      return;
+    }
     const anchor = (e.target as HTMLElement).closest("a");
     if (!anchor) return;
     const href = anchor.getAttribute("href") ?? "";
@@ -386,6 +419,9 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
         <button className={styles.iconButton} onClick={() => api.printPage().catch(() => undefined)} title={t("detail.print")} aria-label={t("detail.print")}>
           <Printer size={16} />
         </button>
+        <button className={styles.iconButton} onClick={exportPdf} disabled={pdf.busy} title={t("detail.exportPdf")} aria-label={t("detail.exportPdf")}>
+          <FileDown size={16} />
+        </button>
         {detail.link && (
           <button className={styles.iconButton} onClick={() => api.openUrl(detail.link!).catch(() => undefined)} title={t("detail.openBrowser")} aria-label={t("detail.openBrowser")}>
             <ExternalLink size={16} />
@@ -415,6 +451,11 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
             </div>
           )}
 
+          {pdf.message && (
+            <p className={pdf.failed ? styles.noticeError : styles.notice} data-noprint>
+              {pdf.message}
+            </p>
+          )}
           {status === "loading" && <p className={styles.notice} data-noprint>{t("detail.loading")}</p>}
           {status === "error" && (
             <p className={styles.noticeError} data-noprint>

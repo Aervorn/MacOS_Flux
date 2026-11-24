@@ -1,11 +1,14 @@
 import DOMPurify from "dompurify";
+import { placeholderizeVideos, type VideoLabels } from "./video";
 
 /**
  * Nettoie le HTML d'un article avant de l'afficher dans la fenêtre de l'app.
  * Le contenu vient d'Internet : aucun script, style, formulaire ni cadre n'est conservé.
+ * Seuls les lecteurs YouTube, Vimeo et Dailymotion deviennent un emplacement « cliquer pour lire ».
  */
-export function sanitizeArticle(html: string): string {
-  return DOMPurify.sanitize(html, {
+export function sanitizeArticle(html: string, videos?: VideoLabels): string {
+  const source = videos ? placeholderizeVideos(html, videos) : html;
+  return DOMPurify.sanitize(source, {
     USE_PROFILES: { html: true },
     FORBID_TAGS: ["style", "link", "form", "input", "button", "select", "textarea", "iframe", "object", "embed", "base", "meta", "svg", "math"],
     FORBID_ATTR: ["style", "srcset", "sizes", "loading", "ping"],

@@ -944,6 +944,8 @@ name = "flux"
 version = "0.8.0"
 dependencies = [
  "flux-core",
+ "objc2",
+ "objc2-foundation",
  "rusqlite",
  "serde",
  "serde_json",

@@ -348,6 +348,8 @@ export const api = {
   detachFromCluster: (key: string) => invoke<void>("detach_from_cluster", { key }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
+  /** Enregistre l'article affiché en PDF ; renvoie le chemin, ou null si annulé. */
+  exportPdf: (title: string) => invoke<string | null>("export_pdf", { title }),
   checkUpdate: () => invoke<{ version: string } | null>("check_update"),
   installUpdate: () => invoke<void>("install_update"),
   swiftImportStatus: () => invoke<SwiftImportStatus>("swift_import_status"),

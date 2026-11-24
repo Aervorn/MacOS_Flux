@@ -61,7 +61,12 @@
     "newTagName": "Tag name",
     "create": "Create",
     "noTags": "No tags",
-    "offlineFull": "Offline: the full article isn’t available. You’re seeing what the feed provides."
+    "offlineFull": "Offline: the full article isn’t available. You’re seeing what the feed provides.",
+    "playVideo": "Play the {{provider}} video",
+    "videoNote": "The {{provider}} player only loads when you click.",
+    "exportPdf": "Export as PDF",
+    "pdfSaved": "PDF saved: {{name}}",
+    "pdfFailed": "PDF export failed: {{message}}. You can use “Print” instead."
   },
   "settings": {
     "appearance": "Appearance",
