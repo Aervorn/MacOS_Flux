@@ -32,15 +32,15 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
   <img src="docs/home_grid_en.png" width="800" alt="Flux main window" />
 </p>
 
-| List with thumbnails | Full-width thumbnails |
+| **List with thumbnails** | **Full-width thumbnails** |
 |:---:|:---:|
 | <img src="docs/home_list_en.png" width="400" alt="List with thumbnails" /> | <img src="docs/home_grid-only_en.png" width="400" alt="Full-width thumbnails" /> |
-| **Reading an article** | **Similar articles grouped** |
-| <img src="docs/reader_en.png" width="400" alt="Reading an article" /> | <img src="docs/similar_articles_en.png" width="400" alt="Similar articles grouped" /> |
-| **Reading settings** | **Filter rules** |
-| <img src="docs/parameter_reading_en.png" width="400" alt="Reading settings" /> | <img src="docs/exclusion_rules_en.png" width="400" alt="Filter rules" /> |
-| **iCloud sync** | **Reading statistics** |
-| <img src="docs/sync_en.png" width="400" alt="iCloud sync settings" /> | <img src="docs/reading_statistics_en.png" width="400" alt="Reading statistics" /> |
+| **Similar articles grouped** | **Reading settings** |
+| <img src="docs/similar_articles_en.png" width="400" alt="Similar articles grouped" /> | <img src="docs/parameter_reading_en.png" width="400" alt="Reading settings" /> |
+| **Filter rules** | **iCloud sync** |
+| <img src="docs/exclusion_rules_en.png" width="400" alt="Filter rules" /> | <img src="docs/sync_en.png" width="400" alt="iCloud sync settings" /> |
+| **Reading statistics** |  |
+| <img src="docs/reading_statistics_en.png" width="400" alt="Reading statistics" /> |  |
 
 ## ✨ Features
 

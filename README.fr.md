@@ -32,15 +32,15 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
   <img src="docs/home_grid_fr.png" width="800" alt="Fenêtre principale de Flux" />
 </p>
 
-| Liste avec miniatures | Grille pleine largeur |
+| **Liste avec miniatures** | **Grille pleine largeur** |
 |:---:|:---:|
 | <img src="docs/home_list_fr.png" width="400" alt="Liste avec miniatures" /> | <img src="docs/home_grid-only_fr.png" width="400" alt="Grille pleine largeur" /> |
-| **Lecture d'un article** | **Articles similaires regroupés** |
-| <img src="docs/reader_fr.png" width="400" alt="Lecture d'un article" /> | <img src="docs/similar_articles_fr.png" width="400" alt="Articles similaires regroupés" /> |
-| **Réglages de lecture** | **Règles de filtrage** |
-| <img src="docs/parameter_reading_fr.png" width="400" alt="Réglages de lecture" /> | <img src="docs/exclusion_rules_fr.png" width="400" alt="Règles de filtrage" /> |
-| **Synchronisation iCloud** | **Statistiques de lecture** |
-| <img src="docs/sync_fr.png" width="400" alt="Réglages de synchronisation iCloud" /> | <img src="docs/reading_statistics_fr.png" width="400" alt="Statistiques de lecture" /> |
+| **Articles similaires regroupés** | **Réglages de lecture** |
+| <img src="docs/similar_articles_fr.png" width="400" alt="Articles similaires regroupés" /> | <img src="docs/parameter_reading_fr.png" width="400" alt="Réglages de lecture" /> |
+| **Règles de filtrage** | **Synchronisation iCloud** |
+| <img src="docs/exclusion_rules_fr.png" width="400" alt="Règles de filtrage" /> | <img src="docs/sync_fr.png" width="400" alt="Réglages de synchronisation iCloud" /> |
+| **Statistiques de lecture** |  |
+| <img src="docs/reading_statistics_fr.png" width="400" alt="Statistiques de lecture" /> |  |
 
 ## ✨ Fonctionnalités
 
