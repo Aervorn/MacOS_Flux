@@ -29,7 +29,7 @@ export default function Toolbar({ title, search, onSearch, layout, onLayout, hid
   );
 
   return (
-    <header className={styles.toolbar}>
+    <header className={styles.toolbar} data-noprint>
       <h1 className={styles.title}>{title}</h1>
 
       <label className={styles.search}>

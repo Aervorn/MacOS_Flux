@@ -88,6 +88,35 @@ export interface ArticleRow {
   readingMinutes: number;
 }
 
+export interface SimilarArticle {
+  key: string;
+  source: string;
+  title: string;
+}
+
+/** Miroir de `flux_core::articles::ArticleDetail`. */
+export interface ArticleDetail {
+  key: string;
+  title: string;
+  summary: string;
+  source: string;
+  feedUrl: string;
+  link: string | null;
+  author: string | null;
+  published: number;
+  imageUrl: string | null;
+  contentHtml: string | null;
+  fullHtml: string | null;
+  isRead: boolean;
+  isStarred: boolean;
+  similar: SimilarArticle[];
+}
+
+export interface FetchedPage {
+  html: string;
+  finalUrl: string;
+}
+
 export interface ListQuery {
   selection: Selection;
   search: string;
@@ -119,6 +148,16 @@ export const api = {
   savePrefs: (prefs: Prefs) => invoke<void>("save_prefs", { prefs }),
   sidebar: () => invoke<Sidebar>("get_sidebar"),
   articles: (query: ListQuery) => invoke<ArticleRow[]>("list_articles", { query }),
+  article: (key: string) => invoke<ArticleDetail | null>("get_article", { key }),
+  fetchPage: (url: string) => invoke<FetchedPage>("fetch_page", { url }),
+  saveFullHtml: (args: {
+    key: string;
+    html: string;
+    searchText: string;
+    wordCount: number;
+    imageUrl: string | null;
+  }) => invoke<boolean>("save_full_html", args),
+  openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
   devImport: () => invoke<ImportReport>("dev_import_swift_data"),
 };

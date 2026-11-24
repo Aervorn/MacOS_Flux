@@ -40,29 +40,7 @@
 .detail {
   flex: 1;
   min-width: 0;
-  overflow-y: auto;
-}
-
-.detailBody {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 24px;
-  user-select: text;
-}
-
-.detailThumb {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--radius-card);
-}
-
-.detailTitle {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.25;
+  overflow: hidden;
 }
 
 .placeholder {
@@ -138,6 +116,17 @@
 @media print {
   .app {
     display: block;
+    height: auto;
     padding: 0;
+  }
+
+  .main,
+  .split,
+  .detail {
+    display: block;
+    height: auto;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
   }
 }

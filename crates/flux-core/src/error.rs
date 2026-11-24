@@ -8,6 +8,8 @@ pub enum Error {
     Plist(#[from] plist::Error),
     #[error("JSON : {0}")]
     Json(#[from] serde_json::Error),
+    #[error("réseau : {0}")]
+    Http(#[from] reqwest::Error),
     #[error("{0}")]
     Other(String),
 }

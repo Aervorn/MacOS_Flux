@@ -2,7 +2,9 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use flux_core::articles::ArticleDetail;
 use flux_core::import::ImportReport;
+use flux_core::net::FetchedPage;
 use flux_core::prefs::Prefs;
 use flux_core::query::{ArticleRow, ListQuery, Sidebar};
 use rusqlite::Connection;
@@ -65,6 +67,46 @@ fn get_sidebar(state: State<'_, AppState>) -> Result<Sidebar, String> {
 fn list_articles(state: State<'_, AppState>, query: ListQuery) -> Result<Vec<ArticleRow>, String> {
     let conn = lock(&state)?;
     flux_core::query::list_articles(&conn, &query).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_article(state: State<'_, AppState>, key: String) -> Result<Option<ArticleDetail>, String> {
+    let conn = lock(&state)?;
+    flux_core::articles::get_article(&conn, &key).map_err(|e| e.to_string())
+}
+
+/// Télécharge la page d'un article (pour en extraire le texte complet côté interface).
+#[tauri::command]
+async fn fetch_page(url: String) -> Result<FetchedPage, String> {
+    flux_core::net::fetch_page(&url).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn save_full_html(
+    state: State<'_, AppState>,
+    key: String,
+    html: String,
+    search_text: String,
+    word_count: i64,
+    image_url: Option<String>,
+) -> Result<bool, String> {
+    let conn = lock(&state)?;
+    flux_core::articles::save_full_html(&conn, &key, &html, &search_text, word_count, image_url.as_deref())
+        .map_err(|e| e.to_string())
+}
+
+/// Ouvre une adresse dans le navigateur par défaut (http, https ou mailto seulement).
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    let lower = url.trim().to_ascii_lowercase();
+    if !(lower.starts_with("http://") || lower.starts_with("https://") || lower.starts_with("mailto:")) {
+        return Err("adresse non prise en charge".into());
+    }
+    std::process::Command::new("open")
+        .arg(url.trim())
+        .status()
+        .map(|_| ())
+        .map_err(|e| e.to_string())
 }
 
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
@@ -139,6 +181,10 @@ pub fn run() {
             save_prefs,
             get_sidebar,
             list_articles,
+            get_article,
+            fetch_page,
+            save_full_html,
+            open_url,
             print_page,
             dev_import_swift_data
         ])

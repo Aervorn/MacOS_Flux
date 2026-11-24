@@ -6,9 +6,8 @@ import { hasSavedLang, setLang, type Lang } from "./i18n";
 import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "./theme";
 import ArticleList from "./components/ArticleList";
 import Sidebar from "./components/Sidebar";
-import Thumb from "./components/Thumb";
+import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
-import { formatPublished } from "./format";
 import styles from "./App.module.css";
 
 const THEMES: { mode: ThemeMode; labelKey: string }[] = [
@@ -139,7 +138,6 @@ export default function App() {
     }
   })();
 
-  const selected = articles.find((a) => a.key === selectedKey) ?? null;
   const currentMode = appearanceToMode(prefs.appearance);
 
   const footer = (
@@ -237,26 +235,30 @@ export default function App() {
 
         {prefs.articleLayout === "list" ? (
           <div className={styles.split}>
-            <div className={styles.listColumn} style={{ width: prefs.articleListWidth }}>
+            <div className={styles.listColumn} data-noprint style={{ width: prefs.articleListWidth }}>
               {list}
             </div>
             <section className={styles.detail}>
-              {selected ? (
-                <div className={styles.detailBody}>
-                  <Thumb thumb={selected.thumb} className={styles.detailThumb} />
-                  <h2 className={styles.detailTitle}>{selected.title}</h2>
-                  <p className={styles.label}>
-                    {selected.source} · {formatPublished(selected.published, i18n.language)}
-                    {selected.author ? ` · ${selected.author}` : ""}
-                  </p>
-                  {selected.summary && <p>{selected.summary}</p>}
-                  <p className={styles.label}>{t("detail.readerSoon")}</p>
-                </div>
+              {selectedKey ? (
+                <Reader
+                  articleKey={selectedKey}
+                  prefs={prefs}
+                  onPrefs={updatePrefs}
+                  onOpenArticle={setSelectedKey}
+                />
               ) : (
                 <p className={styles.placeholder}>{t("detail.select")}</p>
               )}
             </section>
           </div>
+        ) : selectedKey ? (
+          <Reader
+            articleKey={selectedKey}
+            prefs={prefs}
+            onPrefs={updatePrefs}
+            onOpenArticle={setSelectedKey}
+            onClose={() => setSelectedKey(null)}
+          />
         ) : (
           list
         )}

@@ -205,6 +205,11 @@ fn host_of(url: &str) -> &str {
     rest.split(['/', '?', '#']).next().unwrap_or(rest)
 }
 
+/// Nom de la source affiché : nom du flux, sinon nom gardé à sa suppression, sinon son domaine.
+pub(crate) fn source_name(feed_title: Option<String>, source_title: Option<String>, feed_url: &str) -> String {
+    feed_title.or(source_title).unwrap_or_else(|| host_of(feed_url).to_string())
+}
+
 /// Condition « non lu, ou gardé visible » ; ajoute les clés à `params`.
 fn unread_or_sticky(sticky: &[String], params: &mut Vec<Value>) -> String {
     if sticky.is_empty() {
@@ -300,9 +305,7 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
         let source_title: Option<String> = row.get(12)?;
         let feed_title: Option<String> = row.get(13)?;
         let image_url: Option<String> = row.get(8)?;
-        let source = feed_title
-            .or(source_title)
-            .unwrap_or_else(|| host_of(&feed_url).to_string());
+        let source = source_name(feed_title, source_title, &feed_url);
         out.push(ArticleRow {
             key: row.get(0)?,
             title,

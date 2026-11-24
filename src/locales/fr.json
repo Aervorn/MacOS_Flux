@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Flux" },
+  "app": {
+    "name": "Flux"
+  },
   "sidebar": {
     "allArticles": "Tous les articles",
     "unread": "Non lus",
@@ -24,7 +26,22 @@
   },
   "detail": {
     "select": "Choisis un article.",
-    "readerSoon": "La lecture de l'article complet arrive à l'étape suivante."
+    "back": "Retour à la liste",
+    "showFull": "Article complet",
+    "showFeed": "Version du flux",
+    "loadFull": "Charger l'article complet",
+    "smaller": "Réduire le texte",
+    "larger": "Agrandir le texte",
+    "width_narrow": "Étroit",
+    "width_wide": "Large",
+    "width_full": "Pleine largeur",
+    "print": "Imprimer / exporter en PDF",
+    "openBrowser": "Ouvrir dans le navigateur",
+    "alsoPublished": "Aussi publié par",
+    "loading": "Récupération de l'article complet…",
+    "loadError": "Impossible de récupérer l'article complet : {{message}}",
+    "extractFailed": "aucun texte exploitable sur cette page",
+    "sourceLine": "Source : {{link}}"
   },
   "settings": {
     "appearance": "Apparence",

@@ -42,7 +42,7 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
   const isOpen = (uid: string, expanded: boolean) => (uid in collapsed ? !collapsed[uid] : expanded);
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={styles.sidebar} data-noprint>
       <div className={styles.brand}>{t("app.name")}</div>
 
       <nav className={styles.nav}>

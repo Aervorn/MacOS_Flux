@@ -20,3 +20,8 @@ pnpm tauri dev                     # lance l'app en développement
 - `src-tauri/` : coque Tauri (commandes, fenêtre, bundle).
 - `src/` : interface React ; `src/styles/tokens.css` = palette (sombre mesurée, clair provisoire).
 - `web-dist/` : sortie du build du front (`dist/` est réservé à `scripts/make-dmg.sh`).
+
+## À améliorer (todo)
+
+- **Export PDF** : l'impression passe par la fenêtre native de macOS (il faut cliquer sur le petit bouton « PDF » en bas à gauche). Piste : un vrai « Exporter en PDF » direct via `WKWebView.createPDF` (code natif Rust/objc2).
+- **Vidéos intégrées** (iframes YouTube, Vimeo…) : retirées par le nettoyage du HTML ; seul le lien reste. Piste : autoriser une liste blanche de lecteurs.

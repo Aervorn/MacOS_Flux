@@ -26,3 +26,39 @@ button {
   font: inherit;
   color: inherit;
 }
+
+/* Impression / PDF : toujours en clair, sans les éléments d'interface. */
+@media print {
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"],
+  :root[data-theme="auto"] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-hover: #f0f0f0;
+    --pill: #f0f0f0;
+    --border: #dddddd;
+    --text: #111111;
+    --text-secondary: #444444;
+    --text-muted: #777777;
+    --accent: #1a55b8;
+  }
+
+  [data-noprint] {
+    display: none !important;
+  }
+
+  html,
+  body,
+  #root {
+    height: auto;
+    overflow: visible;
+  }
+
+  /* la fenêtre d'impression de macOS n'ajoute pas de marges autour de la page web */
+  #root {
+    box-sizing: border-box;
+    padding: 18mm 16mm;
+  }
+}

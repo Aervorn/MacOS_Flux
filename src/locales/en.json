@@ -1,5 +1,7 @@
 {
-  "app": { "name": "Flux" },
+  "app": {
+    "name": "Flux"
+  },
   "sidebar": {
     "allArticles": "All articles",
     "unread": "Unread",
@@ -24,7 +26,22 @@
   },
   "detail": {
     "select": "Select an article.",
-    "readerSoon": "Reading the full article comes in the next step."
+    "back": "Back to the list",
+    "showFull": "Full article",
+    "showFeed": "Feed version",
+    "loadFull": "Load full article",
+    "smaller": "Smaller text",
+    "larger": "Larger text",
+    "width_narrow": "Narrow",
+    "width_wide": "Wide",
+    "width_full": "Full width",
+    "print": "Print / export as PDF",
+    "openBrowser": "Open in browser",
+    "alsoPublished": "Also published by",
+    "loading": "Fetching the full article…",
+    "loadError": "Couldn't fetch the full article: {{message}}",
+    "extractFailed": "no usable text on this page",
+    "sourceLine": "Source: {{link}}"
   },
   "settings": {
     "appearance": "Appearance",
