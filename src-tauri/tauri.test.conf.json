@@ -1,0 +1,10 @@
+{
+  "productName": "Flux Test",
+  "identifier": "io.github.aervorn.flux.test",
+  "bundle": {
+    "targets": ["app"],
+    "macOS": {
+      "signingIdentity": "Aervorn Code Signing"
+    }
+  }
+}

@@ -42,3 +42,7 @@ pnpm tauri dev                     # lance l'app en développement
 - Une archive `.zip` par jour dans `iCloud Drive/Flux/Sauvegardes Tauri/<Mac>/` (dossier distinct de celui de l'app Swift : formats incompatibles). Contient la base SQLite (réglages compris), `Infos.json` et, en option, les images des favoris.
 - Restauration appliquée au lancement suivant (base actuelle gardée dans `before-restore/`, identifiant de synchro conservé, mémoire de synchro effacée). En développement (`tauri dev`), la relance est manuelle.
 - Limites : une restauration ne peut pas lire les sauvegardes de l'app Swift (utiliser l'import de données Swift) ; archive pas encore téléchargée d'iCloud : attente jusqu'à 2 minutes ; images des favoris limitées à ce qui est dans les dossiers d'images connus.
+
+## Version de test (DMG)
+- `./scripts/make-tauri-test-dmg.sh` : app universelle « Flux Test » (identifiant `io.github.aervorn.flux.test`), signée « Aervorn Code Signing », DMG dans `dist/`. Installable à côté de l'app Swift ; ses données sont séparées (la synchro iCloud les récupère).
+- Pas de mise à jour automatique ni de notarisation pour l'instant (clic droit > Ouvrir au premier lancement). Reste à choisir le système de mise à jour de la version finale (plugin updater Tauri, avec sa propre clé) et à retirer la section Développement des réglages.
