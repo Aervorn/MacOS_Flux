@@ -75,7 +75,6 @@
     "menu": "Menu",
     "open": "Réglages…",
     "about": "À propos de Flux",
-    "aboutUnknown": "Flux",
     "sectionAppearance": "Apparence",
     "sectionReading": "Lecture",
     "sectionFeeds": "Flux",
@@ -120,7 +119,6 @@
     "fontMono": "Geist Mono",
     "sectionSync": "Synchronisation",
     "sectionBackup": "Sauvegarde",
-    "aboutVersion": "Version {{version}} (cœur {{core}})",
     "archiveFavorites": "Archiver les images des favoris",
     "archiveHelp": "Les images d’un favori sont conservées à part : la limite du cache et « Vider le cache » n’y touchent pas. Le texte complet n’est archivé que si l’article a déjà été ouvert dans Flux.",
     "archiving": "Archivage en cours…",
@@ -332,5 +330,15 @@
     "footer": "Un article compte comme lu après 3 secondes d’ouverture. Suivi depuis le {{date}}.",
     "footerNone": "Un article compte comme lu après 3 secondes d’ouverture. Aucune lecture enregistrée pour l’instant.",
     "menu": "Statistiques de lecture"
+  },
+  "about": {
+    "title": "À propos de Flux",
+    "version": "Version {{version}}",
+    "tagline": "Un lecteur RSS simple pour macOS : tes flux, des miniatures, et l’article complet sans ouvrir le navigateur.",
+    "credits": "Créé par Aervorn, avec l’aide de Claude.",
+    "extraction": "Extraction des articles :",
+    "license": "(Mozilla, Apache 2.0)",
+    "source": "Code source sur GitHub",
+    "close": "Fermer"
   }
 }

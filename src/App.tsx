@@ -21,6 +21,7 @@ import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import Onboarding from "./components/Onboarding";
 import StatsDialog from "./components/StatsDialog";
+import AboutDialog from "./components/AboutDialog";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [tour, setTour] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [update, setUpdate] = useState<string | null>(null);
   const [swiftImport, setSwiftImport] = useState<{ available: boolean; dismissed: boolean }>({ available: false, dismissed: false });
   const [refreshing, setRefreshing] = useState(false);
@@ -304,7 +306,7 @@ export default function App() {
   };
 
   const modalOpen =
-    tour || showStats || settings !== null || asking !== null || notice !== null || showAddFeed || update !== null || menu !== null ||
+    tour || showStats || showAbout || settings !== null || asking !== null || notice !== null || showAddFeed || update !== null || menu !== null ||
     (swiftImport.available && !swiftImport.dismissed);
 
   // Raccourcis (comme Reeder). Les touches seules sont ignorées pendant la saisie dans un champ.
@@ -489,8 +491,7 @@ export default function App() {
         {
           label: t("settings.about"),
           icon: <Info size={16} />,
-          onClick: () =>
-            setNotice(info ? t("settings.aboutVersion", { version: info.version, core: info.coreVersion }) : t("settings.aboutUnknown")),
+          onClick: () => setShowAbout(true),
         },
       ],
     });
@@ -690,6 +691,7 @@ export default function App() {
         )}
       </main>
       {showStats && <StatsDialog onClose={() => setShowStats(false)} />}
+      {showAbout && <AboutDialog version={info?.version ?? null} onClose={() => setShowAbout(false)} />}
       {tour && (
         <Onboarding
           onClose={() => setTour(false)}
