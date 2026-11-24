@@ -4,18 +4,24 @@
     <title>Flux</title>
     <link>https://github.com/Aervorn/MacOS_Flux</link>
     <item>
-      <title>Flux 0.6.0</title>
-      <pubDate>Fri, 13 Nov 2026 08:17:54 +0000</pubDate>
-      <sparkle:version>6</sparkle:version>
-      <sparkle:shortVersionString>0.6.0</sparkle:shortVersionString>
+      <title>Flux 0.8.0</title>
+      <pubDate>Tue, 24 Nov 2026 20:49:30 +0000</pubDate>
+      <sparkle:version>8</sparkle:version>
+      <sparkle:shortVersionString>0.8.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[<ul><li><b>Tags under each favorite</b>: in Favorites and in tag views, each article shows its tags right below it, on several lines if needed.</li>
-<li><b>New option: hide tagged articles from Favorites</b> (<b>Settings › General</b>). Tagged articles then only appear in the view of their tags.</li>
-<li>Closing the main window now also closes the Settings window, which used to stay open on its own (and it no longer reopens at the next launch).</li></ul>]]></description>
-      <description xml:lang="fr"><![CDATA[<ul><li><b>Les tags sous chaque favori</b> : dans Favoris et dans les vues des tags, chaque article affiche ses tags juste en dessous, sur plusieurs lignes si besoin.</li>
-<li><b>Nouvelle option : masquer dans Favoris les articles qui ont un tag</b> (<b>Réglages › Général</b>). Les articles tagués n'apparaissent alors plus que dans la vue de leurs tags.</li>
-<li>Fermer la fenêtre principale ferme maintenant aussi la fenêtre des réglages, qui restait ouverte seule (et elle ne se rouvre plus au lancement suivant).</li></ul>]]></description>
-      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.6.0/Flux-0.6.0.dmg" type="application/octet-stream" sparkle:edSignature="d8uXK02/dm0msKxCeEt9bfxAWGBNhsPNxYyzl5Ca58NDNz8IG2l0aSKu3ssIgQEQxOJWxvAMfj9FUKQyQ6k9Cw==" length="5420440" />
+      <description><![CDATA[<ul><li><b>Flux is now built with Tauri</b> (Rust core and React interface) instead of SwiftUI: a new look, with a dark theme, three layouts (list, grid, full-width grid) and resizable panels.</li>
+<li><b>Your data comes with you</b>: the first launch offers to import everything from the Swift version (feeds, folders, articles, favorites, tags, filter rules, settings).</li>
+<li>Same iCloud sync format as before, and a new daily backup to iCloud Drive (separate folder: backups from the Swift version can't be restored here).</li>
+<li>Automatic updates with the Tauri updater, signed with a new key.</li>
+<li>Everything from the Swift version is back: reading statistics, offline reading, favorites archive, single-key shortcuts (J/K/M/S/B), multiple selection, changing a feed's address and the first-launch tour. Similar articles are compared by meaning again too.</li>
+<li>The Swift source stays available in the <code>swift/</code> folder and at the <code>swift-final</code> tag.</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li><b>Flux est maintenant construit avec Tauri</b> (cœur en Rust et interface en React) au lieu de SwiftUI : nouveau look avec un thème sombre, trois dispositions (liste, grille, grille pleine largeur) et des panneaux redimensionnables.</li>
+<li><b>Tes données suivent</b> : le premier lancement propose d'importer tout ce que contenait la version Swift (flux, dossiers, articles, favoris, tags, règles de filtrage, réglages).</li>
+<li>Même format de synchronisation iCloud qu'avant, et une nouvelle sauvegarde quotidienne dans iCloud Drive (dossier séparé : les sauvegardes de la version Swift ne se restaurent pas ici).</li>
+<li>Mises à jour automatiques avec l'updater de Tauri, signées avec une nouvelle clé.</li>
+<li>Tout ce que faisait la version Swift est de retour : statistiques de lecture, lecture hors ligne, archive des favoris, raccourcis à une touche (J/K/M/S/B), sélection multiple, changement d'adresse d'un flux et visite guidée du premier lancement. Les articles similaires sont aussi comparés par le sens, comme avant.</li>
+<li>Le code Swift reste disponible dans le dossier <code>swift/</code> et au tag <code>swift-final</code>.</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.8.0/Flux-0.8.0.dmg" type="application/octet-stream" sparkle:edSignature="AhmJ6saF6IbS+9LyI147i9oMfeKkf1Cfc7n8Pdg6bZ12WtXCXLkqjHJ2H3AfKCCPIhiTqaRK8Cr/CuVVJ1d0AA==" length="17475894" />
     </item>
   </channel>
 </rss>
