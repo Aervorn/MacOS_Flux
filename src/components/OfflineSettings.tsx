@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { api, type OfflineInfo, type Prefs } from "../api";
-import { onOfflineProgress, prepareOffline, type OfflineProgress } from "../offline";
+import { countPending, onOfflineProgress, prepareOffline, type OfflineProgress } from "../offline";
 import styles from "./SettingsDialog.module.css";
 
 interface Props {
@@ -24,7 +24,12 @@ export default function OfflineSettings({ prefs, onPrefs, toggle, select }: Prop
   const { t } = useTranslation();
   const [info, setInfo] = useState<OfflineInfo | null>(null);
   const [progress, setProgress] = useState<OfflineProgress>(null);
+  const [pending, setPending] = useState<number | null>(null);
   useEffect(() => onOfflineProgress(setProgress), []);
+  // Articles qui attendent encore leur texte complet (recompté à chaque fin de préparation)
+  useEffect(() => {
+    if (progress === null && prefs.offlineEnabled) void countPending().then(setPending);
+  }, [progress, prefs.offlineEnabled]);
 
   const load = useCallback(() => api.offlineStatus().then(setInfo).catch(() => undefined), []);
   useEffect(() => {
@@ -58,10 +63,22 @@ export default function OfflineSettings({ prefs, onPrefs, toggle, select }: Prop
           if (offlineEnabled) apply();
         })}
         <p className={styles.help}>{t("settings.offlineHelp")}</p>
-        {progress ? (
-          <p className={styles.help}>{t("settings.offlineArticles", { done: progress.done, total: progress.total })}</p>
-        ) : (
-          info?.working && <p className={styles.help}>{t("settings.cachePreparing")}</p>
+        {prefs.offlineEnabled && (
+          <p className={styles.help}>
+            {progress
+              ? t("settings.offlineArticles", { done: progress.done, total: progress.total })
+              : info?.working
+                ? t("settings.cachePreparing")
+                : pending
+                  ? t("settings.offlinePending", { count: pending })
+                  : t("settings.offlineReady")}
+            {!progress && !info?.working && (
+              <>
+                {" "}
+                <button onClick={apply}>{t("settings.offlineNow")}</button>
+              </>
+            )}
+          </p>
         )}
       </div>
       <div className={styles.row}>

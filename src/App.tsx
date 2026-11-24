@@ -359,7 +359,8 @@ export default function App() {
     const cmd = e.metaKey || e.ctrlKey;
 
     if (cmd) {
-      if (e.code === "KeyA" && !typing) {
+      // Lettre réelle (e.key) et non position de la touche : sur un clavier AZERTY, ⌘Q est la touche « A » du QWERTY
+      if (key === "a" && !typing) {
         e.preventDefault();
         setSelectedKeys(articles.map((a) => a.key));
       } else if (e.code === "KeyN") {

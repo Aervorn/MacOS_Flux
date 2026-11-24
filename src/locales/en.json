@@ -139,7 +139,11 @@
     "cachePreparing": "Preparing…",
     "cacheMb": "{{count}} MB",
     "cacheGb": "{{count}} GB",
-    "offlineArticles": "Full articles: {{done}} of {{total}}"
+    "offlineArticles": "Full articles: {{done}} of {{total}}",
+    "offlinePending_one": "{{count}} article to prepare.",
+    "offlinePending_other": "{{count}} articles to prepare.",
+    "offlineReady": "Everything is ready for offline reading.",
+    "offlineNow": "Prepare now"
   },
   "addFeed": {
     "title": "Add a feed",

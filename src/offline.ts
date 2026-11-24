@@ -24,6 +24,12 @@ export function onOfflineProgress(listener: (p: OfflineProgress) => void): () =>
   return () => listeners.delete(listener);
 }
 
+/** Nombre d'articles dont le texte complet reste à récupérer. */
+export async function countPending(): Promise<number> {
+  const pending = await api.offlinePendingTexts().catch(() => []);
+  return pending.filter((a) => !failed.has(a.key) && looksLikeExcerpt(a.contentHtml || a.summary)).length;
+}
+
 /**
  * Prépare la lecture hors ligne (si l'option est active) : récupère le texte complet des articles
  * non lus et des favoris dont le flux ne donne qu'un extrait, puis télécharge leurs images et ramène

@@ -139,7 +139,11 @@
     "cachePreparing": "Préparation…",
     "cacheMb": "{{count}} Mo",
     "cacheGb": "{{count}} Go",
-    "offlineArticles": "Articles complets : {{done}} sur {{total}}"
+    "offlineArticles": "Articles complets : {{done}} sur {{total}}",
+    "offlinePending_one": "{{count}} article à préparer.",
+    "offlinePending_other": "{{count}} articles à préparer.",
+    "offlineReady": "Tout est prêt pour la lecture hors ligne.",
+    "offlineNow": "Préparer maintenant"
   },
   "addFeed": {
     "title": "Ajouter un flux",
