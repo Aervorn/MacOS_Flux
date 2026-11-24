@@ -58,7 +58,9 @@ if [ -z "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD+x}" ]; then
     read -r -s -p "Mot de passe de la clé de mise à jour : " TAURI_SIGNING_PRIVATE_KEY_PASSWORD
     echo
 fi
+# Selon la version du CLI Tauri, la clé est lue dans l'une ou l'autre de ces variables
 export TAURI_SIGNING_PRIVATE_KEY_PATH="$UPDATER_KEY"
+export TAURI_SIGNING_PRIVATE_KEY="$(cat "$UPDATER_KEY")"
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD
 
 step "Cibles Rust (Apple Silicon + Intel)"
