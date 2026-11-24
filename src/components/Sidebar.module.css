@@ -170,3 +170,20 @@
   outline: 1px solid var(--accent);
   outline-offset: -1px;
 }
+
+.ghost {
+  position: fixed;
+  z-index: 60;
+  max-width: 220px;
+  padding: 4px 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}

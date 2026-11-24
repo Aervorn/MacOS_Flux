@@ -27,8 +27,6 @@ interface Props {
   onMoveFeed: (url: string, folderUid: string | null) => void;
 }
 
-const FEED_MIME = "application/x-flux-feed";
-
 function Count({ n }: { n: number }) {
   return n > 0 ? <span className={styles.count}>{n}</span> : null;
 }
@@ -47,32 +45,82 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
   // L'état ouvert/fermé des dossiers n'est pas encore enregistré : on part de celui de l'app Swift.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  // Glisser-déposer d'un flux vers un dossier : `dragging` est le flux en cours de glissement,
-  // `dropKey` la cible survolée (uid du dossier, ou "root").
-  const dragging = useRef<string | null>(null);
+  // Glisser-déposer d'un flux vers un dossier, géré à la souris (le glisser-déposer HTML de la
+  // WebView de macOS ne laisse pas déposer ici). Les cibles portent l'attribut `data-drop`
+  // (uid du dossier, ou ROOT pour la racine).
+  const ROOT = "__root";
+  const [ghost, setGhost] = useState<{ title: string; x: number; y: number } | null>(null);
   const [dropKey, setDropKey] = useState<string | null>(null);
+  const press = useRef<{ url: string; title: string; x: number; y: number } | null>(null);
+  const moved = useRef(false);
+  const hover = useRef<{ key: string | null; timer: number | null }>({ key: null, timer: null });
+  // État le plus récent, lu par les écouteurs de la souris.
+  const latest = useRef({ data, collapsed, onMoveFeed, onToggleFolder });
+  latest.current = { data, collapsed, onMoveFeed, onToggleFolder };
 
-  const currentFolder = (url: string) => data?.folders.find((f) => f.feeds.some((x) => x.url === url))?.uid ?? null;
+  const targetAt = (x: number, y: number): string | null =>
+    (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>("[data-drop]")?.dataset.drop ?? null;
 
-  const dropProps = (key: string, folderUid: string | null) => ({
-    onDragOver: (e: React.DragEvent) => {
-      if (!dragging.current) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-      if (dropKey !== key) setDropKey(key);
-    },
-    onDragLeave: (e: React.DragEvent) => {
-      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropKey((k) => (k === key ? null : k));
-    },
-    onDrop: (e: React.DragEvent) => {
-      const url = dragging.current;
-      dragging.current = null;
+  const clearHover = () => {
+    if (hover.current.timer !== null) window.clearTimeout(hover.current.timer);
+    hover.current = { key: null, timer: null };
+  };
+
+  const startFeedDrag = (e: React.MouseEvent, feed: SidebarFeed) => {
+    if (e.button !== 0) return;
+    press.current = { url: feed.url, title: feed.title, x: e.clientX, y: e.clientY };
+    moved.current = false;
+
+    const onMove = (ev: MouseEvent) => {
+      const p = press.current;
+      if (!p) return;
+      if (!moved.current && Math.hypot(ev.clientX - p.x, ev.clientY - p.y) < 6) return;
+      moved.current = true;
+      document.body.style.cursor = "grabbing";
+      setGhost({ title: p.title, x: ev.clientX, y: ev.clientY });
+      const key = targetAt(ev.clientX, ev.clientY);
+      setDropKey(key);
+      if (key !== hover.current.key) {
+        clearHover();
+        hover.current.key = key;
+        // Un dossier fermé s'ouvre quand on s'y attarde.
+        const folder = key && key !== ROOT ? latest.current.data?.folders.find((f) => f.uid === key) : undefined;
+        if (folder && !(folder.uid in latest.current.collapsed ? !latest.current.collapsed[folder.uid] : folder.isExpanded)) {
+          hover.current.timer = window.setTimeout(() => {
+            setCollapsed((c) => ({ ...c, [folder.uid]: false }));
+            latest.current.onToggleFolder(folder.uid, true);
+          }, 600);
+        }
+      }
+    };
+    const end = (ev: MouseEvent | null) => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("keydown", onKey);
+      document.body.style.cursor = "";
+      const p = press.current;
+      const dragged = moved.current;
+      press.current = null;
+      clearHover();
+      setGhost(null);
       setDropKey(null);
-      if (!url) return;
-      e.preventDefault();
-      if (currentFolder(url) !== folderUid) onMoveFeed(url, folderUid);
-    },
-  });
+      if (dragged) {
+        // Le « clic » qui suit le relâchement ne doit pas sélectionner le flux.
+        window.setTimeout(() => (moved.current = false), 0);
+      }
+      if (!p || !dragged || !ev) return;
+      const key = targetAt(ev.clientX, ev.clientY);
+      if (!key) return;
+      const folderUid = key === ROOT ? null : key;
+      const current = latest.current.data?.folders.find((f) => f.feeds.some((x) => x.url === p.url))?.uid ?? null;
+      if (current !== folderUid) latest.current.onMoveFeed(p.url, folderUid);
+    };
+    const onUp = (ev: MouseEvent) => end(ev);
+    const onKey = (ev: KeyboardEvent) => ev.key === "Escape" && end(null);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("keydown", onKey);
+  };
 
   const row = (
     sel: Selection,
@@ -86,27 +134,9 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
     <button
       key={JSON.stringify(sel)}
       className={`${styles.row} ${sameSelection(selection, sel) ? styles.active : ""} ${indent ? styles.indent : ""}`}
-      onClick={() => onSelect(sel)}
+      onClick={() => !moved.current && onSelect(sel)}
       onContextMenu={onMenu}
-      draggable={!!feed}
-      onDragStart={
-        feed
-          ? (e) => {
-              dragging.current = feed.url;
-              e.dataTransfer.effectAllowed = "move";
-              e.dataTransfer.setData(FEED_MIME, feed.url);
-              e.dataTransfer.setData("text/plain", feed.title);
-            }
-          : undefined
-      }
-      onDragEnd={
-        feed
-          ? () => {
-              dragging.current = null;
-              setDropKey(null);
-            }
-          : undefined
-      }
+      onMouseDown={feed ? (e) => startFeedDrag(e, feed) : undefined}
     >
       <span className={styles.icon}>{icon}</span>
       <span className={styles.label}>{label}</span>
@@ -164,7 +194,7 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
 
         {row({ kind: "history" }, <History size={16} />, t("sidebar.history"))}
 
-        <div className={`${styles.section} ${dropKey === "root" ? styles.dropTarget : ""}`} {...dropProps("root", null)}>
+        <div className={`${styles.section} ${dropKey === ROOT ? styles.dropTarget : ""}`} data-drop={ROOT}>
           {t("sidebar.feeds")}
         </div>
         {data && data.folders.length === 0 && data.feeds.length === 0 && <p className={styles.hint}>{t("sidebar.noFeeds")}</p>}
@@ -175,7 +205,7 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
             <div
               key={folder.uid}
               className={`${styles.block} ${dropKey === folder.uid ? styles.dropTarget : ""}`}
-              {...dropProps(folder.uid, folder.uid)}
+              data-drop={folder.uid}
             >
               <div className={styles.group}>
                 {row(
@@ -203,13 +233,18 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
         })}
 
         {data && data.feeds.length > 0 && (
-          <div className={`${styles.block} ${dropKey === "root" ? styles.dropTarget : ""}`} {...dropProps("root", null)}>
+          <div className={`${styles.block} ${dropKey === ROOT ? styles.dropTarget : ""}`} data-drop={ROOT}>
             {data.feeds.map((f) => feedRow(f, false))}
           </div>
         )}
       </nav>
 
       {footer && <div className={styles.footer}>{footer}</div>}
+      {ghost && (
+        <div className={styles.ghost} style={{ left: ghost.x + 12, top: ghost.y + 8 }}>
+          {ghost.title}
+        </div>
+      )}
     </aside>
   );
 }
