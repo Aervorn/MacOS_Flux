@@ -8,6 +8,7 @@ import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "
 import ArticleList from "./components/ArticleList";
 import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
+import FiltersDialog from "./components/FiltersDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
 import { ConfirmDialog, PromptDialog } from "./components/Dialogs";
 import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
@@ -38,6 +39,7 @@ export default function App() {
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
   const [asking, setAsking] = useState<Ask | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
   const selectedKeyRef = useRef<string | null>(null);
@@ -170,6 +172,24 @@ export default function App() {
     api.savePrefs(next).catch((e) => setMessage(String(e)));
   };
 
+  // Doublons : -1 = désactivé, sinon sensibilité 0 (faible), 1 (normale) ou 2 (forte). Les groupes sont recalculés.
+  const setDuplicates = async (level: number) => {
+    if (!prefs) return;
+    const next = {
+      ...prefs,
+      groupDuplicates: level >= 0,
+      duplicateSensitivity: level >= 0 ? level : prefs.duplicateSensitivity,
+    };
+    setPrefs(next);
+    try {
+      await api.savePrefs(next);
+      await api.regroupDuplicates();
+      refresh();
+    } catch (e) {
+      setMessage(errorMessage(e, t));
+    }
+  };
+
   const select = (s: Selection) => {
     if (sameSelection(s, selection)) return;
     setSelection(s);
@@ -253,6 +273,26 @@ export default function App() {
           </button>
         ))}
       </div>
+
+      <span className={styles.label}>{t("settings.duplicates")}</span>
+      <div className={styles.segmented}>
+        {[
+          { level: -1, labelKey: "settings.dupOff" },
+          { level: 0, labelKey: "settings.dupLow" },
+          { level: 1, labelKey: "settings.dupNormal" },
+          { level: 2, labelKey: "settings.dupHigh" },
+        ].map(({ level, labelKey }) => {
+          const active = prefs.groupDuplicates ? prefs.duplicateSensitivity === level : level === -1;
+          return (
+            <button key={level} className={active ? styles.segmentActive : styles.segment} onClick={() => void setDuplicates(level)}>
+              {t(labelKey)}
+            </button>
+          );
+        })}
+      </div>
+      <button className={styles.devButton} onClick={() => setShowFilters(true)}>
+        {t("settings.filters")}
+      </button>
 
       <details className={styles.dev}>
         <summary>Dev</summary>
@@ -363,6 +403,15 @@ export default function App() {
           list
         )}
       </main>
+      {showFilters && (
+        <FiltersDialog
+          feeds={[...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])].sort((a, b) =>
+            a.title.localeCompare(b.title),
+          )}
+          onChanged={refresh}
+          onClose={() => setShowFilters(false)}
+        />
+      )}
       {menu && <ContextMenu x={menu.x} y={menu.y} items={menu.items} onClose={() => setMenu(null)} />}
       {asking?.kind === "prompt" && (
         <PromptDialog

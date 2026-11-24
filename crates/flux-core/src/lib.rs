@@ -7,10 +7,12 @@
 
 pub mod actions;
 pub mod articles;
+pub mod cluster;
 pub mod db;
 pub mod error;
 pub mod feed;
 pub mod feeds;
+pub mod filters;
 pub mod html;
 pub mod images;
 pub mod import;

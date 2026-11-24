@@ -114,6 +114,24 @@ export interface ArticleDetail {
   similar: SimilarArticle[];
 }
 
+export interface FilterRule {
+  uid: string;
+  keyword: string;
+  wholeWord: boolean;
+  action: "hide" | "markRead";
+  /** Vide = tous les flux. */
+  feedUrls: string[];
+  /** Articles actuellement touchés par la règle. */
+  matchCount: number;
+}
+
+export interface FilterInput {
+  keyword: string;
+  wholeWord: boolean;
+  action: "hide" | "markRead";
+  feedUrls: string[];
+}
+
 export interface TagInfo {
   uid: string;
   name: string;
@@ -196,6 +214,14 @@ export const api = {
   setFolderExpanded: (uid: string, expanded: boolean) => invoke<void>("set_folder_expanded", { uid, expanded }),
   renameTag: (uid: string, name: string) => invoke<void>("rename_tag", { uid, name }),
   deleteTag: (uid: string) => invoke<void>("delete_tag", { uid }),
+  filters: () => invoke<FilterRule[]>("list_filters"),
+  addFilter: (r: FilterInput) => invoke<void>("add_filter", { ...r }),
+  updateFilter: (uid: string, r: FilterInput) => invoke<void>("update_filter", { uid, ...r }),
+  deleteFilter: (uid: string) => invoke<void>("delete_filter", { uid }),
+  previewFilter: (keyword: string, wholeWord: boolean, feedUrls: string[]) =>
+    invoke<number>("preview_filter", { keyword, wholeWord, feedUrls }),
+  regroupDuplicates: () => invoke<void>("regroup_duplicates"),
+  detachFromCluster: (key: string) => invoke<void>("detach_from_cluster", { key }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
   devImport: () => invoke<ImportReport>("dev_import_swift_data"),

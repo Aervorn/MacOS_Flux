@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Link, Pencil, Plus, Star, Tag, Trash2 } from "lucide-react";
+import { CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Link, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
 import { api } from "./api";
 import type { ArticleDetail, ArticleRow, Selection, SidebarFeed, SidebarFolder, SidebarTag, Sidebar } from "./api";
 import type { MenuItem } from "./components/ContextMenu";
@@ -214,6 +214,15 @@ export function articleMenu(ctx: MenuContext, article: ArticleRow, detail: Artic
         },
       ],
     },
+    ...((detail?.similar.length ?? 0) > 0
+      ? [
+          {
+            label: t("menu.detachCluster"),
+            icon: <Unlink size={16} />,
+            onClick: () => run(ctx, () => api.detachFromCluster(article.key)),
+          } as MenuItem,
+        ]
+      : []),
     "separator",
     {
       label: t("menu.openBrowser"),

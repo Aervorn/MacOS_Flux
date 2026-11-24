@@ -61,7 +61,13 @@
     "appearanceLight": "Light",
     "appearanceDark": "Dark",
     "appearanceAuto": "Automatic",
-    "language": "Language"
+    "language": "Language",
+    "duplicates": "Duplicates",
+    "dupOff": "Off",
+    "dupLow": "Low",
+    "dupNormal": "Normal",
+    "dupHigh": "High",
+    "filters": "Filters…"
   },
   "dev": {
     "version": "Version {{version}} (core {{core}})",
@@ -105,7 +111,8 @@
     "tags": "Tags",
     "newTag": "New tag…",
     "openBrowser": "Open in browser",
-    "copyLink": "Copy link"
+    "copyLink": "Copy link",
+    "detachCluster": "Remove from group"
   },
   "dialogs": {
     "renameFeed": "Rename feed",
@@ -124,5 +131,31 @@
     "deleteFolderBody": "The feeds in the folder are not deleted: they go back to the top level.",
     "deleteTagTitle": "Delete the tag “{{name}}”?",
     "deleteTagBody": "The articles stay in favorites, without this tag."
+  },
+  "filters": {
+    "title": "Filters",
+    "empty": "No rules yet. Add a keyword to hide articles whose title contains it.",
+    "footer": "Rules match the title, ignoring case and accents. They apply to existing articles and to new ones. Favorites are never filtered. Deleting a rule brings back the articles it hid.",
+    "add": "Add a rule",
+    "edit": "Edit",
+    "delete": "Delete",
+    "keyword": "Keyword",
+    "wholeWord": "Whole word",
+    "action": "Action",
+    "hide": "Hide the article",
+    "markRead": "Mark as read",
+    "feeds": "Feeds",
+    "allFeeds": "All feeds",
+    "someFeeds": "{{count}} feeds",
+    "matches_one": "{{count}} article affected",
+    "matches_other": "{{count}} articles affected",
+    "preview_one": "{{count}} article currently matches",
+    "preview_other": "{{count}} articles currently match",
+    "close": "Close",
+    "back": "Back",
+    "save": "Save",
+    "create": "Add",
+    "deleteTitle": "Delete the rule “{{name}}”?",
+    "deleteBody": "The articles it hid will come back."
   }
 }

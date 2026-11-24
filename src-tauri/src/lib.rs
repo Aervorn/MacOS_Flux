@@ -225,6 +225,58 @@ fn set_folder_expanded(state: State<'_, AppState>, uid: String, expanded: bool) 
 }
 
 #[tauri::command]
+fn list_filters(state: State<'_, AppState>) -> Result<Vec<flux_core::filters::Rule>, String> {
+    let conn = lock(&state)?;
+    flux_core::filters::list(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn add_filter(state: State<'_, AppState>, keyword: String, whole_word: bool, action: String, feed_urls: Vec<String>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::filters::add(&conn, &keyword, whole_word, &action, &feed_urls).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_filter(
+    state: State<'_, AppState>,
+    uid: String,
+    keyword: String,
+    whole_word: bool,
+    action: String,
+    feed_urls: Vec<String>,
+) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::filters::update(&conn, &uid, &keyword, whole_word, &action, &feed_urls).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_filter(state: State<'_, AppState>, uid: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::filters::delete(&conn, &uid).map_err(|e| e.to_string())
+}
+
+/// Nombre d'articles (hors favoris) que la règle toucherait.
+#[tauri::command]
+fn preview_filter(state: State<'_, AppState>, keyword: String, whole_word: bool, feed_urls: Vec<String>) -> Result<i64, String> {
+    let conn = lock(&state)?;
+    flux_core::filters::preview_count(&conn, &keyword, whole_word, &feed_urls).map_err(|e| e.to_string())
+}
+
+/// Recalcule les groupes de doublons (après un changement de réglage).
+#[tauri::command]
+fn regroup_duplicates(state: State<'_, AppState>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    let prefs = flux_core::db::load_prefs(&conn).map_err(|e| e.to_string())?;
+    flux_core::cluster::regroup_recent(&conn, &prefs).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn detach_from_cluster(state: State<'_, AppState>, key: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::cluster::detach(&conn, &key).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn rename_tag(state: State<'_, AppState>, uid: String, name: String) -> Result<(), String> {
     let conn = lock(&state)?;
     flux_core::manage::rename_tag(&conn, &uid, &name).map_err(|e| e.to_string())
@@ -339,6 +391,13 @@ pub fn run() {
             set_folder_expanded,
             rename_tag,
             delete_tag,
+            list_filters,
+            add_filter,
+            update_filter,
+            delete_filter,
+            preview_filter,
+            regroup_duplicates,
+            detach_from_cluster,
             create_folder,
             print_page,
             dev_import_swift_data

@@ -29,6 +29,17 @@ fn lock(db: &Mutex<Connection>) -> Result<MutexGuard<'_, Connection>> {
     db.lock().map_err(|_| Error::Other("base de données verrouillée".into()))
 }
 
+/// Filtres puis regroupement des doublons sur les nouveaux articles (sans effet si rien de neuf).
+fn process_new(db: &Mutex<Connection>, added: &[NewArticle], prefs: &Prefs) {
+    if added.is_empty() {
+        return;
+    }
+    let keys: Vec<String> = added.iter().map(|a| a.key.clone()).collect();
+    if let Ok(conn) = lock(db) {
+        let _ = crate::cluster::process_new(&conn, &keys, prefs);
+    }
+}
+
 pub async fn fetch_feed(url: &str) -> Result<ParsedFeed> {
     let response = net::get_feed(url).await?;
     feed::parse(&response.data).ok_or(Error::Feed(FeedError::NotAFeed))
@@ -109,6 +120,7 @@ pub async fn add_feed(
     if parsed.items.len() < 20 {
         added.extend(fetch_older(db, &feed_url, &opts).await);
     }
+    process_new(db, &added, prefs);
     fill_images(db, &added, images).await;
     Ok(AddedFeed { url: feed_url, title, articles: added.len() })
 }
@@ -204,6 +216,7 @@ pub async fn refresh_all(db: &Mutex<Connection>, prefs: &Prefs, images: &ImageDi
         feeds::prune(&conn, opts.cutoff)?;
     }
     report.added = added.len();
+    process_new(db, &added, prefs);
 
     if !offline {
         fill_images(db, &added, images).await;

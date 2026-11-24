@@ -61,7 +61,13 @@
     "appearanceLight": "Clair",
     "appearanceDark": "Sombre",
     "appearanceAuto": "Automatique",
-    "language": "Langue"
+    "language": "Langue",
+    "duplicates": "Doublons",
+    "dupOff": "Non",
+    "dupLow": "Faible",
+    "dupNormal": "Normale",
+    "dupHigh": "Forte",
+    "filters": "Filtres…"
   },
   "dev": {
     "version": "Version {{version}} (cœur {{core}})",
@@ -105,7 +111,8 @@
     "tags": "Tags",
     "newTag": "Nouveau tag…",
     "openBrowser": "Ouvrir dans le navigateur",
-    "copyLink": "Copier le lien"
+    "copyLink": "Copier le lien",
+    "detachCluster": "Sortir du groupe"
   },
   "dialogs": {
     "renameFeed": "Renommer le flux",
@@ -124,5 +131,31 @@
     "deleteFolderBody": "Les flux du dossier ne sont pas supprimés : ils reviennent à la racine.",
     "deleteTagTitle": "Supprimer le tag « {{name}} » ?",
     "deleteTagBody": "Les articles gardent leur place dans les favoris, sans ce tag."
+  },
+  "filters": {
+    "title": "Filtres",
+    "empty": "Aucune règle. Ajoute un mot-clé pour masquer les articles dont le titre le contient.",
+    "footer": "Les règles portent sur le titre, sans tenir compte des majuscules ni des accents. Elles s'appliquent aux articles existants et à ceux qui arrivent. Les favoris ne sont jamais filtrés. Supprimer une règle fait réapparaître les articles qu'elle masquait.",
+    "add": "Ajouter une règle",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "keyword": "Mot-clé",
+    "wholeWord": "Mot entier",
+    "action": "Action",
+    "hide": "Masquer l'article",
+    "markRead": "Marquer comme lu",
+    "feeds": "Flux concernés",
+    "allFeeds": "Tous les flux",
+    "someFeeds": "{{count}} flux",
+    "matches_one": "{{count}} article touché",
+    "matches_other": "{{count}} articles touchés",
+    "preview_one": "{{count}} article correspond actuellement",
+    "preview_other": "{{count}} articles correspondent actuellement",
+    "close": "Fermer",
+    "back": "Retour",
+    "save": "Enregistrer",
+    "create": "Ajouter",
+    "deleteTitle": "Supprimer la règle « {{name}} » ?",
+    "deleteBody": "Les articles qu'elle masquait réapparaissent."
   }
 }
