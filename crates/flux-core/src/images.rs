@@ -57,13 +57,19 @@ pub fn sniff_mime(data: &[u8]) -> Option<&'static str> {
 #[derive(Debug, Clone, Default)]
 pub struct ImageDirs {
     pub own: PathBuf,
+    /// Archive permanente des favoris : jamais vidée automatiquement (ni limite de taille, ni « Vider »)
+    pub archive: PathBuf,
     pub others: Vec<PathBuf>,
 }
 
 impl ImageDirs {
     /// Ordre de lecture : le nôtre d'abord.
     pub fn read_order(&self) -> Vec<PathBuf> {
-        std::iter::once(self.own.clone()).chain(self.others.iter().cloned()).collect()
+        [self.archive.clone(), self.own.clone()]
+            .into_iter()
+            .filter(|d| !d.as_os_str().is_empty())
+            .chain(self.others.iter().cloned())
+            .collect()
     }
 
     pub fn has(&self, name: &str) -> bool {

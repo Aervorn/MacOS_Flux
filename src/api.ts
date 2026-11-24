@@ -179,6 +179,32 @@ export interface SwiftImportStatus {
   dismissed: boolean;
 }
 
+export interface SourceCount {
+  name: string;
+  count: number;
+}
+
+export interface ReadingStats {
+  readCount: number;
+  receivedCount: number;
+  readingSeconds: number;
+  estimatedSeconds: number;
+  perDay: number;
+  /** Articles ouverts par jour, le dernier élément étant aujourd'hui */
+  daily: number[];
+  mostRead: SourceCount[];
+  mostActive: SourceCount[];
+  /** Secondes UNIX de la première ouverture enregistrée */
+  trackingSince: number | null;
+}
+
+export interface ArchiveInfo {
+  pending: number;
+  archived: number;
+  bytes: number;
+  working: boolean;
+}
+
 export interface AddedFeed {
   url: string;
   title: string;
@@ -253,10 +279,20 @@ export const api = {
   setRead: (keys: string[], read: boolean) => invoke<void>("set_read", { keys, read }),
   markAllRead: (selection: Selection, hideTaggedFavorites: boolean) =>
     invoke<number>("mark_all_read", { selection, hideTaggedFavorites }),
-  setStarred: (keys: string[], starred: boolean) => invoke<void>("set_starred", { keys, starred }),
+  setStarred: (keys: string[], starred: boolean) =>
+    invoke<void>("set_starred", { keys, starred }).then(() => {
+      if (starred) void api.archivePending().catch(() => undefined);
+    }),
   createTag: (name: string) => invoke<TagInfo | null>("create_tag", { name }),
-  setTag: (uid: string, on: boolean, keys: string[]) => invoke<void>("set_tag", { uid, on, keys }),
+  setTag: (uid: string, on: boolean, keys: string[]) =>
+    invoke<void>("set_tag", { uid, on, keys }).then(() => {
+      if (on) void api.archivePending().catch(() => undefined); // étiqueter un article en fait un favori
+    }),
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
+  archiveStatus: () => invoke<ArchiveInfo>("archive_status"),
+  archivePending: () => invoke<number>("archive_pending"),
+  readingStats: (days: number) =>
+    invoke<ReadingStats>("reading_stats", { days, tzOffset: -new Date().getTimezoneOffset() * 60 }),
   addReadingSeconds: (key: string, seconds: number) => invoke<void>("add_reading_seconds", { key, seconds }),
   addFeed: (input: string, folderUid: string | null) => invoke<AddedFeed>("add_feed", { input, folderUid }),
   changeFeedAddress: (url: string, input: string) => invoke<AddedFeed>("change_feed_address", { url, input }),

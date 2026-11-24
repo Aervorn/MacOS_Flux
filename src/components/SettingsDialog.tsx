@@ -8,6 +8,7 @@ import { ARTICLE_FONTS, UI_FONTS } from "../fonts";
 import FiltersPanel from "./FiltersPanel";
 import BackupSection from "./BackupSection";
 import SyncSection from "./SyncSection";
+import ArchiveSettings from "./ArchiveSettings";
 import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
@@ -234,6 +235,7 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
               ),
               t("settings.retentionHelp"),
             )}
+            <ArchiveSettings prefs={prefs} onPrefs={onPrefs} toggle={toggle} />
           </>
         );
       case "filters":

@@ -6,6 +6,7 @@
 //! `cluster`, `images`, `sync`, `backup`, `opml`.
 
 pub mod actions;
+pub mod archive;
 pub mod backup;
 pub mod articles;
 pub mod cluster;
@@ -20,6 +21,7 @@ pub mod import;
 pub mod manage;
 pub mod opml;
 pub mod refresh;
+pub mod stats;
 pub mod net;
 pub mod prefs;
 pub mod query;

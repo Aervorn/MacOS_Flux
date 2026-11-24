@@ -120,7 +120,15 @@
     "fontMono": "Geist Mono",
     "sectionSync": "Sync",
     "sectionBackup": "Backup",
-    "aboutVersion": "Version {{version}} (core {{core}})"
+    "aboutVersion": "Version {{version}} (core {{core}})",
+    "archiveFavorites": "Archive favorites’ images",
+    "archiveHelp": "A favorite’s images are kept separately: the cache size limit and “Clear cache” never touch them. The full text is only archived if the article has already been opened in Flux.",
+    "archiving": "Archiving…",
+    "archivePending_other": "{{count}} favorites to archive",
+    "archiveDone_other": "{{count}} favorites archived ({{size}})",
+    "archiveRetry": "Archive now",
+    "archivePending_one": "{{count}} favorite to archive",
+    "archiveDone_one": "{{count}} favorite archived ({{size}})"
   },
   "addFeed": {
     "title": "Add a feed",
@@ -302,5 +310,27 @@
       "title": "Sync and back up",
       "text": "With iCloud Drive, your feeds, favorites and read articles follow you to your other Macs, and a full copy of Flux is backed up every day."
     }
+  },
+  "stats": {
+    "title": "Reading statistics",
+    "close": "Close",
+    "period7": "7 days",
+    "period30": "30 days",
+    "period90": "90 days",
+    "period365": "12 months",
+    "read": "Articles read",
+    "time": "Reading time",
+    "estimated": "Estimated time",
+    "perDay": "Per day",
+    "received": "{{count}} received over the period",
+    "chart": "Articles read",
+    "mostRead": "Most read sources",
+    "mostActive": "Most active sources",
+    "empty": "Nothing to show yet.",
+    "day": "{{date}}: {{count}}",
+    "week": "Week of {{date}}: {{count}}",
+    "footer": "An article counts as read after being open for 3 seconds. Tracked since {{date}}.",
+    "footerNone": "An article counts as read after being open for 3 seconds. No reading recorded yet.",
+    "menu": "Reading statistics"
   }
 }

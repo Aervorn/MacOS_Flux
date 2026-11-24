@@ -13,13 +13,14 @@ import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
 import SettingsDialog, { type Section } from "./components/SettingsDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
-import { Compass, Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
+import { BarChart3, Compass, Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, articlesMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import Onboarding from "./components/Onboarding";
+import StatsDialog from "./components/StatsDialog";
 import styles from "./App.module.css";
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
   const [reloadTick, setReloadTick] = useState(0);
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [tour, setTour] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [update, setUpdate] = useState<string | null>(null);
   const [swiftImport, setSwiftImport] = useState<{ available: boolean; dismissed: boolean }>({ available: false, dismissed: false });
   const [refreshing, setRefreshing] = useState(false);
@@ -64,6 +66,7 @@ export default function App() {
     api.appInfo().then(setInfo).catch(() => setInfo(null)); // hors Tauri (navigateur seul), on ignore
     api.checkUpdate().then((u) => setUpdate(u?.version ?? null)).catch(() => undefined); // silencieux : pas de réseau, ou hors Tauri
     api.swiftImportStatus().then(setSwiftImport).catch(() => undefined);
+    api.archivePending().catch(() => undefined); // favoris arrivés par la synchro ou l'import
     loadSettings().catch((e) => setNotice(String(e)));
     loadSidebar().catch((e) => setNotice(String(e)));
   }, [loadSettings, loadSidebar]);
@@ -301,7 +304,7 @@ export default function App() {
   };
 
   const modalOpen =
-    tour || settings !== null || asking !== null || notice !== null || showAddFeed || update !== null || menu !== null ||
+    tour || showStats || settings !== null || asking !== null || notice !== null || showAddFeed || update !== null || menu !== null ||
     (swiftImport.available && !swiftImport.dismissed);
 
   // Raccourcis (comme Reeder). Les touches seules sont ignorées pendant la saisie dans un champ.
@@ -326,6 +329,9 @@ export default function App() {
       } else if (e.code === "KeyK" && e.shiftKey) {
         e.preventDefault();
         void markAllRead();
+      } else if (e.code === "KeyS" && e.altKey) {
+        e.preventDefault();
+        setShowStats(true);
       } else if (e.key === ",") {
         e.preventDefault();
         setSettings("appearance");
@@ -470,6 +476,7 @@ export default function App() {
       items: [
         { label: t("settings.open"), icon: <Settings size={16} />, onClick: () => setSettings("appearance") },
         { label: t("settings.filters"), icon: <SlidersHorizontal size={16} />, onClick: () => setSettings("filters") },
+        { label: t("stats.menu"), icon: <BarChart3 size={16} />, onClick: () => setShowStats(true) },
         "separator",
         ...(swiftImport.available
           ? [{ label: t("swiftImport.menu"), icon: <Download size={16} />, onClick: () => void importSwiftData() }]
@@ -682,6 +689,7 @@ export default function App() {
           list
         )}
       </main>
+      {showStats && <StatsDialog onClose={() => setShowStats(false)} />}
       {tour && (
         <Onboarding
           onClose={() => setTour(false)}

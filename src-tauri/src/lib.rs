@@ -23,6 +23,8 @@ struct AppState {
     images: ImageDirs,
     /// Une actualisation à la fois.
     refreshing: AtomicBool,
+    /// Archivage des favoris en cours.
+    archiving: AtomicBool,
     /// État de la synchronisation iCloud (affiché dans les réglages).
     sync: Mutex<SyncStatus>,
     /// État de la sauvegarde iCloud (affiché dans les réglages).
@@ -168,7 +170,45 @@ fn mark_all_read(state: State<'_, AppState>, selection: Selection, hide_tagged_f
 #[tauri::command]
 fn set_starred(state: State<'_, AppState>, keys: Vec<String>, starred: bool) -> Result<(), String> {
     let conn = lock(&state)?;
-    flux_core::actions::set_starred(&conn, &keys, starred).map_err(|e| e.to_string())
+    flux_core::actions::set_starred(&conn, &keys, starred).map_err(|e| e.to_string())?;
+    if !starred {
+        // Les images de ces articles quittent l'archive (sauf si un autre favori les utilise)
+        flux_core::archive::release(&conn, &state.images, &keys).map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ArchiveInfo {
+    pending: u32,
+    archived: u32,
+    bytes: u64,
+    working: bool,
+}
+
+#[tauri::command]
+fn archive_status(state: State<'_, AppState>) -> Result<ArchiveInfo, String> {
+    let conn = lock(&state)?;
+    let st = flux_core::archive::status(&conn, &state.images).map_err(|e| e.to_string())?;
+    Ok(ArchiveInfo {
+        pending: st.pending,
+        archived: st.archived,
+        bytes: st.bytes,
+        working: state.archiving.load(Ordering::SeqCst),
+    })
+}
+
+/// Archive les favoris pas encore archivés (images). Sans effet si l'option est désactivée
+/// ou si un archivage est déjà en cours.
+#[tauri::command]
+async fn archive_pending(state: State<'_, AppState>) -> Result<usize, String> {
+    if !current_prefs(&state)?.archive_favorites || state.archiving.swap(true, Ordering::SeqCst) {
+        return Ok(0);
+    }
+    let result = flux_core::archive::run(&state.db, &state.images, |_, _| {}).await;
+    state.archiving.store(false, Ordering::SeqCst);
+    result.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -193,6 +233,16 @@ fn record_opened(state: State<'_, AppState>, key: String) -> Result<(), String> 
 fn add_reading_seconds(state: State<'_, AppState>, key: String, seconds: f64) -> Result<(), String> {
     let conn = lock(&state)?;
     flux_core::actions::add_reading_seconds(&conn, &key, seconds).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn reading_stats(state: State<'_, AppState>, days: u32, tz_offset: i64) -> Result<flux_core::stats::Stats, String> {
+    let conn = lock(&state)?;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs_f64())
+        .unwrap_or(0.0);
+    flux_core::stats::compute(&conn, days, now, tz_offset).map_err(|e| e.to_string())
 }
 
 /// Prefs lues dans la base, sans garder le verrou.
@@ -798,6 +848,7 @@ pub fn run() {
             let swift = app.path().home_dir()?.join("Library/Application Support/Flux");
             let images = ImageDirs {
                 own: dir.join("images"),
+                archive: dir.join("archive"),
                 others: vec![swift.join("Archive"), swift.join("Images")],
             };
             app.manage(AppState {
@@ -805,6 +856,7 @@ pub fn run() {
                 db_path,
                 images,
                 refreshing: AtomicBool::new(false),
+                archiving: AtomicBool::new(false),
                 sync: Mutex::new(SyncStatus::default()),
                 backup: Mutex::new(BackupStatus::default()),
             });
@@ -831,6 +883,9 @@ pub fn run() {
             set_tag,
             record_opened,
             add_reading_seconds,
+            reading_stats,
+            archive_status,
+            archive_pending,
             add_feed,
             refresh_all,
             rename_feed,

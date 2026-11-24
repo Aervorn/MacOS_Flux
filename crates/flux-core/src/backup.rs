@@ -308,10 +308,10 @@ pub fn apply_pending_restore(data_dir: &Path) -> Result<bool> {
     // Images des favoris
     let archive = pending.join("Archive");
     if let Ok(files) = fs::read_dir(&archive) {
-        let own = data_dir.join("images");
-        let _ = fs::create_dir_all(&own);
+        let dest = data_dir.join("archive");
+        let _ = fs::create_dir_all(&dest);
         for f in files.flatten() {
-            let _ = fs::rename(f.path(), own.join(f.file_name()));
+            let _ = fs::rename(f.path(), dest.join(f.file_name()));
         }
     }
     let _ = fs::remove_dir_all(&pending);
@@ -330,7 +330,7 @@ mod tests {
         let conn = db::open(&db_path).unwrap();
         conn.execute_batch("INSERT INTO feeds (id, url, title, added_at) VALUES (1, 'u1', 'Korben', 0);").unwrap();
         db::save_setting(&conn, "syncDeviceId", &"MAC-A".to_string()).unwrap();
-        let images = ImageDirs { own: data.path().join("images"), others: vec![] };
+        let images = ImageDirs { own: data.path().join("images"), archive: data.path().join("archive"), others: vec![] };
         let dest = device_dir(icloud.path(), "Mac/A");
         assert!(dest.ends_with("Mac-A"));
 

@@ -120,7 +120,15 @@
     "fontMono": "Geist Mono",
     "sectionSync": "Synchronisation",
     "sectionBackup": "Sauvegarde",
-    "aboutVersion": "Version {{version}} (cœur {{core}})"
+    "aboutVersion": "Version {{version}} (cœur {{core}})",
+    "archiveFavorites": "Archiver les images des favoris",
+    "archiveHelp": "Les images d’un favori sont conservées à part : la limite du cache et « Vider le cache » n’y touchent pas. Le texte complet n’est archivé que si l’article a déjà été ouvert dans Flux.",
+    "archiving": "Archivage en cours…",
+    "archivePending_other": "{{count}} favoris à archiver",
+    "archiveDone_other": "{{count}} favoris archivés ({{size}})",
+    "archiveRetry": "Archiver maintenant",
+    "archivePending_one": "{{count}} favori à archiver",
+    "archiveDone_one": "{{count}} favori archivé ({{size}})"
   },
   "addFeed": {
     "title": "Ajouter un flux",
@@ -302,5 +310,27 @@
       "title": "Synchronise et sauvegarde",
       "text": "Avec iCloud Drive, tes flux, favoris et articles lus suivent sur tes autres Mac, et une copie complète de Flux est sauvegardée chaque jour."
     }
+  },
+  "stats": {
+    "title": "Statistiques de lecture",
+    "close": "Fermer",
+    "period7": "7 jours",
+    "period30": "30 jours",
+    "period90": "90 jours",
+    "period365": "12 mois",
+    "read": "Articles lus",
+    "time": "Temps de lecture",
+    "estimated": "Temps estimé",
+    "perDay": "Par jour",
+    "received": "{{count}} reçus sur la période",
+    "chart": "Articles lus",
+    "mostRead": "Sources les plus lues",
+    "mostActive": "Sources les plus actives",
+    "empty": "Rien à afficher pour l’instant.",
+    "day": "{{date}} : {{count}}",
+    "week": "Semaine du {{date}} : {{count}}",
+    "footer": "Un article compte comme lu après 3 secondes d’ouverture. Suivi depuis le {{date}}.",
+    "footerNone": "Un article compte comme lu après 3 secondes d’ouverture. Aucune lecture enregistrée pour l’instant.",
+    "menu": "Statistiques de lecture"
   }
 }

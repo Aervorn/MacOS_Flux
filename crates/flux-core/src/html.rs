@@ -161,6 +161,17 @@ pub fn first_image(html: &str) -> Option<String> {
     None
 }
 
+/// Adresses absolues (http, https) des images d'un fragment HTML, telles qu'elles y figurent
+/// (c'est sous ce nom que le lecteur les cherche dans le cache).
+pub fn img_sources(html: &str) -> Vec<String> {
+    re_img()
+        .find_iter(html)
+        .filter_map(|m| attribute("src", m.as_str()))
+        .map(|s| decode_entities(s.trim()))
+        .filter(|s| s.starts_with("http://") || s.starts_with("https://"))
+        .collect()
+}
+
 /// og:image (ou twitter:image) d'une page.
 pub fn og_image(html: &str) -> Option<String> {
     let mut found: Vec<(String, String)> = Vec::new();
