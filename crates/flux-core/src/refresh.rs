@@ -269,7 +269,7 @@ pub async fn refresh_all(db: &Mutex<Connection>, prefs: &Prefs, images: &ImageDi
 }
 
 /// Télécharge une image dans notre cache (sauf si elle y est déjà, ou dans celui de l'app Swift).
-async fn fetch_to_cache(images: &ImageDirs, url: &str) -> bool {
+pub(crate) async fn fetch_to_cache(images: &ImageDirs, url: &str) -> bool {
     let name = cache_name(url);
     if images.has(&name) {
         return true;

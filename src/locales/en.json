@@ -27,7 +27,9 @@
     "layoutList": "List",
     "layoutGrid": "Grid",
     "layoutGridFull": "Full-width grid",
-    "markAllRead": "Mark all as read"
+    "markAllRead": "Mark all as read",
+    "offline": "Offline",
+    "offlineHelp": "No connection: you are reading what is already in Flux."
   },
   "detail": {
     "select": "Select an article.",
@@ -126,7 +128,16 @@
     "archiveDone_other": "{{count}} favorites archived ({{size}})",
     "archiveRetry": "Archive now",
     "archivePending_one": "{{count}} favorite to archive",
-    "archiveDone_one": "{{count}} favorite archived ({{size}})"
+    "archiveDone_one": "{{count}} favorite archived ({{size}})",
+    "offlineEnabled": "Prepare articles for offline reading",
+    "offlineHelp": "After each refresh, Flux downloads the images of unread articles and favorites. An article’s full text is only fetched when you open it.",
+    "cacheLimit": "Maximum image cache size",
+    "cacheLimitHelp": "When the limit is exceeded, the least recently used images are deleted. Archived favorites are never deleted.",
+    "cacheSize": "Image cache: {{size}}",
+    "cacheClear": "Clear cache",
+    "cachePreparing": "Preparing…",
+    "cacheMb": "{{count}} MB",
+    "cacheGb": "{{count}} GB"
   },
   "addFeed": {
     "title": "Add a feed",

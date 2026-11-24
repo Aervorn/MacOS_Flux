@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { CheckCheck, Eye, EyeOff, LayoutGrid, List, Menu, PanelTop, Search } from "lucide-react";
+import { CheckCheck, Eye, EyeOff, LayoutGrid, List, Menu, PanelTop, Search, WifiOff } from "lucide-react";
 import type { ArticleLayout } from "../api";
 import styles from "./Toolbar.module.css";
 
@@ -15,9 +15,11 @@ interface Props {
   onMarkAllRead: () => void;
   /** Ouvre le menu de l'app (réglages, OPML, à propos). */
   onMenu: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  /** Pas de connexion : on affiche une pastille « Hors ligne ». */
+  offline?: boolean;
 }
 
-export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead, onMarkAllRead, onMenu }: Props) {
+export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead, onMarkAllRead, onMenu, offline }: Props) {
   const { t } = useTranslation();
 
   const layoutButton = (value: ArticleLayout, icon: React.ReactNode, label: string) => (
@@ -34,6 +36,12 @@ export default function Toolbar({ title, search, onSearch, layout, onLayout, hid
   return (
     <header className={styles.toolbar} data-noprint data-tauri-drag-region>
       <h1 className={styles.title} data-tauri-drag-region>{title}</h1>
+      {offline && (
+        <span className={styles.offline} title={t("toolbar.offlineHelp")}>
+          <WifiOff size={13} />
+          {t("toolbar.offline")}
+        </span>
+      )}
 
       <label className={styles.search}>
         <Search size={14} />

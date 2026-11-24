@@ -66,3 +66,16 @@
   background: var(--surface-hover);
   color: var(--accent);
 }
+
+.offline {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f5a524 18%, transparent);
+  color: #f5a524;
+  font-size: 12px;
+  font-weight: 600;
+}

@@ -9,6 +9,7 @@ import FiltersPanel from "./FiltersPanel";
 import BackupSection from "./BackupSection";
 import SyncSection from "./SyncSection";
 import ArchiveSettings from "./ArchiveSettings";
+import OfflineSettings from "./OfflineSettings";
 import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
@@ -235,6 +236,7 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
               ),
               t("settings.retentionHelp"),
             )}
+            <OfflineSettings prefs={prefs} onPrefs={onPrefs} toggle={toggle} select={select} />
             <ArchiveSettings prefs={prefs} onPrefs={onPrefs} toggle={toggle} />
           </>
         );

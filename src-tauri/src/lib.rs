@@ -25,6 +25,8 @@ struct AppState {
     refreshing: AtomicBool,
     /// Archivage des favoris en cours.
     archiving: AtomicBool,
+    /// Préparation hors ligne en cours.
+    preparing: AtomicBool,
     /// État de la synchronisation iCloud (affiché dans les réglages).
     sync: Mutex<SyncStatus>,
     /// État de la sauvegarde iCloud (affiché dans les réglages).
@@ -243,6 +245,41 @@ fn reading_stats(state: State<'_, AppState>, days: u32, tz_offset: i64) -> Resul
         .map(|d| d.as_secs_f64())
         .unwrap_or(0.0);
     flux_core::stats::compute(&conn, days, now, tz_offset).map_err(|e| e.to_string())
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OfflineInfo {
+    cache_bytes: u64,
+    working: bool,
+}
+
+#[tauri::command]
+fn offline_status(state: State<'_, AppState>) -> OfflineInfo {
+    OfflineInfo {
+        cache_bytes: flux_core::offline::cache_size(&state.images.own),
+        working: state.preparing.load(Ordering::SeqCst),
+    }
+}
+
+/// Après une actualisation (ou un changement de réglage) : prépare les articles pour la lecture
+/// hors ligne si l'option est active, puis ramène le cache sous sa limite de taille.
+#[tauri::command]
+async fn offline_maintain(state: State<'_, AppState>) -> Result<(), String> {
+    let prefs = current_prefs(&state)?;
+    if prefs.offline_enabled && !state.preparing.swap(true, Ordering::SeqCst) {
+        let result = flux_core::offline::prepare(&state.db, &state.images).await;
+        state.preparing.store(false, Ordering::SeqCst);
+        result.map_err(|e| e.to_string())?;
+    }
+    let limit = u64::try_from(prefs.image_cache_limit_mb).unwrap_or(0) * 1024 * 1024;
+    flux_core::offline::trim(&state.images.own, limit);
+    Ok(())
+}
+
+#[tauri::command]
+fn clear_image_cache(state: State<'_, AppState>) {
+    flux_core::offline::clear(&state.images.own);
 }
 
 /// Prefs lues dans la base, sans garder le verrou.
@@ -787,6 +824,10 @@ fn serve_image(
     let name = request.uri().path().trim_start_matches('/').to_string();
     let state = ctx.app_handle().state::<AppState>();
     let found = flux_core::images::read_cached(&state.images.read_order(), &name);
+    if found.is_some() && flux_core::images::is_cache_name(&name) {
+        // Image utilisée à l'instant : la suppression du cache épargne les récentes
+        flux_core::offline::touch(&state.images.own.join(&name));
+    }
     match found {
         Some((data, mime)) => tauri::http::Response::builder()
             .status(200)
@@ -857,6 +898,7 @@ pub fn run() {
                 images,
                 refreshing: AtomicBool::new(false),
                 archiving: AtomicBool::new(false),
+                preparing: AtomicBool::new(false),
                 sync: Mutex::new(SyncStatus::default()),
                 backup: Mutex::new(BackupStatus::default()),
             });
@@ -886,6 +928,9 @@ pub fn run() {
             reading_stats,
             archive_status,
             archive_pending,
+            offline_status,
+            offline_maintain,
+            clear_image_cache,
             add_feed,
             refresh_all,
             rename_feed,

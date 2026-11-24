@@ -205,6 +205,11 @@ export interface ArchiveInfo {
   working: boolean;
 }
 
+export interface OfflineInfo {
+  cacheBytes: number;
+  working: boolean;
+}
+
 export interface AddedFeed {
   url: string;
   title: string;
@@ -291,6 +296,9 @@ export const api = {
   recordOpened: (key: string) => invoke<void>("record_opened", { key }),
   archiveStatus: () => invoke<ArchiveInfo>("archive_status"),
   archivePending: () => invoke<number>("archive_pending"),
+  offlineStatus: () => invoke<OfflineInfo>("offline_status"),
+  offlineMaintain: () => invoke<void>("offline_maintain"),
+  clearImageCache: () => invoke<void>("clear_image_cache"),
   readingStats: (days: number) =>
     invoke<ReadingStats>("reading_stats", { days, tzOffset: -new Date().getTimezoneOffset() * 60 }),
   addReadingSeconds: (key: string, seconds: number) => invoke<void>("add_reading_seconds", { key, seconds }),

@@ -125,6 +125,7 @@ export default function App() {
 
   // Actualisation de tous les flux, puis compteurs et liste à jour.
   const refreshFeeds = useCallback(async () => {
+    if (!navigator.onLine) return; // hors ligne : on garde ce qui est déjà là
     setRefreshing(true);
     try {
       const report = await api.refreshAll();
@@ -134,7 +135,27 @@ export default function App() {
     } finally {
       setRefreshing(false);
     }
+    // Lecture hors ligne (si activée) et taille du cache d'images : sans bloquer l'interface
+    api.offlineMaintain().catch(() => undefined);
   }, [refresh, t]);
+
+  // Connexion perdue ou retrouvée : indicateur « Hors ligne », et actualisation au retour.
+  const [online, setOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const on = () => {
+      setOnline(true);
+      void refreshFeedsRef.current();
+    };
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  const refreshFeedsRef = useRef(refreshFeeds);
+  refreshFeedsRef.current = refreshFeeds;
 
   // Au lancement (une fois les réglages chargés), puis à intervalle régulier.
   const refreshMinutes = prefs?.refreshMinutes ?? null;
@@ -643,6 +664,7 @@ export default function App() {
           onToggleHideRead={() => updatePrefs({ hideRead: !prefs.hideRead })}
           onMarkAllRead={markAllRead}
           onMenu={openAppMenu}
+          offline={!online}
         />
 
         {prefs.articleLayout !== "gridFull" ? (

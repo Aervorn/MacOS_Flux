@@ -27,7 +27,9 @@
     "layoutList": "Liste",
     "layoutGrid": "Grille",
     "layoutGridFull": "Grille pleine largeur",
-    "markAllRead": "Tout marquer comme lu"
+    "markAllRead": "Tout marquer comme lu",
+    "offline": "Hors ligne",
+    "offlineHelp": "Pas de connexion : tu lis ce qui est déjà dans Flux."
   },
   "detail": {
     "select": "Choisis un article.",
@@ -126,7 +128,16 @@
     "archiveDone_other": "{{count}} favoris archivés ({{size}})",
     "archiveRetry": "Archiver maintenant",
     "archivePending_one": "{{count}} favori à archiver",
-    "archiveDone_one": "{{count}} favori archivé ({{size}})"
+    "archiveDone_one": "{{count}} favori archivé ({{size}})",
+    "offlineEnabled": "Préparer les articles pour la lecture hors ligne",
+    "offlineHelp": "Après chaque actualisation, Flux télécharge les images des articles non lus et des favoris. Le texte complet d’un article n’est récupéré que lorsque tu l’ouvres.",
+    "cacheLimit": "Taille maximale du cache d’images",
+    "cacheLimitHelp": "Quand la limite est dépassée, les images les moins récemment utilisées sont supprimées. Les favoris archivés ne sont jamais supprimés.",
+    "cacheSize": "Cache d’images : {{size}}",
+    "cacheClear": "Vider le cache",
+    "cachePreparing": "Préparation…",
+    "cacheMb": "{{count}} Mo",
+    "cacheGb": "{{count}} Go"
   },
   "addFeed": {
     "title": "Ajouter un flux",

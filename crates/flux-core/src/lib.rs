@@ -23,6 +23,7 @@ pub mod opml;
 pub mod refresh;
 pub mod stats;
 pub mod net;
+pub mod offline;
 pub mod prefs;
 pub mod query;
 pub mod sync;
