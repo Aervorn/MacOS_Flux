@@ -1,7 +1,7 @@
 # Flux — version Tauri (branche `tauri`)
 
-Migration en cours de l'app Swift vers Tauri 2 + Rust + React + TypeScript.
-L'app Swift (`Flux/`, `project.yml`) reste intacte sur cette branche.
+App Tauri 2 + Rust + React + TypeScript (depuis la 0.8.0, c'est l'app principale).
+L'ancienne app Swift est dans `swift/` et au tag `swift-final`.
 
 ## Prérequis
 Rust (rustup, cibles `aarch64-apple-darwin` et `x86_64-apple-darwin`), Node, pnpm, Xcode.
@@ -44,5 +44,12 @@ pnpm tauri dev                     # lance l'app en développement
 - Limites : une restauration ne peut pas lire les sauvegardes de l'app Swift (utiliser l'import de données Swift) ; archive pas encore téléchargée d'iCloud : attente jusqu'à 2 minutes ; images des favoris limitées à ce qui est dans les dossiers d'images connus.
 
 ## Version de test (DMG)
-- `./scripts/make-tauri-test-dmg.sh` : app universelle « Flux Test » (identifiant `io.github.aervorn.flux.test`), signée « Aervorn Code Signing », DMG dans `dist/`. Installable à côté de l'app Swift ; ses données sont séparées (la synchro iCloud les récupère).
-- Pas de mise à jour automatique ni de notarisation pour l'instant (clic droit > Ouvrir au premier lancement). Reste à choisir le système de mise à jour de la version finale (plugin updater Tauri, avec sa propre clé) et à retirer la section Développement des réglages.
+- `./scripts/make-tauri-test-dmg.sh` : app universelle « Flux Test » (identifiant `io.github.aervorn.flux.test`), signée « Aervorn Code Signing », DMG dans `dist/`. Installable à côté de l'app finale ; ses données sont séparées.
+
+## Release
+- Clé de mise à jour (une fois) : `./scripts/setup-updater-key.sh` → `~/.tauri/flux-updater.key` (à sauvegarder, avec son mot de passe) et clé publique dans `tauri.conf.json`.
+- `./scripts/make-dmg.sh` : build universel signé (`src-tauri/tauri.release.conf.json`), DMG, `dist/latest.json` (updater Tauri), `appcast.xml` (Sparkle, pour les utilisateurs de l'app Swift ≤ 0.6). Le numéro de build (`bundleVersion` dans `tauri.conf.json`) doit toujours augmenter et rester numérique : Sparkle le compare à celui de l'app Swift installée (6).
+- `src-tauri/Info.plist` contient la clé publique Sparkle de l'app Swift : c'est ce qui permet à Sparkle d'accepter le DMG Tauri comme mise à jour. Non testé de bout en bout avant la première release.
+
+## Écarts avec l'app Swift (cités dans le README)
+Statistiques de lecture, préparation hors ligne, archive des favoris, raccourcis à une touche (j/k/m/s/b), sélection multiple, changement d'adresse d'un flux, visite guidée du premier lancement, comparaison des titres par le sens.

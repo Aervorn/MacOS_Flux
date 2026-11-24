@@ -21,7 +21,7 @@ Flux is a simple, good-looking RSS reader for macOS.
 
 You add your feeds yourself (no directory, no account, no recommendations), you browse the articles as a list with thumbnails or as a grid, and you read the **full article right inside the app**, without opening your browser. Everything stays on your Mac.
 
-Flux is a native SwiftUI app, available in English and French, in light and dark mode.
+Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available in English and French, in light and dark mode. Versions up to 0.6 were native SwiftUI apps; that code is kept in the [`swift/`](swift) folder and at the `swift-final` tag.
 
 > [!NOTE]
 > **Built with the help of AI.** Flux is a personal project I built with [Claude](https://claude.ai), Anthropic's AI assistant: my skills alone wouldn't have been enough to code it entirely by myself. I decided what the app should do, made the design choices and tested every version in daily use; Claude wrote a large part of the code. Just being upfront about it.
@@ -35,116 +35,77 @@ Flux is a native SwiftUI app, available in English and French, in light and dark
 | List with thumbnails | Full-width thumbnails |
 |:---:|:---:|
 | <img src="docs/home_list_en.png" width="400" alt="List with thumbnails" /> | <img src="docs/home_grid-only_en.png" width="400" alt="Full-width thumbnails" /> |
-| **Similar articles grouped** | **Reading statistics** |
-| <img src="docs/similar_articles_en.png" width="400" alt="Similar articles grouped" /> | <img src="docs/reading_statistics_en.png" width="400" alt="Reading statistics" /> |
+| **Reading an article** | **Similar articles grouped** |
+| <img src="docs/reader_en.png" width="400" alt="Reading an article" /> | <img src="docs/similar_articles_en.png" width="400" alt="Similar articles grouped" /> |
 | **Reading settings** | **Filter rules** |
-| <img src="docs/parameter_reading_en.png" width="300" alt="Reading settings" /> | <img src="docs/exclusion_rules_en.png" width="300" alt="Filter rules" /> |
+| <img src="docs/parameter_reading_en.png" width="400" alt="Reading settings" /> | <img src="docs/exclusion_rules_en.png" width="400" alt="Filter rules" /> |
+| **iCloud sync** | |
+| <img src="docs/sync_en.png" width="400" alt="iCloud sync settings" /> | |
 
 ## ✨ Features
 
 ### 📰 Your feeds, your way
 
-- **Add a feed** (⌘N) by pasting its address, or simply the website's address: Flux finds the feed declared by the site, then tries the usual paths (`/feed`, `/rss`, `/atom.xml`…).
-- **Folders** (⇧⌘N), collapsible, with their own unread count, color and icon (right-click › Customize…). Drag a feed onto a folder to file it.
-- **Rename a feed** (right-click › Rename…) when its name is too long. The original name is kept, so you can go back to it.
-- **Change a feed's address** (right-click › Change Address…), for example when a site offers a more complete feed: its articles, read states, favorites, name and folder are kept.
-- **OPML import and export** (File menu, ⇧⌘I / ⇧⌘E) to bring your subscriptions from another reader (NetNewsWire, Reeder, Feedly…) with their folders, or to back them up.
-- **Limitations:** nested folders in an OPML file are flattened to their closest folder.
+- **Add a feed** by pasting its address, or simply the website's address: Flux finds the feed declared by the site, then tries the usual paths (`/feed`, `/rss`, `/atom.xml`…).
+- **Folders**, collapsible, with their own unread count. Right-click a feed to rename it, move it to a folder, open its website, copy its address or delete it.
+- **OPML import and export** (app menu) to bring your subscriptions from another reader (NetNewsWire, Reeder, Feedly…) with their folders, or to back them up.
+- The site's **favicon** is shown next to each feed; the sidebar and the list can be resized, and the window remembers its size and position.
+- **Limitations:** nested folders in an OPML file are flattened to their closest folder. Changing a feed's address, changing a folder's icon or color and dragging a feed onto a folder aren't available yet.
 
 ### 🖼️ A list you enjoy browsing
 
-- **List** view with a thumbnail, the source, the date, the title and an optional summary, or **Thumbnails** view (a grid of images with the title underneath). Switch between them in the toolbar.
+- Three layouts, switched in the toolbar: **list** (thumbnail, source, date, title and an optional summary), **grid** (cards with the title, the number of columns adapts to the width) and **full-width grid**, where an article opens in place, with a back arrow.
 - Thumbnails come from the feed (`media:thumbnail`, `enclosure`…), from the first image of the article, or as a last resort from the page's `og:image`.
-- **Full-width thumbnails** (third choice of the layout picker in the toolbar): the grid takes the whole width, and an article opens in its place, with a back arrow (or Esc). Return opens the selected article.
-- **Search** in the title and full text of the articles of the current view.
-- **Multiple selection** (⌘-click, ⇧-click, ⇧↑/↓, ⌘A) to mark several articles as read, unread or favorite at once.
+- **Search** the articles of the current view, **hide read articles** with one button, **mark all as read**.
+- Views: All articles, Unread, Favorites, History, folders, feeds and tags.
 
 ### 📖 The full article, in the app
 
-- When a feed only provides an excerpt (short, or cut with “…” or “Read more”), Flux downloads the page and extracts the article with [Readability.js](https://github.com/mozilla/readability), the engine behind Firefox's Reader View. A button switches between the feed version and the full article.
-- Clean reading layout, light or dark, with an adjustable text size (⌘+ / ⌘− / ⌘0) and three text widths (narrow, wide, full width). Links open in your default browser.
-- **Limitations:** articles reserved for a site's subscribers stay cut, since the site itself doesn't serve the rest. Pages built entirely in JavaScript can be extracted poorly: the “Open in Browser” button is there for those.
+- When a feed only provides an excerpt, Flux downloads the page and extracts the article with [Readability.js](https://github.com/mozilla/readability), the engine behind Firefox's Reader View. A button switches between the feed version and the full article.
+- Clean reading layout, light or dark, with an adjustable text size (⌘+ or ⌘= / ⌘− / ⌘0), three text widths and a choice of article fonts. Links open in your default browser.
+- **Print / export as PDF** from the article toolbar (macOS print dialog, then its “PDF” button).
+- **Limitations:** articles reserved for a site's subscribers stay cut, since the site itself doesn't serve the rest. Pages built entirely in JavaScript can be extracted poorly: the “Open in browser” button is there for those. Embedded videos (YouTube, Vimeo…) are removed from the article, only their link remains.
 
 ### 🧲 Similar articles
 
 When several sources publish the same story within 48 hours, Flux groups them: only one article appears in the lists, with a “+N” badge, and the article shows the other sources so you can read their version. Reading it marks the whole group as read.
 
-- Articles are grouped when they point to the same link, or when their titles share at least two distinctive words and are close enough, word for word or in meaning (sentence embeddings from Apple's NaturalLanguage framework, computed on your Mac). Words that appear in many titles at the moment (“iPhone” during a launch week) count very little. A group holds at most one article per source, and an article must resemble the group's first article to join it.
-- Settings › Reading: on by default, with three sensitivity levels.
-- **Limitations:** grouping is never perfect. It misses some duplicates whose titles are worded very differently, and can occasionally group two different stories: right-click › Separate from Similar Articles. A single feed's view always shows all its articles.
+- Articles are grouped when they point to the same link, or when their titles share enough distinctive words. Four levels in the app menu › Settings: off, low, normal, high.
+- Right-click › Remove from group when two different stories got grouped.
+- **Limitations:** the comparison only looks at the words of the titles, not at their meaning (the Swift version also compared the meaning with Apple's language models), so it misses duplicates whose titles are worded very differently.
 
 ### 🚫 Keyword filters
 
-Rules (Settings › Filters) exclude articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. A rule applies to all feeds or only to the feeds you check, to the whole word or anywhere in the title, and shows how many articles it affects (with a preview before you save it).
+Rules (menu › Filters) act on articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. A rule applies to all feeds or only to the ones you check, to the whole word or anywhere in the title, and shows how many articles it affects.
 
-- Shortcut: right-click a feed › New Filter Rule… opens a rule with that feed already checked.
 - Rules apply to existing and incoming articles; favorites are never filtered. Deleting a rule brings back the articles it was hiding.
-- **Limitation:** only the title is checked, not the article text.
+- **Limitations:** only the title is checked, not the article text; the oldest rule wins and rules can't be reordered.
 
-### ⌨️ Keyboard shortcuts, Reeder style
+### ⭐ Favorites, tags and history
 
-| Key | Action |
-|---|---|
-| j / k | Next / previous article |
-| Space / ⇧ Space | Scroll the article (at the bottom: next article) |
-| m | Mark as read / unread (whole selection) |
-| s | Add to / remove from favorites (whole selection) |
-| b | Open in browser |
-| ↑ / ↓ (← / → in Thumbnails) | Move in the list; with ⇧, extend the selection |
-| Return / Esc | Open the article / back to the thumbnails (full-width thumbnails) |
-| ⌘N / ⇧⌘N | Add a feed / new folder |
-| ⌘R | Refresh |
-| ⇧⌘K | Mark all as read (current view) |
-| ⌘+ (or ⌘=) / ⌘− / ⌘0 | Bigger / smaller / default text size |
-| ⌥⌘E / ⌘P | Export the article as PDF / print it |
-| ⌥⌘S | Reading statistics |
-| ⌘, | Settings |
-
-Single-key shortcuts are ignored while you type in a text field.
-
-### ✈️ Offline reading
-
-When enabled (Settings › Offline), after each refresh Flux downloads unread articles and favorites in full, **images included**, so you can read them without a connection. Without a connection, the toolbar shows “Offline”.
-
-- The image cache has a size limit (250 MB to 5 GB, 1 GB by default); the least recently used images are removed first. Its size is shown in Settings, with a button to clear it.
-- **Limitations:** up to 25 images per article. The first preparation can take a few minutes if you have many unread articles.
-
-### ⭐ Favorites, history and cleanup
-
-- **Favorites** are kept forever, even once read, and are never marked as read automatically.
-- **Favorites archive** (Settings › Storage, on by default): when you add a favorite, the full article and its images are stored in a permanent archive, separate from the offline cache. You can read it again even if the site deletes it, or without a connection. Removing a favorite frees its space.
-- **Tags** to organize favorites: right-click on articles › Tags, or the tag button in the article toolbar. An article can have several tags, and tagging an article adds it to favorites. Tags appear under Favorites in the sidebar, and under each article in Favorites and in tag views (on several lines if needed).
-- Optionally **hide tagged articles from Favorites** (Settings › General): they then only appear in the view of their tags, and Favorites only shows the ones you haven't sorted yet.
-- **Export as PDF** (button in the article toolbar, or ⌥⌘E) and **Print** (⌘P), in a light layout made for paper, split into real pages.
-- **History** (sidebar) lists the articles you've opened, most recent first, and search works there too.
-- **Mark articles as read** immediately, after 5, 10 or 30 seconds, or never (Settings › Reading).
-- Optionally **mark old articles as read** after 1 day to 1 month, with a preview of how many articles are affected before you apply.
-- Read articles that aren't favorites are **deleted** after 2 weeks to 1 year (2 months by default), or never.
-- Deleting a feed deletes its articles **except its favorites**, which stay in Favorites (and go back to the feed if you add it again).
-
-### 📊 Reading statistics
-
-View › Reading Statistics (⌥⌘S): articles read, time spent reading, estimated reading time (at 230 words per minute), a chart of articles read per day, and the most read and most active sources, over 7 days, 30 days, 3 months or 12 months.
-
-- **Limitations:** reading is recorded from this version on (no history before it). An article counts as read after being shown for 3 seconds, and the time spent is the time it stayed on screen, not proof that you read it. Published articles are only counted while Flux keeps them.
+- **Favorites** are never deleted and never marked as read automatically.
+- **Tags** to organize favorites (right-click on an article › Tags, or the tag button in the article toolbar). Tags are listed in the sidebar.
+- **History** lists the articles you've opened, most recent first.
+- **Mark articles as read** immediately, after a few seconds, or never; optionally mark old articles as read automatically; delete read articles after a delay you choose (never for favorites).
+- **Limitations:** adding a favorite doesn't yet archive its full text and images permanently. There's no offline mode: images inside articles load from the web when you read them.
 
 ### ☁️ Sync between Macs
 
-Settings › iCloud: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/` and merges the others: when something changed on both Macs, the most recent change wins, item by item.
+Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/devices/` and merges the others: when something changed on both Macs, the most recent change wins, item by item. The format is the same as the Swift version's.
 
-- Not synced: settings, history, statistics and images (each Mac downloads its own, favorites archive included).
-- **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). Flux uses iCloud Drive rather than CloudKit, which requires a paid Apple Developer account. The first time, macOS may ask for permission to access iCloud Drive.
+- Not synced: settings, history and images.
+- **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). The first time, macOS may ask permission to access iCloud Drive: allow it, Flux retries by itself. A feed's address change isn't carried over.
 
 ### 💾 Backup to iCloud Drive
 
-Settings › iCloud › Backup: once a day, Flux stores a complete copy of itself (feeds, folders, articles, favorites, tags, rules, history, settings and, optionally, the favorites archive) as a `.zip` in `iCloud Drive/Flux/Sauvegardes/<Mac name>/`, keeping the last 3 to 30. Unlike sync, deleting something doesn't touch backups already made.
+Settings › Backup: once a day, Flux stores a complete copy of its database (feeds, folders, articles, favorites, tags, rules, history, settings) as a `.zip` in `iCloud Drive/Flux/Sauvegardes Tauri/<Mac name>/`, keeping the last 3 to 30. Unlike sync, deleting something doesn't touch backups already made.
 
-- **Restore…** relaunches Flux with the contents of a backup; the current contents are set aside first. If sync is on, the restored contents win over the other Macs and are sent to them.
-- Off by default. The image cache isn't backed up: it downloads again.
+- **Restore** replaces the current contents at the next launch; the current contents are set aside first.
+- **Limitation:** backups made by the Swift version use another format and can't be restored here (use the import described below instead).
 
 ### ⚙️ Settings
 
-Settings are organized in five tabs (General, Reading, Filters, Storage, iCloud): appearance (automatic, light, dark), language (system, English, French), summary under the title, tagged articles hidden from Favorites, article text width, mark-as-read delay, refresh interval (15 minutes to 6 hours), offline reading and storage.
+Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, summary in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity.
 
 ## 🧩 Compatibility
 
@@ -154,16 +115,15 @@ Feed formats: **RSS 2.0**, **RSS 1.0 (RDF)**, **Atom** and **JSON Feed**, served
 
 ## 🔐 Required permissions
 
-None. Flux needs no special permission: it only uses the network to download your feeds, their articles and their images.
+None, except one: if you turn on sync or backup, macOS asks once whether Flux may access iCloud Drive. Otherwise Flux only uses the network to download your feeds, their articles and their images.
 
 ## 🔒 Privacy
 
-Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. Everything is stored on your Mac:
+Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. Everything is stored on your Mac:
 
-- articles, feeds and folders: `~/Library/Application Support/Flux/Flux.store`;
-- image cache: `~/Library/Application Support/Flux/Images`;
-- favorites archive: `~/Library/Application Support/Flux/Archive`;
-- sync (if turned on): one file per Mac in `iCloud Drive/Flux/devices/`, stored in your own iCloud.
+- articles, feeds, folders and settings: `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite`;
+- thumbnails: `~/Library/Application Support/io.github.aervorn.flux/images`;
+- sync and backup (if turned on): `iCloud Drive/Flux/`, stored in your own iCloud.
 
 ## 📥 Installation
 
@@ -184,23 +144,37 @@ Flux collects nothing and sends nothing about you. There is no account, no analy
 >
 > You can check that the download is genuine by comparing its SHA-256 checksum (`shasum -a 256 Flux-x.y.z.dmg`) with the one given in the release notes.
 
+### Coming from the Swift version (0.6 and earlier)
+
+Updating from inside the old app installs the new Flux in its place. On first launch, if Flux finds your old data, it offers to **import** your feeds, folders, articles, favorites, tags, filter rules and settings (your old data is only read, never changed). You can also start the import later from the app menu. The import is only offered while the new database is empty.
+
+Some features of the Swift version aren't in this one yet: reading statistics, offline preparation, favorites archive, single-key keyboard shortcuts (j/k/m/s/b), multiple selection, changing a feed's address, the first-launch tour. See the [releases](https://github.com/Aervorn/MacOS_Flux/releases) for what comes next.
+
 ## 🔄 Updating
 
-Since version 0.4.0, Flux updates itself: it checks for a new version once a day and offers to install it (or use **Flux › Check for Updates…**). Updates are signed, and Flux refuses any file that wasn't signed by the author. Automatic checking and installing can be turned off in **Settings › General**.
-
-Coming from 0.3.x? Download the new DMG from the [releases page](https://github.com/Aervorn/MacOS_Flux/releases) one last time and replace the app in your Applications folder. Your feeds, articles, favorites and settings are kept.
+Flux checks for a new version at launch (or app menu › **Check for updates…**) and offers to install it. Updates are signed, and Flux refuses any file that wasn't signed by the author.
 
 ## 📝 Changelog
 
-### 0.6.0
+### 0.8.0
+- **Flux is now built with Tauri** (Rust core and React interface) instead of SwiftUI: a new look, with a dark theme, three layouts (list, grid, full-width grid) and resizable panels.
+- **Your data comes with you**: the first launch offers to import everything from the Swift version (feeds, folders, articles, favorites, tags, filter rules, settings).
+- Same iCloud sync format as before, and a new daily backup to iCloud Drive (separate folder: backups from the Swift version can't be restored here).
+- Automatic updates with the Tauri updater, signed with a new key.
+- Not available yet in this version: reading statistics, offline preparation, favorites archive, single-key shortcuts, multiple selection, changing a feed's address.
+- The Swift source stays available in the `swift/` folder and at the `swift-final` tag.
+
+### Swift versions
+
+#### 0.6.0
 - **Tags under each favorite**: in Favorites and in tag views, each article shows its tags right below it, on several lines if needed.
 - **New option: hide tagged articles from Favorites** (**Settings › General**). Tagged articles then only appear in the view of their tags.
 - Closing the main window now also closes the Settings window, which used to stay open on its own (and it no longer reopens at the next launch).
 
-### 0.5.1
+#### 0.5.1
 - New app icon made for macOS 26: it adapts to the light, dark, clear and tinted icon styles (no more dark border in the Dock in dark mode).
 
-### 0.5.0
+#### 0.5.0
 - **Tags for favorites**: right-click on articles › Tags, or the tag button in the article toolbar. Tags appear under Favorites in the sidebar.
 - **Filter rules on several feeds**: check the feeds a rule applies to. Shortcut: right-click a feed › New Filter Rule….
 - **Backup to iCloud Drive**: a complete daily copy of Flux, with one-click restore (**Settings › iCloud**).
@@ -209,15 +183,15 @@ Coming from 0.3.x? Download the new DMG from the [releases page](https://github.
 - A short tour of Flux on first launch, and a "What's New" window after updates (both in the **Help** menu).
 - Clearer context menus in the sidebar, and the General settings tab no longer needs scrolling.
 
-### 0.4.0
+#### 0.4.0
 - Automatic updates with [Sparkle](https://sparkle-project.org): Flux checks for new versions once a day (**Flux › Check for Updates…**, options in **Settings › General**).
 - "Hide read articles" button in the toolbar (also in the **View** menu), for All Articles, folders and feeds.
 - The **Add Feed**, **New Folder** and **Refresh** buttons are now in the sidebar.
 
-### 0.3.1
+#### 0.3.1
 - New signing certificate and bundle identifier. Your feeds, articles and favorites are kept; settings are reset.
 
-### 0.3.0
+#### 0.3.0
 - First downloadable version (DMG).
 - Sync between Macs through iCloud Drive: feeds, folders, names, filter rules, read articles and favorites.
 - Adjustable article text size (⌘+ or ⌘= / ⌘− / ⌘0).
@@ -225,54 +199,35 @@ Coming from 0.3.x? Download the new DMG from the [releases page](https://github.
 - Favorites are kept when their feed is deleted.
 - More reliable grouping of similar articles, settings window that fits its content.
 
-### 0.2
+#### 0.2
 - JSON Feed support, full-width thumbnails, keyword filters, favorites archive and History, reading statistics, grouping of similar articles from several sources, settings in tabs.
 
-### 0.1
+#### 0.1
 - First version: manual feeds and folders, list and thumbnail views, full article reading with Readability, search, multiple selection, Reeder-style shortcuts, offline reading, OPML import/export, settings, English and French, light and dark mode.
 
 ## 🛠️ Building from source
 
-Requirements: Xcode 15 or later, macOS 14 or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (the Xcode project is generated from `project.yml`).
+Requirements: macOS 14 or later, [Rust](https://rustup.rs) (stable), Node.js and [pnpm](https://pnpm.io), and the Xcode command-line tools.
 
 ```bash
-brew install xcodegen
 git clone https://github.com/Aervorn/MacOS_Flux.git
 cd MacOS_Flux
-xcodegen generate
-open Flux.xcodeproj
+pnpm install
+pnpm tauri dev      # runs the app in development
 ```
 
-Choose the **Flux** scheme and **My Mac**, then **Product › Run** (⌘R). The project is set to **Sign to Run Locally**: no Apple developer account is needed.
-
-After a `git pull` that adds or removes files, run `xcodegen generate` again.
+`cargo test -p flux-core` runs the tests of the Rust core, `pnpm check:i18n` checks that both languages have the same texts. `pnpm tauri build` builds the app; no Apple developer account or certificate is needed.
 
 ```
-Flux/
-├── FluxApp.swift            entry point, SwiftData database, windows and menus
-├── Models.swift             Feed, Folder, Article, FilterRule
-├── FeedParser.swift         RSS / Atom / JSON Feed parser and dates
-├── FeedStore.swift          adding, refreshing, offline preparation, OPML, cleanup
-├── ArticleExtractor.swift   Readability.js in a hidden WKWebView
-├── ImageCache.swift         disk image cache, flux-image:// protocol, thumbnails
-├── HTMLUtils.swift          plain text, entities, images, feed discovery
-├── OPML.swift               OPML import / export
-├── Filters.swift            keyword filter rules
-├── DuplicateDetector.swift  grouping of similar articles
-├── Sync.swift               sync between Macs through iCloud Drive
-├── Net.swift                network session
-├── Keyboard.swift           single-key shortcuts
-├── Settings.swift           settings, appearance, language
-├── Updater.swift            automatic updates (Sparkle)
-├── Views/                   SwiftUI interface
-├── en.lproj / fr.lproj      translations
-└── Resources/Readability.js
-Design/                      app icon (SVG, and the Python script that generates the PNGs), DMG background
-scripts/make-dmg.sh          builds the DMG of a release and the Sparkle appcast
-scripts/sparkle-keys.sh      creates the Sparkle signing key (once)
+crates/flux-core/   Rust core without Tauri: database, feeds, filters, similar articles, sync, backup
+src-tauri/          Tauri shell: commands, window, updater, bundle
+src/                React interface (components, reader, locales fr / en)
+swift/              the former SwiftUI app (kept for reference)
+Design/             app icon and DMG background
+scripts/            make-dmg.sh (release), setup-updater-key.sh, check-i18n.mjs
 ```
 
-To build a DMG like the published ones, `scripts/make-dmg.sh` generates the project, archives the app, checks its signature and creates the disk image. It needs [create-dmg](https://github.com/create-dmg/create-dmg) (`brew install create-dmg`) and a signing certificate, whose name is set at the top of the script. It also signs the DMG for Sparkle and rewrites `appcast.xml`, which needs the EdDSA key created once by `scripts/sparkle-keys.sh` (the private key stays in your keychain).
+To build a DMG like the published ones, `scripts/make-dmg.sh` builds the universal app, checks its signature and creates the disk image, `latest.json` (Tauri updates) and `appcast.xml` (Sparkle, for the Swift versions). It needs [create-dmg](https://github.com/create-dmg/create-dmg), a signing certificate whose name is set at the top of the script, and the update key created once by `scripts/setup-updater-key.sh`.
 
 ## 🤝 Contributing & issues
 
@@ -280,7 +235,7 @@ Bug reports, ideas and pull requests are welcome!
 
 - **A feed that doesn't load properly?** [Open an issue](https://github.com/Aervorn/MacOS_Flux/issues/new) with the feed's address, your macOS version, what you expected and what happened. A screenshot helps a lot.
 - **An idea?** Open an issue to discuss it first.
-- **A pull request?** Keep it focused on one change. The interface texts are written in French in the code; add the English translation of any new text in `Flux/en.lproj/Localizable.strings`.
+- **A pull request?** Keep it focused on one change. The interface texts are in `src/locales/fr.json` and `src/locales/en.json`: any new text must exist in both.
 
 ## ⚠️ Disclaimer
 
@@ -292,4 +247,4 @@ Flux isn't affiliated with the sites whose feeds you read. Articles, images and 
 
 Flux is released under the [MIT License](LICENSE).
 
-Article extraction uses [Readability.js](https://github.com/mozilla/readability) by Mozilla, released under the Apache 2.0 License (see `Flux/Resources/Readability-LICENSE.md`).
+Third-party components (Readability.js, fonts, libraries) and their licenses are listed in [NOTICE.md](NOTICE.md).

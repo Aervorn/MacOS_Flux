@@ -62,13 +62,14 @@ fastlane/screenshots/**/*.png
 fastlane/test_output
 
 # Fichiers générés par XcodeGen (`xcodegen generate`)
-Flux.xcodeproj/
-Support/Info.plist
+swift/Flux.xcodeproj/
+swift/Support/Info.plist
 
 # macOS
 .DS_Store
 
 # Script de release (scripts/make-dmg.sh)
+swift/build/
 build/
 dist/
 
