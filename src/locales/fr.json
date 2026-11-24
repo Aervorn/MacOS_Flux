@@ -20,6 +20,11 @@
   "dev": {
     "version": "Version {{version}} (cœur {{core}})",
     "print": "Tester l'impression / PDF",
-    "printError": "Impression impossible : {{message}}"
+    "printError": "Impression impossible : {{message}}",
+    "import": "Importer mes données Flux (Swift)",
+    "importDone": "Importé : {{articles}} articles, {{feeds}} flux, {{folders}} dossiers, {{tags}} tags, {{rules}} règles.",
+    "importSettings": "Réglages importés.",
+    "importWarnings": "{{count}} avertissement(s) : {{list}}",
+    "importError": "Import impossible : {{message}}"
   }
 }

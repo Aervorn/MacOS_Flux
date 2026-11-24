@@ -10,6 +10,18 @@ interface AppInfo {
   coreVersion: string;
 }
 
+interface ImportReport {
+  folders: number;
+  feeds: number;
+  articles: number;
+  favoriteTags: number;
+  articleTags: number;
+  filterRules: number;
+  settingsImported: boolean;
+  language: string | null;
+  warnings: string[];
+}
+
 const THEMES: { mode: ThemeMode; labelKey: string }[] = [
   { mode: "light", labelKey: "settings.appearanceLight" },
   { mode: "dark", labelKey: "settings.appearanceDark" },
@@ -21,6 +33,8 @@ export default function App() {
   const [theme, setTheme] = useState<ThemeMode>(initialTheme);
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   useEffect(() => {
     invoke<AppInfo>("app_info")
@@ -39,6 +53,16 @@ export default function App() {
       await invoke("print_page");
     } catch (e) {
       setError(t("dev.printError", { message: String(e) }));
+    }
+  };
+
+  const importData = async () => {
+    setReport(null);
+    setImportError(null);
+    try {
+      setReport(await invoke<ImportReport>("dev_import_swift_data"));
+    } catch (e) {
+      setImportError(t("dev.importError", { message: String(e) }));
     }
   };
 
@@ -89,6 +113,24 @@ export default function App() {
             {t("dev.print")}
           </button>
           {error && <div className={styles.error}>{error}</div>}
+          <button className={styles.devButton} onClick={importData}>
+            {t("dev.import")}
+          </button>
+          {importError && <div className={styles.error}>{importError}</div>}
+          {report && (
+            <p className={styles.label}>
+              {t("dev.importDone", {
+                articles: report.articles,
+                feeds: report.feeds,
+                folders: report.folders,
+                tags: report.favoriteTags,
+                rules: report.filterRules,
+              })}
+              {report.settingsImported && ` ${t("dev.importSettings")}`}
+              {report.warnings.length > 0 &&
+                ` ${t("dev.importWarnings", { count: report.warnings.length, list: report.warnings.join(" ; ") })}`}
+            </p>
+          )}
         </div>
       </main>
     </div>

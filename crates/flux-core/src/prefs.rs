@@ -1,18 +1,20 @@
 //! Réglages utilisateur et leurs valeurs par défaut.
 //!
 //! Les valeurs par défaut reprennent `Prefs.defaults` de l'app Swift
-//! (`Flux/Settings.swift`). L'import des réglages (étape 2) applique ces
-//! mêmes valeurs pour toute clé absente de l'export `defaults`.
+//! (`Flux/Settings.swift`). L'import des réglages applique ces mêmes valeurs
+//! pour toute clé absente de l'export `defaults`.
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 pub struct Prefs {
     pub refresh_minutes: u32,
     pub retention_days: u32,
-    pub mark_read_delay: u32,
+    /// Secondes avant de marquer l'article ouvert comme lu (0 = tout de suite, -1 = jamais).
+    pub mark_read_delay: i32,
     pub image_cache_limit_mb: u32,
+    /// "narrow", "wide" ou "full"
     pub reader_width: String,
     pub show_summary: bool,
     pub reader_font_size: u32,
@@ -27,7 +29,12 @@ pub struct Prefs {
     pub auto_mark_read_enabled: bool,
     pub auto_mark_read_days: u32,
     pub offline_enabled: bool,
+    /// "system", "light" ou "dark"
     pub appearance: String,
+    /// "list", "grid" ou "gridFull"
+    pub article_layout: String,
+    pub article_list_width: f64,
+    pub favorites_expanded: bool,
 }
 
 impl Default for Prefs {
@@ -52,6 +59,9 @@ impl Default for Prefs {
             auto_mark_read_days: 7,
             offline_enabled: false,
             appearance: "system".into(),
+            article_layout: "list".into(),
+            article_list_width: 400.0,
+            favorites_expanded: true,
         }
     }
 }
@@ -67,6 +77,7 @@ mod tests {
         assert_eq!(p.retention_days, 60);
         assert_eq!(p.image_cache_limit_mb, 1024);
         assert_eq!(p.reader_width, "narrow");
+        assert_eq!(p.article_layout, "list");
         assert!(p.archive_favorites && p.group_duplicates);
     }
 
@@ -74,5 +85,12 @@ mod tests {
     fn serializes_in_camel_case() {
         let json = serde_json::to_string(&Prefs::default()).unwrap();
         assert!(json.contains("\"refreshMinutes\":30"));
+    }
+
+    #[test]
+    fn missing_fields_fall_back_to_defaults() {
+        let p: Prefs = serde_json::from_str("{\"retentionDays\":14}").unwrap();
+        assert_eq!(p.retention_days, 14);
+        assert_eq!(p.refresh_minutes, 30);
     }
 }
