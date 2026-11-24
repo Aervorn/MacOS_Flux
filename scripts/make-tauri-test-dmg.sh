@@ -37,8 +37,8 @@ pnpm install --frozen-lockfile
 step "Compilation de l'app universelle (plusieurs minutes)"
 pnpm tauri build --target "$TARGET" --bundles app --config src-tauri/tauri.test.conf.json
 
-APP="src-tauri/target/$TARGET/release/bundle/macos/$APP_NAME.app"
-[ -d "$APP" ] || fail "$APP_NAME.app introuvable (cherche dans src-tauri/target/$TARGET/release/bundle)."
+APP="target/$TARGET/release/bundle/macos/$APP_NAME.app"
+[ -d "$APP" ] || fail "$APP_NAME.app introuvable (cherche dans target/$TARGET/release/bundle)."
 BIN="$APP/Contents/MacOS/$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$APP/Contents/Info.plist")"
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP/Contents/Info.plist")
 echo "$APP_NAME $VERSION — architectures : $(lipo -archs "$BIN")"
