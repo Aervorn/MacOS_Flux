@@ -22,7 +22,8 @@
     "showRead": "Show read articles",
     "layoutList": "List",
     "layoutGrid": "Grid",
-    "layoutGridFull": "Full-width grid"
+    "layoutGridFull": "Full-width grid",
+    "markAllRead": "Mark all as read"
   },
   "detail": {
     "select": "Select an article.",
@@ -41,7 +42,16 @@
     "loading": "Fetching the full article…",
     "loadError": "Couldn't fetch the full article: {{message}}",
     "extractFailed": "no usable text on this page",
-    "sourceLine": "Source: {{link}}"
+    "sourceLine": "Source: {{link}}",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "favorite": "Add to favorites",
+    "unfavorite": "Remove from favorites",
+    "tags": "Tags",
+    "newTag": "New tag…",
+    "newTagName": "Tag name",
+    "create": "Create",
+    "noTags": "No tags"
   },
   "settings": {
     "appearance": "Appearance",

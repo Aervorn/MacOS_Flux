@@ -109,7 +109,14 @@ export interface ArticleDetail {
   fullHtml: string | null;
   isRead: boolean;
   isStarred: boolean;
+  /** uid des tags de l'article */
+  tags: string[];
   similar: SimilarArticle[];
+}
+
+export interface TagInfo {
+  uid: string;
+  name: string;
 }
 
 export interface FetchedPage {
@@ -157,6 +164,14 @@ export const api = {
     wordCount: number;
     imageUrl: string | null;
   }) => invoke<boolean>("save_full_html", args),
+  setRead: (keys: string[], read: boolean) => invoke<void>("set_read", { keys, read }),
+  markAllRead: (selection: Selection, hideTaggedFavorites: boolean) =>
+    invoke<number>("mark_all_read", { selection, hideTaggedFavorites }),
+  setStarred: (keys: string[], starred: boolean) => invoke<void>("set_starred", { keys, starred }),
+  createTag: (name: string) => invoke<TagInfo | null>("create_tag", { name }),
+  setTag: (uid: string, on: boolean, keys: string[]) => invoke<void>("set_tag", { uid, on, keys }),
+  recordOpened: (key: string) => invoke<void>("record_opened", { key }),
+  addReadingSeconds: (key: string, seconds: number) => invoke<void>("add_reading_seconds", { key, seconds }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
   devImport: () => invoke<ImportReport>("dev_import_swift_data"),

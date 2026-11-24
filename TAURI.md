@@ -25,3 +25,6 @@ pnpm tauri dev                     # lance l'app en développement
 
 - **Export PDF** : l'impression passe par la fenêtre native de macOS (il faut cliquer sur le petit bouton « PDF » en bas à gauche). Piste : un vrai « Exporter en PDF » direct via `WKWebView.createPDF` (code natif Rust/objc2).
 - **Vidéos intégrées** (iframes YouTube, Vimeo…) : retirées par le nettoyage du HTML ; seul le lien reste. Piste : autoriser une liste blanche de lecteurs.
+- **Menu contextuel** sur les articles (clic droit : lu/non lu, favori, tags…) : reporté après les actions, **à faire avant la release finale**.
+- **Archivage des favoris** : mettre un article en favori ne télécharge pas encore son texte complet ni ses images dans l'archive permanente (dépend du téléchargement des images, étape suivante).
+- **Tags** : création et attribution faites ; renommer / supprimer un tag viendra avec les menus contextuels de la barre latérale.

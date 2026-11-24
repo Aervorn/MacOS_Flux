@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, ExternalLink, FileText, Minus, Plus, Printer, Rss } from "lucide-react";
+import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileText, Minus, Plus, Printer, Rss, Star, Tag } from "lucide-react";
 import { api } from "../api";
-import type { ArticleDetail, Prefs } from "../api";
+import type { ArticleDetail, Prefs, SidebarTag } from "../api";
 import { formatPublished } from "../format";
 import { extractArticle } from "../reader/extract";
 import { cachedImageSrc, restoreOnError, rewriteImages } from "../reader/images";
@@ -20,13 +20,17 @@ interface Props {
   prefs: Prefs;
   onPrefs: (patch: Partial<Prefs>) => void;
   onOpenArticle: (key: string) => void;
+  /** Tags existants (pour le menu des tags). */
+  tags: SidebarTag[];
+  /** Appelé après une action qui change les listes ou les compteurs (lu, favori, tags). */
+  onChanged: () => void;
   /** Affiche le bouton de retour (grille : le lecteur recouvre la liste). */
   onClose?: () => void;
 }
 
 type Status = "idle" | "loading" | "error";
 
-export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, onClose }: Props) {
+export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags, onChanged, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const [detail, setDetail] = useState<ArticleDetail | null>(null);
   const [showFull, setShowFull] = useState(true);
@@ -35,6 +39,13 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, onCl
   const [heroSrc, setHeroSrc] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [tagMenu, setTagMenu] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const onChangedRef = useRef(onChanged);
+  onChangedRef.current = onChanged;
+  const manualReadKey = useRef<string | null>(null); // lu/non lu choisi à la main : plus de marquage automatique
+  const markDelayRef = useRef(prefs.markReadDelay);
+  markDelayRef.current = prefs.markReadDelay;
 
   // Chargement de l'article, et récupération automatique du texte complet si le flux n'a qu'un extrait.
   useEffect(() => {
@@ -114,6 +125,93 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, onCl
     }
   }, [detail, t]);
 
+  // Marquage automatique comme lu (réglage : jamais si < 0, tout de suite si 0, sinon après N secondes).
+  // Seul l'article affiché compte : en changer avant la fin du délai annule le marquage.
+  const loadedKey = detail?.key ?? null;
+  useEffect(() => {
+    if (!loadedKey) return;
+    const delay = markDelayRef.current;
+    if (delay < 0 || detail?.isRead) return;
+    const id = setTimeout(() => {
+      if (manualReadKey.current === loadedKey) return;
+      api
+        .setRead([loadedKey], true)
+        .then(() => {
+          setDetail((d) => (d && d.key === loadedKey ? { ...d, isRead: true } : d));
+          onChangedRef.current();
+        })
+        .catch(() => undefined);
+    }, delay * 1000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedKey]);
+
+  // Historique : un article affiché pendant 3 secondes compte comme ouvert.
+  useEffect(() => {
+    if (!loadedKey) return;
+    const id = setTimeout(() => api.recordOpened(loadedKey).catch(() => undefined), 3000);
+    return () => clearTimeout(id);
+  }, [loadedKey]);
+
+  // Temps de lecture : compté tant que la fenêtre est au premier plan.
+  useEffect(() => {
+    let since: number | null = document.hasFocus() ? Date.now() : null;
+    const finish = () => {
+      if (since === null) return;
+      const seconds = (Date.now() - since) / 1000;
+      since = null;
+      if (seconds >= 1) api.addReadingSeconds(articleKey, seconds).catch(() => undefined);
+    };
+    const onFocus = () => {
+      since = Date.now();
+    };
+    window.addEventListener("blur", finish);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      finish();
+      window.removeEventListener("blur", finish);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [articleKey]);
+
+  const toggleRead = async () => {
+    if (!detail) return;
+    const read = !detail.isRead;
+    manualReadKey.current = detail.key;
+    await api.setRead([detail.key], read);
+    setDetail((d) => (d ? { ...d, isRead: read } : d));
+    onChanged();
+  };
+
+  const toggleStar = async () => {
+    if (!detail) return;
+    const starred = !detail.isStarred;
+    await api.setStarred([detail.key], starred);
+    setDetail((d) => (d ? { ...d, isStarred: starred } : d));
+    onChanged();
+  };
+
+  // Un tag range un favori : l'ajouter à un article qui n'en est pas un en fait un favori.
+  const toggleTag = async (uid: string) => {
+    if (!detail) return;
+    const on = !detail.tags.includes(uid);
+    await api.setTag(uid, on, [detail.key]);
+    setDetail((d) =>
+      d ? { ...d, isStarred: d.isStarred || on, tags: on ? [...d.tags, uid] : d.tags.filter((x) => x !== uid) } : d,
+    );
+    onChanged();
+  };
+
+  const createTag = async () => {
+    const created = await api.createTag(newTag);
+    setNewTag("");
+    if (created) {
+      await api.setTag(created.uid, true, [articleKey]);
+      setDetail((d) => (d ? { ...d, isStarred: true, tags: [...d.tags, created.uid] } : d));
+      onChanged();
+    }
+  };
+
   const rawBody = useMemo(
     () =>
       detail
@@ -188,6 +286,63 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, onCl
           </button>
         )}
         <span className={styles.spacer} />
+        <button
+          className={styles.iconButton}
+          onClick={toggleRead}
+          title={detail.isRead ? t("detail.markUnread") : t("detail.markRead")}
+          aria-label={detail.isRead ? t("detail.markUnread") : t("detail.markRead")}
+        >
+          {detail.isRead ? <CircleCheck size={16} /> : <Circle size={16} />}
+        </button>
+        <button
+          className={`${styles.iconButton} ${detail.isStarred ? styles.starOn : ""}`}
+          onClick={toggleStar}
+          title={detail.isStarred ? t("detail.unfavorite") : t("detail.favorite")}
+          aria-label={detail.isStarred ? t("detail.unfavorite") : t("detail.favorite")}
+        >
+          <Star size={16} fill={detail.isStarred ? "currentColor" : "none"} />
+        </button>
+        <div className={styles.menuWrap}>
+          <button
+            className={styles.iconButton}
+            onClick={() => setTagMenu((v) => !v)}
+            title={t("detail.tags")}
+            aria-label={t("detail.tags")}
+          >
+            <Tag size={16} />
+          </button>
+          {tagMenu && (
+            <>
+              <div className={styles.backdrop} onClick={() => setTagMenu(false)} />
+              <div className={styles.menu}>
+                {tags.length === 0 && <p className={styles.menuEmpty}>{t("detail.noTags")}</p>}
+                {tags.map((tag) => (
+                  <button key={tag.uid} className={styles.menuItem} onClick={() => toggleTag(tag.uid)}>
+                    <span className={styles.check}>{detail.tags.includes(tag.uid) && <Check size={14} />}</span>
+                    {tag.name}
+                  </button>
+                ))}
+                <form
+                  className={styles.menuForm}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void createTag();
+                  }}
+                >
+                  <input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder={t("detail.newTagName")}
+                    spellCheck={false}
+                  />
+                  <button type="submit" className={styles.pill} disabled={!newTag.trim()}>
+                    {t("detail.create")}
+                  </button>
+                </form>
+              </div>
+            </>
+          )}
+        </div>
         {canToggle && (
           <button
             className={styles.pill}

@@ -5,6 +5,7 @@
 //! Swift), `prefs` (réglages). Viendront ensuite : `feed`, `ingest`,
 //! `cluster`, `images`, `sync`, `backup`, `opml`.
 
+pub mod actions;
 pub mod articles;
 pub mod db;
 pub mod error;

@@ -2,11 +2,12 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
+use flux_core::actions::TagInfo;
 use flux_core::articles::ArticleDetail;
 use flux_core::import::ImportReport;
 use flux_core::net::FetchedPage;
 use flux_core::prefs::Prefs;
-use flux_core::query::{ArticleRow, ListQuery, Sidebar};
+use flux_core::query::{ArticleRow, ListQuery, Selection, Sidebar};
 use rusqlite::Connection;
 use serde::Serialize;
 use tauri::{Manager, State};
@@ -109,6 +110,48 @@ fn open_url(url: String) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn set_read(state: State<'_, AppState>, keys: Vec<String>, read: bool) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::actions::set_read(&conn, &keys, read).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn mark_all_read(state: State<'_, AppState>, selection: Selection, hide_tagged_favorites: bool) -> Result<usize, String> {
+    let conn = lock(&state)?;
+    flux_core::actions::mark_all_read(&conn, &selection, hide_tagged_favorites).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_starred(state: State<'_, AppState>, keys: Vec<String>, starred: bool) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::actions::set_starred(&conn, &keys, starred).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn create_tag(state: State<'_, AppState>, name: String) -> Result<Option<TagInfo>, String> {
+    let conn = lock(&state)?;
+    flux_core::actions::create_tag(&conn, &name).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_tag(state: State<'_, AppState>, uid: String, on: bool, keys: Vec<String>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::actions::set_tag(&conn, &uid, on, &keys).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn record_opened(state: State<'_, AppState>, key: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::actions::record_opened(&conn, &key).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn add_reading_seconds(state: State<'_, AppState>, key: String, seconds: f64) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::actions::add_reading_seconds(&conn, &key, seconds).map_err(|e| e.to_string())
+}
+
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
 /// native de la webview.
 #[tauri::command]
@@ -185,6 +228,13 @@ pub fn run() {
             fetch_page,
             save_full_html,
             open_url,
+            set_read,
+            mark_all_read,
+            set_starred,
+            create_tag,
+            set_tag,
+            record_opened,
+            add_reading_seconds,
             print_page,
             dev_import_swift_data
         ])

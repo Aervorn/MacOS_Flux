@@ -79,6 +79,21 @@ export default function App() {
     };
   }, [ready, selection, debouncedSearch, hideRead, hideTagged, reloadTick]);
 
+  // Après une action (lu, favori, tags…) : compteurs et liste à jour.
+  const refresh = useCallback(() => {
+    loadSidebar().catch((e) => setMessage(String(e)));
+    setReloadTick((n) => n + 1);
+  }, [loadSidebar]);
+
+  const markAllRead = async () => {
+    try {
+      await api.markAllRead(selection, prefs?.hideTaggedFavorites ?? false);
+      refresh();
+    } catch (e) {
+      setMessage(String(e));
+    }
+  };
+
   const updatePrefs = (patch: Partial<Prefs>) => {
     if (!prefs) return;
     const next = { ...prefs, ...patch };
@@ -231,6 +246,7 @@ export default function App() {
           hideRead={hideRead}
           canHideRead={canHideRead}
           onToggleHideRead={() => updatePrefs({ hideRead: !prefs.hideRead })}
+          onMarkAllRead={markAllRead}
         />
 
         {prefs.articleLayout === "list" ? (
@@ -245,6 +261,8 @@ export default function App() {
                   prefs={prefs}
                   onPrefs={updatePrefs}
                   onOpenArticle={setSelectedKey}
+                  tags={sidebar?.tags ?? []}
+                  onChanged={refresh}
                 />
               ) : (
                 <p className={styles.placeholder}>{t("detail.select")}</p>
@@ -257,6 +275,8 @@ export default function App() {
             prefs={prefs}
             onPrefs={updatePrefs}
             onOpenArticle={setSelectedKey}
+            tags={sidebar?.tags ?? []}
+            onChanged={refresh}
             onClose={() => setSelectedKey(null)}
           />
         ) : (

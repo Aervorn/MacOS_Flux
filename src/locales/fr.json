@@ -22,7 +22,8 @@
     "showRead": "Afficher les articles lus",
     "layoutList": "Liste",
     "layoutGrid": "Grille",
-    "layoutGridFull": "Grille pleine largeur"
+    "layoutGridFull": "Grille pleine largeur",
+    "markAllRead": "Tout marquer comme lu"
   },
   "detail": {
     "select": "Choisis un article.",
@@ -41,7 +42,16 @@
     "loading": "Récupération de l'article complet…",
     "loadError": "Impossible de récupérer l'article complet : {{message}}",
     "extractFailed": "aucun texte exploitable sur cette page",
-    "sourceLine": "Source : {{link}}"
+    "sourceLine": "Source : {{link}}",
+    "markRead": "Marquer comme lu",
+    "markUnread": "Marquer comme non lu",
+    "favorite": "Ajouter aux favoris",
+    "unfavorite": "Retirer des favoris",
+    "tags": "Tags",
+    "newTag": "Nouveau tag…",
+    "newTagName": "Nom du tag",
+    "create": "Créer",
+    "noTags": "Aucun tag"
   },
   "settings": {
     "appearance": "Apparence",

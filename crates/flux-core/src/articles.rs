@@ -34,6 +34,8 @@ pub struct ArticleDetail {
     pub full_html: Option<String>,
     pub is_read: bool,
     pub is_starred: bool,
+    /// Identifiants (uid) des tags de l'article.
+    pub tags: Vec<String>,
     pub similar: Vec<SimilarArticle>,
 }
 
@@ -73,6 +75,16 @@ pub fn get_article(conn: &Connection, key: &str) -> Result<Option<ArticleDetail>
         return Ok(None);
     };
 
+    let article_id: i64 = conn.query_row("SELECT id FROM articles WHERE key = ?1", params![key], |r| r.get(0))?;
+    let tags = {
+        let mut stmt = conn.prepare(
+            "SELECT t.uid FROM article_tags x JOIN favorite_tags t ON t.id = x.tag_id
+             WHERE x.article_id = ?1 ORDER BY t.name",
+        )?;
+        let rows = stmt.query_map(params![article_id], |r| r.get::<_, String>(0))?;
+        rows.collect::<std::result::Result<Vec<_>, _>>()?
+    };
+
     let mut similar = Vec::new();
     if let Some(cluster) = cluster {
         let mut stmt = conn.prepare(
@@ -110,6 +122,7 @@ pub fn get_article(conn: &Connection, key: &str) -> Result<Option<ArticleDetail>
         full_html,
         is_read: read != 0,
         is_starred: starred != 0,
+        tags,
         similar,
     }))
 }

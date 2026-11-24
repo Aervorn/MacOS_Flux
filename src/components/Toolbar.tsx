@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Eye, EyeOff, LayoutGrid, List, PanelTop, Search } from "lucide-react";
+import { CheckCheck, Eye, EyeOff, LayoutGrid, List, PanelTop, Search } from "lucide-react";
 import type { ArticleLayout } from "../api";
 import styles from "./Toolbar.module.css";
 
@@ -12,9 +12,10 @@ interface Props {
   hideRead: boolean;
   canHideRead: boolean;
   onToggleHideRead: () => void;
+  onMarkAllRead: () => void;
 }
 
-export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead }: Props) {
+export default function Toolbar({ title, search, onSearch, layout, onLayout, hideRead, canHideRead, onToggleHideRead, onMarkAllRead }: Props) {
   const { t } = useTranslation();
 
   const layoutButton = (value: ArticleLayout, icon: React.ReactNode, label: string) => (
@@ -41,6 +42,15 @@ export default function Toolbar({ title, search, onSearch, layout, onLayout, hid
           spellCheck={false}
         />
       </label>
+
+      <button
+        className={styles.iconButton}
+        onClick={onMarkAllRead}
+        title={t("toolbar.markAllRead")}
+        aria-label={t("toolbar.markAllRead")}
+      >
+        <CheckCheck size={16} />
+      </button>
 
       {canHideRead && (
         <button
