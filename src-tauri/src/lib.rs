@@ -369,6 +369,7 @@ fn serve_image(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .register_uri_scheme_protocol("flux-image", |ctx, request| serve_image(ctx, request))
         .setup(|app| {
             let dir = app.path().app_data_dir()?;

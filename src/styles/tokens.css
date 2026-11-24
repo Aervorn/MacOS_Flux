@@ -53,8 +53,28 @@
 }
 
 :root {
-  --font: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --radius-card: 12px;
   --gap: 16px;
   --sidebar-width: 260px;
+}
+
+/* Densité de la barre latérale : taille du texte, marge verticale des lignes, espace entre elles. */
+:root,
+:root[data-density="normal"] {
+  --sb-font: 14px;
+  --sb-row-py: 5px;
+  --sb-gap: 1px;
+}
+
+:root[data-density="compact"] {
+  --sb-font: 13px;
+  --sb-row-py: 3px;
+  --sb-gap: 0px;
+}
+
+:root[data-density="spacious"] {
+  --sb-font: 14px;
+  --sb-row-py: 7px;
+  --sb-gap: 2px;
 }

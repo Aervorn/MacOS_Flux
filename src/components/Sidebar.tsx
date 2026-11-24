@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Rss, Star, Tag } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
 import type { Selection, Sidebar as SidebarData, SidebarFeed, SidebarFolder, SidebarTag } from "../api";
 import { sameSelection } from "../api";
+import Favicon from "./Favicon";
 import { folderColor, folderIcon } from "../icons";
 import styles from "./Sidebar.module.css";
 
@@ -61,12 +62,14 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
   );
 
   const feedRow = (f: SidebarFeed, indent: boolean) =>
-    row({ kind: "feed", url: f.url }, <Rss size={16} />, f.title, f.unread, indent, (e) => onFeedMenu(e, f));
+    row({ kind: "feed", url: f.url }, <Favicon siteUrl={f.siteUrl} />, f.title, f.unread, indent, (e) => onFeedMenu(e, f));
 
   const isOpen = (uid: string, expanded: boolean) => (uid in collapsed ? !collapsed[uid] : expanded);
 
   return (
     <aside className={styles.sidebar} data-noprint>
+      {/* Place des boutons rouge/jaune/vert de la fenêtre, et zone pour la déplacer */}
+      <div className={styles.titlebar} data-tauri-drag-region />
       <div className={styles.brand}>
         <span className={styles.brandName}>{t("app.name")}</span>
         <button className={styles.headerButton} onClick={onAddFolder} title={t("sidebar.addFolder")} aria-label={t("sidebar.addFolder")}>

@@ -144,13 +144,54 @@
   color: var(--text);
 }
 
-.select {
-  width: 100%;
-  padding: 8px 10px;
+.fontGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fontCard,
+.fontCardActive {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--pill);
+  border-radius: 10px;
+  background: var(--bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.fontCard:hover {
+  background: var(--surface-hover);
+}
+
+.fontCardActive {
+  border-color: var(--accent);
+  background: var(--surface-hover);
+}
+
+.fontSample {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.fontText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.fontName {
+  font-size: 13px;
   color: var(--text);
+}
+
+.fontDesc {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .toggle {

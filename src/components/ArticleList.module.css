@@ -38,40 +38,86 @@
   border-radius: 8px;
 }
 
-/* --- Grille --- */
+/* --- Grille : cartes de 150 px minimum, le nombre de colonnes suit la largeur --- */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--gap);
-  padding: var(--gap);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 12px;
 }
 
 .card {
   display: flex;
   flex-direction: column;
+  gap: 7px;
   min-width: 0;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--surface);
+  padding: 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
   color: inherit;
   text-align: left;
-  overflow: hidden;
   cursor: pointer;
 }
 
 .card:hover,
 .card.selected {
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
-.card.selected {
-  border-color: var(--accent);
+.cardMedia {
+  position: relative;
 }
 
 .cardThumb {
   width: 100%;
   aspect-ratio: 16 / 10;
+  border-radius: 9px;
+}
+
+.cardStar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  box-sizing: content-box;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #f5c518;
+  backdrop-filter: blur(6px);
+}
+
+.cardTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* 3 lignes réservées : toutes les cartes ont la même hauteur */
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 4.2em;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.card.read .cardTitle {
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 /* --- Contenu commun --- */
@@ -80,10 +126,6 @@
   flex-direction: column;
   gap: 4px;
   min-width: 0;
-}
-
-.card .body {
-  padding: 12px;
 }
 
 .meta {

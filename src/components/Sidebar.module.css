@@ -5,6 +5,11 @@
   min-height: 0;
 }
 
+.titlebar {
+  flex: none;
+  height: 28px;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -49,7 +54,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sb-gap, 2px);
 }
 
 .group {
@@ -63,7 +68,8 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 7px 12px;
+  padding: var(--sb-row-py, 7px) 12px;
+  font-size: var(--sb-font, 14px);
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -112,7 +118,7 @@
 .chevron {
   position: absolute;
   right: 40px;
-  top: 7px;
+  top: var(--sb-row-py, 7px);
   display: inline-flex;
   padding: 3px;
   border: 0;

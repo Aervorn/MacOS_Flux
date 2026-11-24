@@ -94,7 +94,7 @@
 
 .title {
   margin: 0 0 20px;
-  font-family: "New York", ui-serif, Georgia, serif;
+  font-family: var(--font-article-title, "New York", ui-serif, Georgia, serif);
   font-size: 1.88rem;
   font-weight: 700;
   line-height: 1.2;
@@ -134,6 +134,7 @@
 }
 
 .content {
+  font-family: var(--font-article, var(--font));
   font-size: var(--reader-font, 17px);
   line-height: 1.68;
   overflow-wrap: break-word;

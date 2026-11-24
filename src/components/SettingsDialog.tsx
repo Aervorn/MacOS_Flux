@@ -4,7 +4,9 @@ import { BookOpen, Palette, Rss, SlidersHorizontal, Terminal, X } from "lucide-r
 import type { AppInfo, ImportReport, Prefs, SidebarFeed } from "../api";
 import { setLang, type Lang } from "../i18n";
 import type { ThemeMode } from "../theme";
+import { ARTICLE_FONTS, UI_FONTS } from "../fonts";
 import FiltersPanel from "./FiltersPanel";
+import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
 export type Section = "appearance" | "reading" | "feeds" | "filters" | "dev";
@@ -76,13 +78,7 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
   );
 
   const select = (value: number, options: { value: number; label: string }[], onPick: (v: number) => void) => (
-    <select className={styles.select} value={value} onChange={(e) => onPick(Number(e.target.value))}>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <Select value={value} options={options} onChange={onPick} />
   );
 
   const row = (label: string, control: React.ReactNode, help?: string) => (
@@ -113,11 +109,51 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
               t("settings.language"),
               segmented(i18n.language as Lang, (["fr", "en"] as Lang[]).map((l) => ({ value: l, label: l === "fr" ? "Français" : "English" })), setLang),
             )}
+            {row(
+              t("settings.uiFont"),
+              segmented<Prefs["uiFont"]>(
+                prefs.uiFont,
+                UI_FONTS.map((f) => ({ value: f.id, label: f.id === "system" ? t("settings.fontSystem") : f.name })),
+                (uiFont) => onPrefs({ uiFont }),
+              ),
+            )}
+            {row(
+              t("settings.sidebarDensity"),
+              segmented<Prefs["sidebarDensity"]>(
+                prefs.sidebarDensity,
+                [
+                  { value: "compact", label: t("settings.densityCompact") },
+                  { value: "normal", label: t("settings.densityNormal") },
+                  { value: "spacious", label: t("settings.densitySpacious") },
+                ],
+                (sidebarDensity) => onPrefs({ sidebarDensity }),
+              ),
+            )}
           </>
         );
       case "reading":
         return (
           <>
+            {row(
+              t("settings.articleFont"),
+              <div className={styles.fontGrid}>
+                {ARTICLE_FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    className={prefs.articleFont === f.id ? styles.fontCardActive : styles.fontCard}
+                    onClick={() => onPrefs({ articleFont: f.id })}
+                  >
+                    <span className={styles.fontSample} style={{ fontFamily: f.title }}>
+                      Aa
+                    </span>
+                    <span className={styles.fontText}>
+                      <span className={styles.fontName}>{f.id === "classic" ? t("settings.fontClassicName") : f.name}</span>
+                      <span className={styles.fontDesc}>{t(f.descKey)}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>,
+            )}
             {row(
               t("settings.fontSize"),
               <div className={styles.stepper}>

@@ -1,0 +1,27 @@
+.handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  width: 8px;
+  margin-left: -4px;
+  cursor: col-resize;
+}
+
+.handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.handle:hover::after,
+.active::after {
+  opacity: 0.6;
+}

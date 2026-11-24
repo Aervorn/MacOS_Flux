@@ -4,6 +4,7 @@ import { EyeOff, CircleCheck, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
 import type { FilterInput, FilterRule, SidebarFeed } from "../api";
 import { errorMessage } from "../errors";
+import Select from "./Select";
 import base from "./AddFeedDialog.module.css";
 import styles from "./FiltersPanel.module.css";
 
@@ -183,10 +184,14 @@ export default function FiltersPanel({ feeds, onChanged, onEditingChange }: Prop
             </label>
             <div className={base.row}>
               <span>{t("filters.action")}</span>
-              <select value={form.action} onChange={(e) => patch({ action: e.target.value as FilterInput["action"] })}>
-                <option value="hide">{t("filters.hide")}</option>
-                <option value="markRead">{t("filters.markRead")}</option>
-              </select>
+              <Select
+                value={form.action}
+                onChange={(action) => patch({ action })}
+                options={[
+                  { value: "hide", label: t("filters.hide") },
+                  { value: "markRead", label: t("filters.markRead") },
+                ]}
+              />
             </div>
             <span className={base.help}>
               {t("filters.feeds")} : {form.feedUrls.length === 0 ? t("filters.allFeeds") : t("filters.someFeeds", { count: form.feedUrls.length })}

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import type { SidebarFolder } from "../api";
 import { errorMessage } from "../errors";
+import Select from "./Select";
 import styles from "./AddFeedDialog.module.css";
 
 interface Props {
@@ -58,17 +59,15 @@ export default function AddFeedDialog({ folders, initialFolderUid, onClose, onAd
           disabled={working}
         />
         {folders.length > 0 && (
-          <label className={styles.row}>
+          <div className={styles.row}>
             <span>{t("addFeed.folder")}</span>
-            <select className={styles.field} value={folderUid} onChange={(e) => setFolderUid(e.target.value)} disabled={working}>
-              <option value="">{t("addFeed.noFolder")}</option>
-              {folders.map((f) => (
-                <option key={f.uid} value={f.uid}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </label>
+            <Select
+              value={folderUid}
+              onChange={setFolderUid}
+              disabled={working}
+              options={[{ value: "", label: t("addFeed.noFolder") }, ...folders.map((f) => ({ value: f.uid, label: f.name }))]}
+            />
+          </div>
         )}
         {error && <p className={styles.error}>{error}</p>}
         <div className={styles.actions}>

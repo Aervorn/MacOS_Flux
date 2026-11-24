@@ -32,8 +32,8 @@ export default function Toolbar({ title, search, onSearch, layout, onLayout, hid
   );
 
   return (
-    <header className={styles.toolbar} data-noprint>
-      <h1 className={styles.title}>{title}</h1>
+    <header className={styles.toolbar} data-noprint data-tauri-drag-region>
+      <h1 className={styles.title} data-tauri-drag-region>{title}</h1>
 
       <label className={styles.search}>
         <Search size={14} />

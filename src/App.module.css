@@ -1,5 +1,6 @@
 .app {
   display: grid;
+  position: relative;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   gap: var(--gap);
   height: 100%;
@@ -23,7 +24,9 @@
   overflow-y: auto;
 }
 
+/* Positionné pour accueillir la poignée de redimensionnement */
 .split {
+  position: relative;
   display: flex;
   flex: 1;
   min-height: 0;

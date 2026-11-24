@@ -35,7 +35,11 @@ export interface Prefs {
   appearance: Appearance;
   articleLayout: ArticleLayout;
   articleListWidth: number;
+  sidebarWidth: number;
   favoritesExpanded: boolean;
+  uiFont: "inter" | "geist" | "system";
+  articleFont: "classic" | "geist" | "literata" | "sourceSerif" | "merriweather" | "atkinson" | "systemSerif" | "mono";
+  sidebarDensity: "compact" | "normal" | "spacious";
 }
 
 export interface Settings {

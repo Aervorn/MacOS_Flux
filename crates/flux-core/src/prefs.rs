@@ -34,7 +34,16 @@ pub struct Prefs {
     /// "list", "grid" ou "gridFull"
     pub article_layout: String,
     pub article_list_width: f64,
+    /// Largeur de la barre latérale, en pixels.
+    pub sidebar_width: f64,
     pub favorites_expanded: bool,
+    /// Police de l'interface : "inter", "geist" ou "system".
+    pub ui_font: String,
+    /// Police de l'article : "classic", "geist", "literata", "sourceSerif", "merriweather",
+    /// "atkinson", "systemSerif" ou "mono".
+    pub article_font: String,
+    /// Espacement de la barre latérale : "compact", "normal" ou "spacious".
+    pub sidebar_density: String,
 }
 
 impl Default for Prefs {
@@ -61,7 +70,11 @@ impl Default for Prefs {
             appearance: "system".into(),
             article_layout: "list".into(),
             article_list_width: 400.0,
+            sidebar_width: 260.0,
             favorites_expanded: true,
+            ui_font: "inter".into(),
+            article_font: "classic".into(),
+            sidebar_density: "normal".into(),
         }
     }
 }
@@ -78,7 +91,9 @@ mod tests {
         assert_eq!(p.image_cache_limit_mb, 1024);
         assert_eq!(p.reader_width, "narrow");
         assert_eq!(p.article_layout, "list");
+        assert_eq!(p.sidebar_width, 260.0);
         assert!(p.archive_favorites && p.group_duplicates);
+        assert_eq!((p.ui_font.as_str(), p.article_font.as_str(), p.sidebar_density.as_str()), ("inter", "classic", "normal"));
     }
 
     #[test]

@@ -5,7 +5,9 @@ import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as Si
 import { hasSavedLang, setLang } from "./i18n";
 import { errorMessage } from "./errors";
 import { applyTheme, appearanceToMode, modeToAppearance } from "./theme";
+import { applyLook } from "./fonts";
 import ArticleList from "./components/ArticleList";
+import Resizer from "./components/Resizer";
 import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
 import SettingsDialog, { type Section } from "./components/SettingsDialog";
@@ -61,6 +63,11 @@ export default function App() {
     const id = setTimeout(() => setDebouncedSearch(search), 200);
     return () => clearTimeout(id);
   }, [search]);
+
+  // Polices et densité : à l'ouverture, puis à chaque changement dans les réglages.
+  useEffect(() => {
+    if (prefs) applyLook(prefs);
+  }, [prefs?.uiFont, prefs?.articleFont, prefs?.sidebarDensity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canHideRead = selection.kind === "all" || selection.kind === "folder" || selection.kind === "feed";
   const hideRead = (prefs?.hideRead ?? false) && canHideRead;
@@ -161,6 +168,10 @@ export default function App() {
         api.createFolder(name).then(refresh).catch((err) => setMessage(errorMessage(err, t)));
       },
     });
+
+  // Largeurs des panneaux : aperçu pendant le glissement, enregistrées au relâchement.
+  const [dragSidebar, setDragSidebar] = useState<number | null>(null);
+  const [dragList, setDragList] = useState<number | null>(null);
 
   const updatePrefs = (patch: Partial<Prefs>) => {
     if (!prefs) return;
@@ -294,6 +305,8 @@ export default function App() {
   })();
 
   const currentMode = appearanceToMode(prefs.appearance);
+  const sidebarWidth = dragSidebar ?? prefs.sidebarWidth;
+  const listWidth = dragList ?? prefs.articleListWidth;
 
   const list = (
     <div className={styles.scroll}>
@@ -309,7 +322,18 @@ export default function App() {
   );
 
   return (
-    <div className={styles.app}>
+    <div className={styles.app} style={{ ["--sidebar-width" as string]: `${sidebarWidth}px` }}>
+      <Resizer
+        value={sidebarWidth}
+        min={180}
+        max={420}
+        left={`calc(var(--gap) + ${sidebarWidth}px + var(--gap) / 2)`}
+        onPreview={setDragSidebar}
+        onCommit={(v) => {
+          updatePrefs({ sidebarWidth: v });
+          setDragSidebar(null);
+        }}
+      />
       <Sidebar
         data={sidebar}
         selection={selection}
@@ -342,11 +366,22 @@ export default function App() {
           onMenu={openAppMenu}
         />
 
-        {prefs.articleLayout === "list" ? (
+        {prefs.articleLayout !== "gridFull" ? (
           <div className={styles.split}>
-            <div className={styles.listColumn} data-noprint style={{ width: prefs.articleListWidth }}>
+            <div className={styles.listColumn} data-noprint style={{ width: listWidth }}>
               {list}
             </div>
+            <Resizer
+              value={listWidth}
+              min={280}
+              max={700}
+              left={`${listWidth}px`}
+              onPreview={setDragList}
+              onCommit={(v) => {
+                updatePrefs({ articleListWidth: v });
+                setDragList(null);
+              }}
+            />
             <section className={styles.detail}>
               {selectedKey ? (
                 <Reader

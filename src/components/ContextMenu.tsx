@@ -19,6 +19,8 @@ interface Props {
   x: number;
   y: number;
   items: MenuItem[];
+  /** Largeur minimale du menu (liste déroulante : au moins la largeur du champ). */
+  minWidth?: number;
   onClose: () => void;
 }
 
@@ -88,7 +90,7 @@ function MenuList({
 }
 
 /** Menu contextuel maison (clic droit) : se ferme au clic ailleurs, sur Échap ou si la fenêtre perd le focus. */
-export default function ContextMenu({ x, y, items, onClose }: Props) {
+export default function ContextMenu({ x, y, items, minWidth, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
 
@@ -104,12 +106,17 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
   }, [x, y, items]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
+    // En capture, pour que Échap ferme le menu seul (et pas aussi la fenêtre qui l'a ouvert).
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      onClose();
+    };
+    window.addEventListener("keydown", onKey, true);
     window.addEventListener("blur", onClose);
     window.addEventListener("resize", onClose);
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keydown", onKey, true);
       window.removeEventListener("blur", onClose);
       window.removeEventListener("resize", onClose);
     };
@@ -125,7 +132,7 @@ export default function ContextMenu({ x, y, items, onClose }: Props) {
       }}
     >
       <div ref={ref} className={styles.root} style={pos} onMouseDown={(e) => e.stopPropagation()}>
-        <MenuList items={items} onClose={onClose} />
+        <MenuList items={items} onClose={onClose} style={minWidth ? { minWidth } : undefined} />
       </div>
     </div>,
     document.body,
