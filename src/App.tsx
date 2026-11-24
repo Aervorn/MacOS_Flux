@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useTranslation } from "react-i18next";
 import { api, sameSelection } from "./api";
-import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as SidebarData } from "./api";
+import type { AppInfo, ArticleRow, Prefs, Selection, Sidebar as SidebarData } from "./api";
 import { hasSavedLang, setLang } from "./i18n";
 import { errorMessage } from "./errors";
 import { applyTheme, appearanceToMode, modeToAppearance } from "./theme";
@@ -13,7 +13,7 @@ import Sidebar from "./components/Sidebar";
 import AddFeedDialog from "./components/AddFeedDialog";
 import SettingsDialog, { type Section } from "./components/SettingsDialog";
 import ContextMenu, { type MenuItem } from "./components/ContextMenu";
-import { Download, Info, Settings, SlidersHorizontal, Upload } from "lucide-react";
+import { Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
@@ -32,8 +32,8 @@ export default function App() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [reloadTick, setReloadTick] = useState(0);
   const [info, setInfo] = useState<AppInfo | null>(null);
-  const [report, setReport] = useState<ImportReport | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [update, setUpdate] = useState<string | null>(null);
+  const [swiftImport, setSwiftImport] = useState<{ available: boolean; dismissed: boolean }>({ available: false, dismissed: false });
   const [refreshing, setRefreshing] = useState(false);
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null);
@@ -56,8 +56,10 @@ export default function App() {
 
   useEffect(() => {
     api.appInfo().then(setInfo).catch(() => setInfo(null)); // hors Tauri (navigateur seul), on ignore
-    loadSettings().catch((e) => setMessage(String(e)));
-    loadSidebar().catch((e) => setMessage(String(e)));
+    api.checkUpdate().then((u) => setUpdate(u?.version ?? null)).catch(() => undefined); // silencieux : pas de réseau, ou hors Tauri
+    api.swiftImportStatus().then(setSwiftImport).catch(() => undefined);
+    loadSettings().catch((e) => setNotice(String(e)));
+    loadSidebar().catch((e) => setNotice(String(e)));
   }, [loadSettings, loadSidebar]);
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export default function App() {
       .then((rows) => {
         if (!cancelled) setArticles(rows);
       })
-      .catch((e) => setMessage(String(e)));
+      .catch((e) => setNotice(String(e)));
     return () => {
       cancelled = true;
     };
@@ -97,7 +99,7 @@ export default function App() {
 
   // Après une action (lu, favori, tags…) : compteurs et liste à jour.
   const refresh = useCallback(() => {
-    loadSidebar().catch((e) => setMessage(String(e)));
+    loadSidebar().catch((e) => setNotice(String(e)));
     setReloadTick((n) => n + 1);
   }, [loadSidebar]);
 
@@ -106,7 +108,7 @@ export default function App() {
       await api.markAllRead(selection, prefs?.hideTaggedFavorites ?? false);
       refresh();
     } catch (e) {
-      setMessage(String(e));
+      setNotice(String(e));
     }
   };
 
@@ -117,7 +119,7 @@ export default function App() {
       const report = await api.refreshAll();
       if (report.added > 0 || report.failed > 0) refresh();
     } catch (e) {
-      setMessage(errorMessage(e, t));
+      setNotice(errorMessage(e, t));
     } finally {
       setRefreshing(false);
     }
@@ -164,7 +166,7 @@ export default function App() {
       setSelectedKey(null);
     },
     ask: setAsking,
-    fail: (e) => setMessage(errorMessage(e, t)),
+    fail: (e) => setNotice(errorMessage(e, t)),
     hideTaggedFavorites: prefs?.hideTaggedFavorites ?? false,
   });
 
@@ -187,7 +189,7 @@ export default function App() {
       placeholder: t("dialogs.folderName"),
       confirmLabel: t("dialogs.create"),
       onSubmit: (name) => {
-        api.createFolder(name).then(refresh).catch((err) => setMessage(errorMessage(err, t)));
+        api.createFolder(name).then(refresh).catch((err) => setNotice(errorMessage(err, t)));
       },
     });
 
@@ -199,7 +201,7 @@ export default function App() {
     if (!prefs) return;
     const next = { ...prefs, ...patch };
     setPrefs(next);
-    api.savePrefs(next).catch((e) => setMessage(String(e)));
+    api.savePrefs(next).catch((e) => setNotice(String(e)));
   };
 
   // Doublons : -1 = désactivé, sinon sensibilité 0 (faible), 1 (normale) ou 2 (forte). Les groupes sont recalculés.
@@ -216,7 +218,7 @@ export default function App() {
       await api.regroupDuplicates();
       refresh();
     } catch (e) {
-      setMessage(errorMessage(e, t));
+      setNotice(errorMessage(e, t));
     }
   };
 
@@ -237,7 +239,7 @@ export default function App() {
       await loadSidebar();
       if (result.added > 0) void refreshFeeds();
     } catch (e) {
-      setMessage(errorMessage(e, t));
+      setNotice(errorMessage(e, t));
     }
   };
 
@@ -248,7 +250,7 @@ export default function App() {
       await api.exportOpml(path);
       setNotice(t("opml.exported"));
     } catch (e) {
-      setMessage(errorMessage(e, t));
+      setNotice(errorMessage(e, t));
     }
   };
 
@@ -261,14 +263,18 @@ export default function App() {
         { label: t("settings.open"), icon: <Settings size={16} />, onClick: () => setSettings("appearance") },
         { label: t("settings.filters"), icon: <SlidersHorizontal size={16} />, onClick: () => setSettings("filters") },
         "separator",
+        ...(swiftImport.available
+          ? [{ label: t("swiftImport.menu"), icon: <Download size={16} />, onClick: () => void importSwiftData() }]
+          : []),
         { label: t("settings.importOpml"), icon: <Download size={16} />, onClick: () => void importOpml() },
         { label: t("settings.exportOpml"), icon: <Upload size={16} />, onClick: () => void exportOpml() },
         "separator",
+        { label: t("update.check"), icon: <RefreshCw size={16} />, onClick: () => void checkUpdateNow() },
         {
           label: t("settings.about"),
           icon: <Info size={16} />,
           onClick: () =>
-            setNotice(info ? t("dev.version", { version: info.version, core: info.coreVersion }) : t("settings.aboutUnknown")),
+            setNotice(info ? t("settings.aboutVersion", { version: info.version, core: info.coreVersion }) : t("settings.aboutUnknown")),
         },
       ],
     });
@@ -280,27 +286,51 @@ export default function App() {
     setSelectedKey(null);
   };
 
-  const importData = async () => {
-    setReport(null);
-    setMessage(null);
+  const importSwiftData = async () => {
+    setSwiftImport({ available: false, dismissed: true });
     try {
-      setReport(await api.devImport());
+      const report = await api.importSwift();
       await loadSettings();
       await loadSidebar();
       setSelectedKey(null);
       setReloadTick((n) => n + 1);
+      let text = t("swiftImport.done", {
+        articles: report.articles,
+        feeds: report.feeds,
+        folders: report.folders,
+        tags: report.favoriteTags,
+        rules: report.filterRules,
+      });
+      if (report.warnings.length > 0) text += " " + t("swiftImport.warnings", { count: report.warnings.length, list: report.warnings.join(" ; ") });
+      setNotice(text);
     } catch (e) {
-      setMessage(t("dev.importError", { message: String(e) }));
+      setNotice(t("swiftImport.error", { message: String(e) }));
     }
   };
 
-  const printPage = async () => {
-    setMessage(null);
+  const checkUpdateNow = async () => {
     try {
-      await api.printPage();
+      const u = await api.checkUpdate();
+      if (u) setUpdate(u.version);
+      else setNotice(t("update.upToDate", { version: info?.version ?? "" }));
     } catch (e) {
-      setMessage(t("dev.printError", { message: String(e) }));
+      setNotice(t("update.error", { message: String(e) }));
     }
+  };
+
+  const installUpdate = async () => {
+    setUpdate(null);
+    setNotice(t("update.installing"));
+    try {
+      await api.installUpdate(); // relance l'app en cas de succès
+    } catch (e) {
+      setNotice(t("update.error", { message: String(e) }));
+    }
+  };
+
+  const dismissSwiftImport = () => {
+    setSwiftImport((s) => ({ ...s, dismissed: true }));
+    api.swiftImportDismiss().catch(() => undefined);
   };
 
   if (!prefs) return null;
@@ -433,7 +463,25 @@ export default function App() {
           list
         )}
       </main>
-      {notice && <InfoDialog title={t("opml.title")} message={notice} onClose={() => setNotice(null)} />}
+      {update && (
+        <ConfirmDialog
+          title={t("update.title")}
+          message={t("update.message", { version: update })}
+          confirmLabel={t("update.install")}
+          onConfirm={() => void installUpdate()}
+          onClose={() => setUpdate(null)}
+        />
+      )}
+      {swiftImport.available && !swiftImport.dismissed && (
+        <ConfirmDialog
+          title={t("swiftImport.title")}
+          message={t("swiftImport.message")}
+          confirmLabel={t("swiftImport.confirm")}
+          onConfirm={() => void importSwiftData()}
+          onClose={dismissSwiftImport}
+        />
+      )}
+      {notice && <InfoDialog title="Flux" message={notice} onClose={() => setNotice(null)} />}
       {settings && (
         <SettingsDialog
           section={settings}
@@ -450,7 +498,6 @@ export default function App() {
             a.title.localeCompare(b.title),
           )}
           onChanged={refresh}
-          dev={{ info, report, message, onPrint: printPage, onImportSwift: importData }}
           onClose={() => setSettings(null)}
         />
       )}

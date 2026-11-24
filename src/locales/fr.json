@@ -80,7 +80,6 @@
     "sectionReading": "Lecture",
     "sectionFeeds": "Flux",
     "sectionFilters": "Filtres",
-    "sectionDev": "Développement",
     "fontSize": "Taille du texte de l'article",
     "lineWidth": "Largeur du texte de l'article",
     "widthNarrow": "Étroite",
@@ -120,17 +119,8 @@
     "fontSystemSerif": "Georgia, rien à charger",
     "fontMono": "Geist Mono",
     "sectionSync": "Synchronisation",
-    "sectionBackup": "Sauvegarde"
-  },
-  "dev": {
-    "version": "Version {{version}} (cœur {{core}})",
-    "print": "Tester l'impression / PDF",
-    "printError": "Impression impossible : {{message}}",
-    "import": "Importer mes données Flux (Swift)",
-    "importDone": "Importé : {{articles}} articles, {{feeds}} flux, {{folders}} dossiers, {{tags}} tags, {{rules}} règles.",
-    "importSettings": "Réglages importés.",
-    "importWarnings": "{{count}} avertissement(s) : {{list}}",
-    "importError": "Import impossible : {{message}}"
+    "sectionBackup": "Sauvegarde",
+    "aboutVersion": "Version {{version}} (cœur {{core}})"
   },
   "addFeed": {
     "title": "Ajouter un flux",
@@ -250,5 +240,23 @@
     "relaunchManually": "Sauvegarde prête. Quitte puis relance Flux pour l'appliquer.",
     "quitNow": "Quitter Flux",
     "later": "Plus tard"
+  },
+  "swiftImport": {
+    "title": "Reprendre tes données ?",
+    "message": "Une ancienne version de Flux a été trouvée sur ce Mac. Veux-tu reprendre tes flux, dossiers, articles, favoris, tags, règles et réglages ? Ton ancienne app n’est pas modifiée.",
+    "confirm": "Importer",
+    "menu": "Importer mes données de l’ancienne version",
+    "done": "Importé : {{articles}} articles, {{feeds}} flux, {{folders}} dossiers, {{tags}} tags, {{rules}} règles.",
+    "warnings": "{{count}} avertissement(s) : {{list}}",
+    "error": "Import impossible : {{message}}"
+  },
+  "update": {
+    "check": "Rechercher les mises à jour…",
+    "title": "Mise à jour disponible",
+    "message": "Flux {{version}} est disponible. Flux va la télécharger, s’installer puis redémarrer.",
+    "install": "Installer et redémarrer",
+    "installing": "Téléchargement de la mise à jour… Flux redémarrera tout seul.",
+    "upToDate": "Flux est à jour (version {{version}}).",
+    "error": "Mise à jour impossible : {{message}}"
   }
 }

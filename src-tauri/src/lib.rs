@@ -607,26 +607,116 @@ fn print_page(window: tauri::WebviewWindow) -> Result<(), String> {
     window.print().map_err(|e| e.to_string())
 }
 
-/// Import de développement : repart d'une base vide (`flux.sqlite` dans le dossier de données
-/// de l'app) et y recopie le store Swift (lu en lecture seule) et les réglages.
-/// À remplacer par un vrai écran d'import ; supprime la base à chaque appel.
-#[tauri::command]
-fn dev_import_swift_data(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<ImportReport, String> {
+/// Chemins de l'app Swift (version précédente de Flux).
+fn swift_paths(app: &tauri::AppHandle) -> Result<(PathBuf, PathBuf, PathBuf), String> {
     let home = app.path().home_dir().map_err(|e| e.to_string())?;
-    let store = home.join("Library/Application Support/Flux/Flux.store");
-    let prefs_plist = home.join("Library/Preferences/io.github.aervorn.flux.plist");
+    let dir = home.join("Library/Application Support/Flux");
+    Ok((
+        dir.join("Flux.store"),
+        home.join("Library/Preferences/io.github.aervorn.flux.plist"),
+        dir,
+    ))
+}
 
-    let mut guard = lock(&state)?;
-    // Libère le fichier avant de le supprimer
-    *guard = flux_core::db::open_in_memory().map_err(|e| e.to_string())?;
-    for suffix in ["", "-wal", "-shm"] {
-        let _ = std::fs::remove_file(format!("{}{}", state.db_path.display(), suffix));
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SwiftImportStatus {
+    /// Un store Swift existe et la base actuelle est vide : on peut proposer l'import.
+    available: bool,
+    /// L'utilisateur a déjà refusé la proposition.
+    dismissed: bool,
+}
+
+#[tauri::command]
+fn swift_import_status(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<SwiftImportStatus, String> {
+    let (store, _, _) = swift_paths(&app)?;
+    let conn = lock(&state)?;
+    let existing: i64 = conn
+        .query_row(
+            "SELECT (SELECT COUNT(*) FROM feeds) + (SELECT COUNT(*) FROM articles)",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
+    let dismissed = flux_core::db::load_setting::<bool>(&conn, "swiftImportDismissed")
+        .map_err(|e| e.to_string())?
+        .unwrap_or(false);
+    Ok(SwiftImportStatus { available: store.is_file() && existing == 0, dismissed })
+}
+
+#[tauri::command]
+fn swift_import_dismiss(state: State<'_, AppState>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::db::save_setting(&conn, "swiftImportDismissed", &true).map_err(|e| e.to_string())
+}
+
+/// Copie les fichiers d'un dossier d'images vers le nôtre (sans écraser). Meilleur effort.
+fn copy_images(from: &std::path::Path, to: &std::path::Path) {
+    let Ok(entries) = std::fs::read_dir(from) else { return };
+    let _ = std::fs::create_dir_all(to);
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let Some(name_str) = name.to_str() else { continue };
+        if !flux_core::images::is_cache_name(name_str) {
+            continue;
+        }
+        let dest = to.join(&name);
+        if !dest.exists() {
+            let _ = std::fs::copy(entry.path(), dest);
+        }
     }
+}
 
-    let mut conn = flux_core::db::open(&state.db_path).map_err(|e| e.to_string())?;
-    let report = flux_core::import::import_all(&store, Some(&prefs_plist), &mut conn).map_err(|e| e.to_string())?;
-    *guard = conn;
+/// Reprend les données de l'app Swift (lecture seule de l'existant) dans la base actuelle,
+/// qui doit être vide, puis copie les images en cache pour ne plus dépendre de l'ancienne app.
+#[tauri::command]
+fn import_swift_data(app: tauri::AppHandle, state: State<'_, AppState>) -> Result<ImportReport, String> {
+    let (store, prefs_plist, swift_dir) = swift_paths(&app)?;
+    let report = {
+        let mut conn = lock(&state)?;
+        flux_core::import::import_all(&store, Some(&prefs_plist), &mut conn).map_err(|e| e.to_string())?
+    };
+    copy_images(&swift_dir.join("Archive"), &state.images.own);
+    copy_images(&swift_dir.join("Images"), &state.images.own);
     Ok(report)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UpdateInfo {
+    version: String,
+}
+
+/// Cherche une mise à jour (fichier `latest.json` de la dernière release GitHub).
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(update.map(|u| UpdateInfo { version: u.version }))
+}
+
+/// Télécharge et installe la mise à jour (signature vérifiée avec la clé publique de
+/// `tauri.conf.json`), puis relance l'app.
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let update = app
+        .updater()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "aucune mise à jour disponible".to_string())?;
+    update
+        .download_and_install(|_, _| {}, || {})
+        .await
+        .map_err(|e| e.to_string())?;
+    app.restart()
 }
 
 /// Sert `flux-image://localhost/<nom de cache>` depuis le cache d'images de l'app Swift
@@ -657,6 +747,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .register_uri_scheme_protocol("flux-image", |ctx, request| serve_image(ctx, request))
         .setup(|app| {
             let dir = app.path().app_data_dir()?;
@@ -731,7 +822,11 @@ pub fn run() {
             export_opml,
             create_folder,
             print_page,
-            dev_import_swift_data
+            check_update,
+            install_update,
+            swift_import_status,
+            swift_import_dismiss,
+            import_swift_data
         ])
         .run(tauri::generate_context!())
         .expect("erreur au lancement de Flux");

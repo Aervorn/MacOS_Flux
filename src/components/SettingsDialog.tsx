@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Archive, BookOpen, Cloud, Palette, Rss, SlidersHorizontal, Terminal, X } from "lucide-react";
-import type { AppInfo, ImportReport, Prefs, SidebarFeed } from "../api";
+import { Archive, BookOpen, Cloud, Palette, Rss, SlidersHorizontal, X } from "lucide-react";
+import type { Prefs, SidebarFeed } from "../api";
 import { setLang, type Lang } from "../i18n";
 import type { ThemeMode } from "../theme";
 import { ARTICLE_FONTS, UI_FONTS } from "../fonts";
@@ -11,7 +11,7 @@ import SyncSection from "./SyncSection";
 import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
-export type Section = "appearance" | "reading" | "feeds" | "filters" | "sync" | "backup" | "dev";
+export type Section = "appearance" | "reading" | "feeds" | "filters" | "sync" | "backup";
 
 const SECTIONS: { id: Section; icon: React.ReactNode; labelKey: string }[] = [
   { id: "appearance", icon: <Palette size={16} />, labelKey: "settings.sectionAppearance" },
@@ -20,7 +20,6 @@ const SECTIONS: { id: Section; icon: React.ReactNode; labelKey: string }[] = [
   { id: "filters", icon: <SlidersHorizontal size={16} />, labelKey: "settings.sectionFilters" },
   { id: "sync", icon: <Cloud size={16} />, labelKey: "settings.sectionSync" },
   { id: "backup", icon: <Archive size={16} />, labelKey: "settings.sectionBackup" },
-  { id: "dev", icon: <Terminal size={16} />, labelKey: "settings.sectionDev" },
 ];
 
 const THEMES: { mode: ThemeMode; labelKey: string }[] = [
@@ -35,14 +34,6 @@ const MAX_FONT = 28;
 /** Valeurs proposées, plus la valeur actuelle si elle n'y figure pas (réglage importé). */
 const withCurrent = (values: number[], current: number) => (values.includes(current) ? values : [...values, current].sort((a, b) => a - b));
 
-interface DevTools {
-  info: AppInfo | null;
-  report: ImportReport | null;
-  message: string | null;
-  onPrint: () => void;
-  onImportSwift: () => void;
-}
-
 interface Props {
   section: Section;
   onSection: (s: Section) => void;
@@ -54,11 +45,10 @@ interface Props {
   feeds: SidebarFeed[];
   /** Recharge compteurs et liste (après un changement de filtres). */
   onChanged: () => void;
-  dev: DevTools;
   onClose: () => void;
 }
 
-export default function SettingsDialog({ section, onSection, prefs, onPrefs, themeMode, onTheme, onDuplicates, feeds, onChanged, dev, onClose }: Props) {
+export default function SettingsDialog({ section, onSection, prefs, onPrefs, themeMode, onTheme, onDuplicates, feeds, onChanged, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const [filtersEditing, setFiltersEditing] = useState(false);
 
@@ -252,37 +242,6 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
         return <SyncSection prefs={prefs} onPrefs={onPrefs} onChanged={onChanged} />;
       case "backup":
         return <BackupSection prefs={prefs} onPrefs={onPrefs} />;
-      case "dev":
-        return (
-          <>
-            {dev.info && <p className={styles.help}>{t("dev.version", { version: dev.info.version, core: dev.info.coreVersion })}</p>}
-            <div>
-              <button className={styles.button} onClick={dev.onPrint}>
-                {t("dev.print")}
-              </button>
-            </div>
-            <div>
-              <button className={styles.button} onClick={dev.onImportSwift}>
-                {t("dev.import")}
-              </button>
-            </div>
-            {dev.report && (
-              <p className={styles.help}>
-                {t("dev.importDone", {
-                  articles: dev.report.articles,
-                  feeds: dev.report.feeds,
-                  folders: dev.report.folders,
-                  tags: dev.report.favoriteTags,
-                  rules: dev.report.filterRules,
-                })}
-                {dev.report.settingsImported && ` ${t("dev.importSettings")}`}
-                {dev.report.warnings.length > 0 &&
-                  ` ${t("dev.importWarnings", { count: dev.report.warnings.length, list: dev.report.warnings.join(" ; ") })}`}
-              </p>
-            )}
-            {dev.message && <p className={styles.error}>{dev.message}</p>}
-          </>
-        );
     }
   })();
 

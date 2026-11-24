@@ -80,7 +80,6 @@
     "sectionReading": "Reading",
     "sectionFeeds": "Feeds",
     "sectionFilters": "Filters",
-    "sectionDev": "Development",
     "fontSize": "Article text size",
     "lineWidth": "Article text width",
     "widthNarrow": "Narrow",
@@ -120,17 +119,8 @@
     "fontSystemSerif": "Georgia, nothing extra loaded",
     "fontMono": "Geist Mono",
     "sectionSync": "Sync",
-    "sectionBackup": "Backup"
-  },
-  "dev": {
-    "version": "Version {{version}} (core {{core}})",
-    "print": "Test printing / PDF",
-    "printError": "Printing failed: {{message}}",
-    "import": "Import my Flux data (Swift)",
-    "importDone": "Imported: {{articles}} articles, {{feeds}} feeds, {{folders}} folders, {{tags}} tags, {{rules}} rules.",
-    "importSettings": "Settings imported.",
-    "importWarnings": "{{count}} warning(s): {{list}}",
-    "importError": "Import failed: {{message}}"
+    "sectionBackup": "Backup",
+    "aboutVersion": "Version {{version}} (core {{core}})"
   },
   "addFeed": {
     "title": "Add a feed",
@@ -250,5 +240,23 @@
     "relaunchManually": "Backup ready. Quit and reopen Flux to apply it.",
     "quitNow": "Quit Flux",
     "later": "Later"
+  },
+  "swiftImport": {
+    "title": "Bring your data over?",
+    "message": "A previous version of Flux was found on this Mac. Do you want to import your feeds, folders, articles, favorites, tags, rules and settings? Your old app is left untouched.",
+    "confirm": "Import",
+    "menu": "Import data from the previous version",
+    "done": "Imported: {{articles}} articles, {{feeds}} feeds, {{folders}} folders, {{tags}} tags, {{rules}} rules.",
+    "warnings": "{{count}} warning(s): {{list}}",
+    "error": "Import failed: {{message}}"
+  },
+  "update": {
+    "check": "Check for updates…",
+    "title": "Update available",
+    "message": "Flux {{version}} is available. Flux will download it, install it and restart.",
+    "install": "Install and restart",
+    "installing": "Downloading the update… Flux will restart by itself.",
+    "upToDate": "Flux is up to date (version {{version}}).",
+    "error": "Update failed: {{message}}"
   }
 }

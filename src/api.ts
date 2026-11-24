@@ -173,6 +173,11 @@ export interface ImportReport {
   warnings: string[];
 }
 
+export interface SwiftImportStatus {
+  available: boolean;
+  dismissed: boolean;
+}
+
 export interface AddedFeed {
   url: string;
   title: string;
@@ -275,10 +280,14 @@ export const api = {
   detachFromCluster: (key: string) => invoke<void>("detach_from_cluster", { key }),
   openUrl: (url: string) => invoke<void>("open_url", { url }),
   printPage: () => invoke<void>("print_page"),
-  devImport: () => invoke<ImportReport>("dev_import_swift_data"),
+  checkUpdate: () => invoke<{ version: string } | null>("check_update"),
+  installUpdate: () => invoke<void>("install_update"),
+  swiftImportStatus: () => invoke<SwiftImportStatus>("swift_import_status"),
+  swiftImportDismiss: () => invoke<void>("swift_import_dismiss"),
+  importSwift: () => invoke<ImportReport>("import_swift_data"),
 };
 
-/** Miniature servie par le protocole flux-image (cache de l'app Swift, lecture seule). */
+/** Miniature servie par le protocole flux-image (cache d'images de l'app). */
 export const imageSrc = (thumb: string) => `flux-image://localhost/${thumb}`;
 
 export const sameSelection = (a: Selection, b: Selection) => JSON.stringify(a) === JSON.stringify(b);

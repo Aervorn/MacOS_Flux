@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Clé publique Sparkle (EdDSA) de l'ancienne app Swift : elle permet à Sparkle d'accepter
+	     ce DMG comme mise à jour de l'app Swift (0.6.x → 0.8.0). Ensuite, les mises à jour
+	     passent par le plugin updater de Tauri. -->
+	<key>SUPublicEDKey</key>
+	<string>eZCHe74IeZ8DBTAY+tVftTLA2+kKJT3xD5e/QmhV2sE=</string>
+</dict>
+</plist>
