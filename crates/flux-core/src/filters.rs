@@ -172,7 +172,7 @@ pub fn apply(conn: &Connection, only: Option<&[String]>) -> Result<usize> {
 }
 
 /// Libère les articles filtrés par une règle (ceux déjà marqués comme lus le restent).
-fn release(conn: &Connection, uid: &str) -> Result<()> {
+pub(crate) fn release(conn: &Connection, uid: &str) -> Result<()> {
     conn.execute("UPDATE articles SET filtered_by = NULL, is_hidden = 0 WHERE filtered_by = ?1", params![uid])?;
     Ok(())
 }
@@ -188,7 +188,7 @@ fn validate(keyword: &str, action: &str) -> Result<String> {
     Ok(keyword)
 }
 
-fn set_feeds(conn: &Connection, rule_id: i64, feed_urls: &[String]) -> Result<()> {
+pub(crate) fn set_feeds(conn: &Connection, rule_id: i64, feed_urls: &[String]) -> Result<()> {
     conn.execute("DELETE FROM filter_rule_feeds WHERE rule_id = ?1", params![rule_id])?;
     for url in feed_urls {
         conn.execute("INSERT OR IGNORE INTO filter_rule_feeds (rule_id, feed_url) VALUES (?1, ?2)", params![rule_id, url])?;

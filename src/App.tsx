@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { useTranslation } from "react-i18next";
 import { api, sameSelection } from "./api";
 import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as SidebarData } from "./api";
@@ -131,6 +132,27 @@ export default function App() {
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshMinutes]);
+
+  // Synchro iCloud : un autre Mac a changé des choses (la liste se recharge ; les nouveaux flux
+  // sont actualisés), et on resynchronise au retour dans l'app.
+  const syncEnabled = prefs?.syncEnabled ?? false;
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    listen<number>("sync-changed", (e) => {
+      refresh();
+      if (e.payload > 0) void refreshFeeds();
+    })
+      .then((un) => (off = un))
+      .catch(() => undefined);
+    const onFocus = () => {
+      if (syncEnabled) api.syncNow().catch(() => undefined);
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      off?.();
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [refresh, refreshFeeds, syncEnabled]);
 
   const menuContext = (): MenuContext => ({
     t,

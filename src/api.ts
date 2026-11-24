@@ -35,6 +35,7 @@ export interface Prefs {
   appearance: Appearance;
   articleLayout: ArticleLayout;
   articleListWidth: number;
+  syncEnabled: boolean;
   sidebarWidth: number;
   favoritesExpanded: boolean;
   uiFont: "inter" | "geist" | "system";
@@ -190,7 +191,21 @@ export interface AppInfo {
   coreVersion: string;
 }
 
+/** Miroir de `SyncStatus` (src-tauri). */
+export interface SyncStatus {
+  syncing: boolean;
+  /** Secondes Unix */
+  lastSync: number | null;
+  /** `icloud_unavailable` ou un message */
+  error: string | null;
+  others: { name: string; updated: number }[];
+  icloudAvailable: boolean;
+}
+
 export const api = {
+  syncStatus: () => invoke<SyncStatus>("sync_status"),
+  syncNow: () => invoke<void>("sync_now"),
+  syncApply: (enabled: boolean) => invoke<void>("sync_apply", { enabled }),
   appInfo: () => invoke<AppInfo>("app_info"),
   settings: () => invoke<Settings>("get_settings"),
   savePrefs: (prefs: Prefs) => invoke<void>("save_prefs", { prefs }),

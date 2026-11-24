@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
@@ -13,7 +14,7 @@ use flux_core::prefs::Prefs;
 use flux_core::query::{ArticleRow, ListQuery, Selection, Sidebar};
 use rusqlite::Connection;
 use serde::Serialize;
-use tauri::{Manager, State};
+use tauri::{Emitter, Manager, State};
 
 struct AppState {
     db: Mutex<Connection>,
@@ -22,6 +23,20 @@ struct AppState {
     images: ImageDirs,
     /// Une actualisation à la fois.
     refreshing: AtomicBool,
+    /// État de la synchronisation iCloud (affiché dans les réglages).
+    sync: Mutex<SyncStatus>,
+}
+
+#[derive(Default, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SyncStatus {
+    syncing: bool,
+    /// Secondes Unix de la dernière synchro réussie
+    last_sync: Option<f64>,
+    /// Code d'erreur (`icloud_unavailable`) ou message
+    error: Option<String>,
+    others: Vec<flux_core::sync::OtherDevice>,
+    icloud_available: bool,
 }
 
 fn lock<'a>(state: &'a State<'_, AppState>) -> Result<std::sync::MutexGuard<'a, Connection>, String> {
@@ -313,6 +328,123 @@ fn create_folder(state: State<'_, AppState>, name: String) -> Result<Option<Stri
     flux_core::manage::create_folder(&conn, &name).map_err(|e| e.to_string())
 }
 
+// --- Synchronisation iCloud ---
+
+/// Une synchro complète ; prévient l'interface si la base a changé.
+fn run_sync(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<AppState>();
+    {
+        let mut st = state.sync.lock().map_err(|_| "état verrouillé".to_string())?;
+        if st.syncing {
+            return Ok(());
+        }
+        st.syncing = true;
+    }
+    let result = (|| -> Result<flux_core::sync::SyncReport, String> {
+        if !flux_core::sync::is_icloud_available() {
+            return Err("icloud_unavailable".to_string());
+        }
+        let conn = state.db.lock().map_err(|_| "base de données verrouillée".to_string())?;
+        let prefs = flux_core::db::load_prefs(&conn).map_err(|e| e.to_string())?;
+        let dev = flux_core::sync::device(&conn).map_err(|e| e.to_string())?;
+        flux_core::sync::sync(&conn, &flux_core::sync::devices_dir(), &dev, prefs.retention_days, flux_core::feeds::now())
+            .map_err(|e| e.to_string())
+    })();
+    let mut st = state.sync.lock().map_err(|_| "état verrouillé".to_string())?;
+    st.syncing = false;
+    st.icloud_available = flux_core::sync::is_icloud_available();
+    match result {
+        Ok(report) => {
+            st.last_sync = Some(flux_core::feeds::now());
+            st.error = None;
+            st.others = report.others.clone();
+            drop(st);
+            if report.changed || !report.new_feeds.is_empty() {
+                let _ = app.emit("sync-changed", report.new_feeds.len());
+            }
+            Ok(())
+        }
+        Err(e) => {
+            st.error = Some(e.clone());
+            Err(e)
+        }
+    }
+}
+
+#[tauri::command]
+fn sync_status(state: State<'_, AppState>) -> Result<SyncStatus, String> {
+    let mut st = state.sync.lock().map_err(|_| "état verrouillé".to_string())?.clone();
+    st.icloud_available = flux_core::sync::is_icloud_available();
+    Ok(st)
+}
+
+#[tauri::command]
+fn sync_now(app: tauri::AppHandle) -> Result<(), String> {
+    run_sync(&app)
+}
+
+/// Appelé après l'activation (synchro tout de suite) ou la désactivation (on retire ce Mac).
+#[tauri::command]
+fn sync_apply(app: tauri::AppHandle, state: State<'_, AppState>, enabled: bool) -> Result<(), String> {
+    if enabled {
+        return run_sync(&app);
+    }
+    let conn = lock(&state)?;
+    let dev = flux_core::sync::device(&conn).map_err(|e| e.to_string())?;
+    flux_core::sync::disable(&conn, &flux_core::sync::devices_dir(), &dev).map_err(|e| e.to_string())?;
+    drop(conn);
+    *state.sync.lock().map_err(|_| "état verrouillé".to_string())? = SyncStatus::default();
+    Ok(())
+}
+
+/// Surveille la base (après 5 s sans modification) et les fichiers des autres Mac (toutes les 30 s).
+fn sync_loop(app: tauri::AppHandle) {
+    use std::time::{Duration, Instant};
+    let mut last_changes = None;
+    let mut dirty_since: Option<Instant> = None;
+    let mut last_remote_check = Instant::now();
+    let mut seen: HashMap<PathBuf, f64> = HashMap::new();
+    let mut first = true;
+    loop {
+        std::thread::sleep(Duration::from_secs(2));
+        let state = app.state::<AppState>();
+        let (enabled, changes, dev_id) = {
+            let Ok(conn) = state.db.lock() else { continue };
+            let enabled = flux_core::db::load_prefs(&conn).map(|p| p.sync_enabled).unwrap_or(false);
+            let id = flux_core::sync::device(&conn).map(|d| d.id).unwrap_or_default();
+            (enabled, conn.total_changes(), id)
+        };
+        if !enabled {
+            last_changes = None;
+            dirty_since = None;
+            first = true;
+            continue;
+        }
+        let mut due = std::mem::take(&mut first);
+        if last_changes.is_some_and(|prev| prev != changes) {
+            dirty_since = Some(Instant::now());
+        }
+        last_changes = Some(changes);
+        if dirty_since.is_some_and(|t| t.elapsed() >= Duration::from_secs(5)) {
+            due = true;
+        }
+        let dir = flux_core::sync::devices_dir();
+        if last_remote_check.elapsed() >= Duration::from_secs(30) {
+            last_remote_check = Instant::now();
+            let now: HashMap<PathBuf, f64> = flux_core::sync::remote_files(&dir, &dev_id).into_iter().collect();
+            if now != seen {
+                due = true;
+            }
+        }
+        if due {
+            dirty_since = None;
+            let _ = run_sync(&app);
+            seen = flux_core::sync::remote_files(&dir, &dev_id).into_iter().collect();
+            last_changes = state.db.lock().ok().map(|c| c.total_changes());
+        }
+    }
+}
+
 /// Prototype d'impression / export PDF (étape 1) : ouvre la boîte d'impression
 /// native de la webview.
 #[tauri::command]
@@ -381,7 +513,15 @@ pub fn run() {
                 own: dir.join("images"),
                 others: vec![swift.join("Archive"), swift.join("Images")],
             };
-            app.manage(AppState { db: Mutex::new(conn), db_path, images, refreshing: AtomicBool::new(false) });
+            app.manage(AppState {
+                db: Mutex::new(conn),
+                db_path,
+                images,
+                refreshing: AtomicBool::new(false),
+                sync: Mutex::new(SyncStatus::default()),
+            });
+            let handle = app.handle().clone();
+            std::thread::spawn(move || sync_loop(handle));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -418,6 +558,9 @@ pub fn run() {
             preview_filter,
             regroup_duplicates,
             detach_from_cluster,
+            sync_status,
+            sync_now,
+            sync_apply,
             import_opml,
             export_opml,
             create_folder,

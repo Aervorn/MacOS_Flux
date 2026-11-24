@@ -29,6 +29,8 @@ pub struct Prefs {
     pub auto_mark_read_enabled: bool,
     pub auto_mark_read_days: u32,
     pub offline_enabled: bool,
+    /// Synchronisation entre Mac par iCloud Drive.
+    pub sync_enabled: bool,
     /// "system", "light" ou "dark"
     pub appearance: String,
     /// "list", "grid" ou "gridFull"
@@ -67,6 +69,7 @@ impl Default for Prefs {
             auto_mark_read_enabled: false,
             auto_mark_read_days: 7,
             offline_enabled: false,
+            sync_enabled: false,
             appearance: "system".into(),
             article_layout: "list".into(),
             article_list_width: 400.0,

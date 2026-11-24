@@ -222,3 +222,22 @@
   font-size: 12px;
   user-select: text;
 }
+
+.deviceList {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.action {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--pill);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

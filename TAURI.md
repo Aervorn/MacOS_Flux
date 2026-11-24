@@ -32,3 +32,8 @@ pnpm tauri dev                     # lance l'app en développement
 - **Cache d'images** : les miniatures des nouveaux articles sont téléchargées dans notre dossier (`images/`), mais le cache n'est pas encore limité en taille (réglage « limite du cache »). Les images à l'intérieur des articles se chargent en ligne à la lecture.
 - **Erreurs de flux** : mémorisées en base (`last_error`) mais pas encore affichées dans la barre latérale.
 - **Pas de mode hors ligne ni de préparation hors ligne** (réglage `offlineEnabled`).
+
+## Synchronisation iCloud (en cours)
+- Même format JSON v1 que l'app Swift, même dossier `iCloud Drive/Flux/devices/`.
+- Limites connues : changement d'adresse d'un flux (`previousURL`) pas repris (l'ancien flux est supprimé, le nouveau créé, l'état lu de ses articles est perdu) ; un fichier iCloud pas encore téléchargé est demandé via `brctl` mais n'est lu qu'à la synchro suivante ; la synchro bloque brièvement la base pendant qu'elle tourne.
+- Testée à la main (lecture, ajout/suppression de flux) : OK.

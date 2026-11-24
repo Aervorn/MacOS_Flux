@@ -22,6 +22,7 @@ pub mod refresh;
 pub mod net;
 pub mod prefs;
 pub mod query;
+pub mod sync;
 
 pub use error::{Error, Result};
 

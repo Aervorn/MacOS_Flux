@@ -118,7 +118,8 @@
     "fontMerriweather": "Dessinée pour la lecture sur écran",
     "fontAtkinson": "Très lisible, pour la basse vision",
     "fontSystemSerif": "Georgia, rien à charger",
-    "fontMono": "Geist Mono"
+    "fontMono": "Geist Mono",
+    "sectionSync": "Synchronisation"
   },
   "dev": {
     "version": "Version {{version}} (cœur {{core}})",
@@ -214,5 +215,17 @@
     "none": "Aucun abonnement trouvé dans ce fichier.",
     "imported": "Import terminé : {{added}} ajouté(s), {{skipped}} ignoré(s) (déjà présents ou invalides). Les articles arrivent dans quelques instants.",
     "exported": "Abonnements exportés."
+  },
+  "sync": {
+    "enable": "Synchroniser avec mes autres Mac (iCloud Drive)",
+    "help": "Flux, dossiers, tags, filtres, articles lus et favoris sont partagés via iCloud Drive, sans compte ni serveur. Fonctionne avec l'app Flux d'origine.",
+    "status": "État",
+    "syncing": "Synchronisation en cours…",
+    "lastSync": "Dernière synchronisation : {{date}}",
+    "never": "Pas encore synchronisé.",
+    "updated": "mis à jour {{date}}",
+    "noOther": "Aucun autre Mac vu pour l'instant.",
+    "now": "Synchroniser maintenant",
+    "icloudUnavailable": "iCloud Drive n'est pas activé sur ce Mac."
   }
 }
