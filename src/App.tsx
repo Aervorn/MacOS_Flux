@@ -1,26 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { invoke } from "@tauri-apps/api/core";
-import { setLang, type Lang } from "./i18n";
-import { applyTheme, initialTheme, type ThemeMode } from "./theme";
+import { api, sameSelection } from "./api";
+import type { AppInfo, ArticleRow, ImportReport, Prefs, Selection, Sidebar as SidebarData } from "./api";
+import { hasSavedLang, setLang, type Lang } from "./i18n";
+import { applyTheme, appearanceToMode, modeToAppearance, type ThemeMode } from "./theme";
+import ArticleList from "./components/ArticleList";
+import Sidebar from "./components/Sidebar";
+import Thumb from "./components/Thumb";
+import Toolbar from "./components/Toolbar";
+import { formatPublished } from "./format";
 import styles from "./App.module.css";
-
-interface AppInfo {
-  version: string;
-  coreVersion: string;
-}
-
-interface ImportReport {
-  folders: number;
-  feeds: number;
-  articles: number;
-  favoriteTags: number;
-  articleTags: number;
-  filterRules: number;
-  settingsImported: boolean;
-  language: string | null;
-  warnings: string[];
-}
 
 const THEMES: { mode: ThemeMode; labelKey: string }[] = [
   { mode: "light", labelKey: "settings.appearanceLight" },
@@ -30,108 +19,247 @@ const THEMES: { mode: ThemeMode; labelKey: string }[] = [
 
 export default function App() {
   const { t, i18n } = useTranslation();
-  const [theme, setTheme] = useState<ThemeMode>(initialTheme);
+  const [prefs, setPrefs] = useState<Prefs | null>(null);
+  const [sidebar, setSidebar] = useState<SidebarData | null>(null);
+  const [selection, setSelection] = useState<Selection>({ kind: "all" });
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [articles, setArticles] = useState<ArticleRow[]>([]);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [reloadTick, setReloadTick] = useState(0);
   const [info, setInfo] = useState<AppInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    invoke<AppInfo>("app_info")
-      .then(setInfo)
-      .catch(() => setInfo(null)); // hors Tauri (navigateur seul), on ignore
+  // La clé sélectionnée sert à garder l'article visible à la prochaine requête, sans la relancer.
+  const selectedKeyRef = useRef<string | null>(null);
+  selectedKeyRef.current = selectedKey;
+
+  const loadSettings = useCallback(async () => {
+    const { prefs: loaded, language } = await api.settings();
+    setPrefs(loaded);
+    applyTheme(appearanceToMode(loaded.appearance));
+    if ((language === "fr" || language === "en") && !hasSavedLang()) setLang(language);
   }, []);
 
-  const chooseTheme = (mode: ThemeMode) => {
-    setTheme(mode);
-    applyTheme(mode);
+  const loadSidebar = useCallback(async () => setSidebar(await api.sidebar()), []);
+
+  useEffect(() => {
+    api.appInfo().then(setInfo).catch(() => setInfo(null)); // hors Tauri (navigateur seul), on ignore
+    loadSettings().catch((e) => setMessage(String(e)));
+    loadSidebar().catch((e) => setMessage(String(e)));
+  }, [loadSettings, loadSidebar]);
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 200);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  const canHideRead = selection.kind === "all" || selection.kind === "folder" || selection.kind === "feed";
+  const hideRead = (prefs?.hideRead ?? false) && canHideRead;
+  const hideTagged = prefs?.hideTaggedFavorites ?? false;
+  const ready = prefs !== null;
+
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    api
+      .articles({
+        selection,
+        search: debouncedSearch,
+        hideRead,
+        hideTaggedFavorites: hideTagged,
+        sticky: selectedKeyRef.current ? [selectedKeyRef.current] : [],
+      })
+      .then((rows) => {
+        if (!cancelled) setArticles(rows);
+      })
+      .catch((e) => setMessage(String(e)));
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, selection, debouncedSearch, hideRead, hideTagged, reloadTick]);
+
+  const updatePrefs = (patch: Partial<Prefs>) => {
+    if (!prefs) return;
+    const next = { ...prefs, ...patch };
+    setPrefs(next);
+    api.savePrefs(next).catch((e) => setMessage(String(e)));
   };
 
-  const printPage = async () => {
-    setError(null);
-    try {
-      await invoke("print_page");
-    } catch (e) {
-      setError(t("dev.printError", { message: String(e) }));
-    }
+  const select = (s: Selection) => {
+    if (sameSelection(s, selection)) return;
+    setSelection(s);
+    setSelectedKey(null);
   };
 
   const importData = async () => {
     setReport(null);
-    setImportError(null);
+    setMessage(null);
     try {
-      setReport(await invoke<ImportReport>("dev_import_swift_data"));
+      setReport(await api.devImport());
+      await loadSettings();
+      await loadSidebar();
+      setSelectedKey(null);
+      setReloadTick((n) => n + 1);
     } catch (e) {
-      setImportError(t("dev.importError", { message: String(e) }));
+      setMessage(t("dev.importError", { message: String(e) }));
     }
   };
 
+  const printPage = async () => {
+    setMessage(null);
+    try {
+      await api.printPage();
+    } catch (e) {
+      setMessage(t("dev.printError", { message: String(e) }));
+    }
+  };
+
+  if (!prefs) return null;
+
+  const title = (() => {
+    switch (selection.kind) {
+      case "all":
+        return t("sidebar.allArticles");
+      case "unread":
+        return t("sidebar.unread");
+      case "starred":
+        return t("sidebar.favorites");
+      case "history":
+        return t("sidebar.history");
+      case "folder":
+        return sidebar?.folders.find((f) => f.uid === selection.uid)?.name ?? "";
+      case "tag":
+        return sidebar?.tags.find((tag) => tag.uid === selection.uid)?.name ?? "";
+      case "feed": {
+        const all = [...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])];
+        return all.find((f) => f.url === selection.url)?.title ?? "";
+      }
+    }
+  })();
+
+  const selected = articles.find((a) => a.key === selectedKey) ?? null;
+  const currentMode = appearanceToMode(prefs.appearance);
+
+  const footer = (
+    <div className={styles.footer}>
+      <span className={styles.label}>{t("settings.appearance")}</span>
+      <div className={styles.segmented}>
+        {THEMES.map(({ mode, labelKey }) => (
+          <button
+            key={mode}
+            className={currentMode === mode ? styles.segmentActive : styles.segment}
+            onClick={() => {
+              applyTheme(mode);
+              updatePrefs({ appearance: modeToAppearance(mode) });
+            }}
+          >
+            {t(labelKey)}
+          </button>
+        ))}
+      </div>
+      <span className={styles.label}>{t("settings.language")}</span>
+      <div className={styles.segmented}>
+        {(["fr", "en"] as Lang[]).map((lang) => (
+          <button
+            key={lang}
+            className={i18n.language === lang ? styles.segmentActive : styles.segment}
+            onClick={() => setLang(lang)}
+          >
+            {lang.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      <details className={styles.dev}>
+        <summary>Dev</summary>
+        {info && <p className={styles.label}>{t("dev.version", { version: info.version, core: info.coreVersion })}</p>}
+        <button className={styles.devButton} onClick={printPage}>
+          {t("dev.print")}
+        </button>
+        <button className={styles.devButton} onClick={importData}>
+          {t("dev.import")}
+        </button>
+        {report && (
+          <p className={styles.label}>
+            {t("dev.importDone", {
+              articles: report.articles,
+              feeds: report.feeds,
+              folders: report.folders,
+              tags: report.favoriteTags,
+              rules: report.filterRules,
+            })}
+            {report.settingsImported && ` ${t("dev.importSettings")}`}
+            {report.warnings.length > 0 &&
+              ` ${t("dev.importWarnings", { count: report.warnings.length, list: report.warnings.join(" ; ") })}`}
+          </p>
+        )}
+        {message && <p className={styles.error}>{message}</p>}
+      </details>
+    </div>
+  );
+
+  const list = (
+    <div className={styles.scroll}>
+      <ArticleList
+        articles={articles}
+        layout={prefs.articleLayout}
+        selectedKey={selectedKey}
+        showSummary={prefs.showSummary}
+        onSelect={setSelectedKey}
+      />
+    </div>
+  );
+
   return (
     <div className={styles.app}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>{t("app.name")}</div>
-        <div className={styles.itemActive}>{t("sidebar.allArticles")}</div>
-        <div className={styles.item}>{t("sidebar.unread")}</div>
-        <div className={styles.item}>{t("sidebar.favorites")}</div>
-        <div className={styles.sectionTitle}>{t("sidebar.feeds")}</div>
-
-        <div className={styles.footer}>
-          <span className={styles.label}>{t("settings.appearance")}</span>
-          <div className={styles.segmented}>
-            {THEMES.map(({ mode, labelKey }) => (
-              <button
-                key={mode}
-                className={theme === mode ? styles.segmentActive : styles.segment}
-                onClick={() => chooseTheme(mode)}
-              >
-                {t(labelKey)}
-              </button>
-            ))}
-          </div>
-          <span className={styles.label}>{t("settings.language")}</span>
-          <div className={styles.segmented}>
-            {(["fr", "en"] as Lang[]).map((lang) => (
-              <button
-                key={lang}
-                className={i18n.language === lang ? styles.segmentActive : styles.segment}
-                onClick={() => setLang(lang)}
-              >
-                {lang.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
-      </aside>
+      <Sidebar
+        data={sidebar}
+        selection={selection}
+        onSelect={select}
+        favoritesExpanded={prefs.favoritesExpanded}
+        onToggleFavorites={() => updatePrefs({ favoritesExpanded: !prefs.favoritesExpanded })}
+        footer={footer}
+      />
 
       <main className={styles.main}>
-        <div className={styles.empty}>
-          <div className={styles.placeholder} />
-          <h1 className={styles.emptyTitle}>{t("list.emptyTitle")}</h1>
-          <p>{t("list.emptyBody")}</p>
-          {info && <p className={styles.label}>{t("dev.version", { version: info.version, core: info.coreVersion })}</p>}
-          <button className={styles.devButton} onClick={printPage}>
-            {t("dev.print")}
-          </button>
-          {error && <div className={styles.error}>{error}</div>}
-          <button className={styles.devButton} onClick={importData}>
-            {t("dev.import")}
-          </button>
-          {importError && <div className={styles.error}>{importError}</div>}
-          {report && (
-            <p className={styles.label}>
-              {t("dev.importDone", {
-                articles: report.articles,
-                feeds: report.feeds,
-                folders: report.folders,
-                tags: report.favoriteTags,
-                rules: report.filterRules,
-              })}
-              {report.settingsImported && ` ${t("dev.importSettings")}`}
-              {report.warnings.length > 0 &&
-                ` ${t("dev.importWarnings", { count: report.warnings.length, list: report.warnings.join(" ; ") })}`}
-            </p>
-          )}
-        </div>
+        <Toolbar
+          title={title}
+          search={search}
+          onSearch={setSearch}
+          layout={prefs.articleLayout}
+          onLayout={(articleLayout) => updatePrefs({ articleLayout })}
+          hideRead={hideRead}
+          canHideRead={canHideRead}
+          onToggleHideRead={() => updatePrefs({ hideRead: !prefs.hideRead })}
+        />
+
+        {prefs.articleLayout === "list" ? (
+          <div className={styles.split}>
+            <div className={styles.listColumn} style={{ width: prefs.articleListWidth }}>
+              {list}
+            </div>
+            <section className={styles.detail}>
+              {selected ? (
+                <div className={styles.detailBody}>
+                  <Thumb thumb={selected.thumb} className={styles.detailThumb} />
+                  <h2 className={styles.detailTitle}>{selected.title}</h2>
+                  <p className={styles.label}>
+                    {selected.source} · {formatPublished(selected.published, i18n.language)}
+                    {selected.author ? ` · ${selected.author}` : ""}
+                  </p>
+                  {selected.summary && <p>{selected.summary}</p>}
+                  <p className={styles.label}>{t("detail.readerSoon")}</p>
+                </div>
+              ) : (
+                <p className={styles.placeholder}>{t("detail.select")}</p>
+              )}
+            </section>
+          </div>
+        ) : (
+          list
+        )}
       </main>
     </div>
   );

@@ -4,11 +4,27 @@
     "allArticles": "All articles",
     "unread": "Unread",
     "favorites": "Favorites",
-    "feeds": "Feeds"
+    "history": "History",
+    "feeds": "Feeds",
+    "noFeeds": "No feeds yet."
   },
   "list": {
     "emptyTitle": "No articles yet",
-    "emptyBody": "The skeleton is in place: feeds and articles come in the next steps."
+    "emptyBody": "Import your data from the Swift app (Dev menu, at the bottom of the sidebar).",
+    "noResults": "No articles here.",
+    "readingMinutes": "{{count}} min"
+  },
+  "toolbar": {
+    "search": "Search",
+    "hideRead": "Hide read articles",
+    "showRead": "Show read articles",
+    "layoutList": "List",
+    "layoutGrid": "Grid",
+    "layoutGridFull": "Full-width grid"
+  },
+  "detail": {
+    "select": "Select an article.",
+    "readerSoon": "Reading the full article comes in the next step."
   },
   "settings": {
     "appearance": "Appearance",

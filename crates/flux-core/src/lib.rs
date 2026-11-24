@@ -1,13 +1,16 @@
 //! Cœur de Flux : tout ce qui ne dépend pas de Tauri.
 //!
-//! Déjà présents : `db` (schéma SQLite), `import` (reprise des données de
-//! l'app Swift), `prefs` (réglages). Viendront ensuite : `feed`, `ingest`,
+//! Déjà présents : `db` (schéma SQLite), `query` (barre latérale et listes),
+//! `images` (noms du cache d'images), `import` (reprise des données de l'app
+//! Swift), `prefs` (réglages). Viendront ensuite : `feed`, `ingest`,
 //! `cluster`, `images`, `sync`, `backup`, `opml`.
 
 pub mod db;
 pub mod error;
+pub mod images;
 pub mod import;
 pub mod prefs;
+pub mod query;
 
 pub use error::{Error, Result};
 

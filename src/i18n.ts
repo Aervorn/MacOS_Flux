@@ -23,6 +23,16 @@ void i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
 });
 
+/** Vrai si l'utilisateur a déjà choisi une langue dans cette app. */
+export function hasSavedLang(): boolean {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved === "fr" || saved === "en";
+  } catch {
+    return false;
+  }
+}
+
 export function setLang(lang: Lang) {
   void i18n.changeLanguage(lang);
   document.documentElement.lang = lang;

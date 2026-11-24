@@ -4,11 +4,27 @@
     "allArticles": "Tous les articles",
     "unread": "Non lus",
     "favorites": "Favoris",
-    "feeds": "Flux"
+    "history": "Historique",
+    "feeds": "Flux",
+    "noFeeds": "Aucun flux pour l'instant."
   },
   "list": {
     "emptyTitle": "Aucun article pour l'instant",
-    "emptyBody": "Le squelette est en place : les flux et les articles arrivent aux étapes suivantes."
+    "emptyBody": "Importe tes données depuis l'app Swift (menu Dev, en bas de la barre latérale).",
+    "noResults": "Aucun article ici.",
+    "readingMinutes": "{{count}} min"
+  },
+  "toolbar": {
+    "search": "Rechercher",
+    "hideRead": "Masquer les articles lus",
+    "showRead": "Afficher les articles lus",
+    "layoutList": "Liste",
+    "layoutGrid": "Grille",
+    "layoutGridFull": "Grille pleine largeur"
+  },
+  "detail": {
+    "select": "Choisis un article.",
+    "readerSoon": "La lecture de l'article complet arrive à l'étape suivante."
   },
   "settings": {
     "appearance": "Apparence",

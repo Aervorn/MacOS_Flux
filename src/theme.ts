@@ -1,3 +1,5 @@
+import type { Appearance } from "./api";
+
 export type ThemeMode = "light" | "dark" | "auto";
 const STORAGE_KEY = "flux.theme";
 
@@ -11,6 +13,7 @@ export function applyTheme(mode: ThemeMode) {
   }
 }
 
+/** Dernier thème connu, pour le premier affichage avant la lecture des réglages. */
 export function initialTheme(): ThemeMode {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -20,3 +23,7 @@ export function initialTheme(): ThemeMode {
   }
   return "auto";
 }
+
+/** Les réglages disent « system » là où le CSS dit « auto ». */
+export const appearanceToMode = (a: Appearance): ThemeMode => (a === "system" ? "auto" : a);
+export const modeToAppearance = (m: ThemeMode): Appearance => (m === "auto" ? "system" : m);

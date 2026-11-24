@@ -12,6 +12,8 @@ serde_json = "1"
 rusqlite = { version = "0.43", features = ["bundled"] }
 plist = "1"
 thiserror = "2"
+sha2 = "0.10"
+unicode-normalization = "0.1"
 
 [dev-dependencies]
 tempfile = "3"

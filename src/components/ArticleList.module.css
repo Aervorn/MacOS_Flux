@@ -1,0 +1,130 @@
+.empty {
+  margin: 0;
+  padding: 24px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* --- Liste --- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+}
+
+.item {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover,
+.item.selected {
+  background: var(--surface-hover);
+}
+
+.itemThumb {
+  flex: none;
+  width: 96px;
+  height: 64px;
+  border-radius: 8px;
+}
+
+/* --- Grille --- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--gap);
+  padding: var(--gap);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  color: inherit;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.card:hover,
+.card.selected {
+  background: var(--surface-hover);
+}
+
+.card.selected {
+  border-color: var(--accent);
+}
+
+.cardThumb {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+}
+
+/* --- Contenu commun --- */
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.card .body {
+  padding: 12px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.star {
+  flex: none;
+  color: var(--accent);
+}
+
+.title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-weight: 600;
+}
+
+.summary {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.read .title {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
