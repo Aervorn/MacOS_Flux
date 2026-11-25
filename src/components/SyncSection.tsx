@@ -89,6 +89,9 @@ export default function SyncSection({ prefs, onPrefs, onChanged }: Props) {
             </ul>
           )}
           {status && status.others.length === 0 && !error && <p className={styles.help}>{t("sync.noOther")}</p>}
+          {status && status.incompatible.length > 0 && (
+            <p className={styles.error}>{t("sync.incompatible", { names: status.incompatible.map((o) => o.name).join(", ") })}</p>
+          )}
           <div>
             <button className={styles.action} onClick={() => void syncNow()} disabled={busy}>
               {t("sync.now")}

@@ -27,6 +27,7 @@ pub mod net;
 pub mod offline;
 pub mod prefs;
 pub mod query;
+pub mod smart;
 pub mod sync;
 
 pub use error::{Error, Result};

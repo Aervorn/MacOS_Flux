@@ -14,7 +14,10 @@
     "addFolder": "New folder",
     "feedError": "This feed couldn’t be refreshed",
     "lastSuccess": "Last successful refresh: {{date}}",
-    "neverRefreshed": "Never refreshed successfully."
+    "neverRefreshed": "Never refreshed successfully.",
+    "smartFolders": "Smart folders",
+    "addSmartFolder": "New smart folder",
+    "noSmartFolders": "No smart folders. They sort articles by keywords."
   },
   "list": {
     "emptyTitle": "No articles yet",
@@ -32,7 +35,11 @@
     "layoutGridFull": "Full-width grid",
     "markAllRead": "Mark all as read",
     "offline": "Offline",
-    "offlineHelp": "No connection: you are reading what is already in Flux."
+    "offlineHelp": "No connection: you are reading what is already in Flux.",
+    "searchScope": "Search options",
+    "searchIn": "Search in",
+    "searchTitle": "Title",
+    "searchBody": "Article body"
   },
   "detail": {
     "select": "Select an article.",
@@ -95,7 +102,6 @@
     "widthNarrow": "Narrow",
     "widthWide": "Wide",
     "widthFull": "Full width",
-    "showSummary": "Show the summary in the list",
     "refreshEvery": "Refresh feeds",
     "minutes": "Every {{count}} minutes",
     "hours_one": "Every hour",
@@ -151,7 +157,11 @@
     "offlinePending_one": "{{count}} article to prepare.",
     "offlinePending_other": "{{count}} articles to prepare.",
     "offlineReady": "Everything is ready for offline reading.",
-    "offlineNow": "Prepare now"
+    "offlineNow": "Prepare now",
+    "summaryLines": "Article lines shown in list view",
+    "summaryNone": "None",
+    "summaryLinesCount_one": "{{count}} line",
+    "summaryLinesCount_other": "{{count}} lines"
   },
   "addFeed": {
     "title": "Add a feed",
@@ -189,7 +199,9 @@
     "detachCluster": "Remove from group",
     "changeAddress": "Change address…",
     "showError": "Show error…",
-    "folderStyle": "Icon and color…"
+    "folderStyle": "Icon and color…",
+    "editSmartFolder": "Edit…",
+    "deleteSmartFolder": "Delete smart folder"
   },
   "dialogs": {
     "renameFeed": "Rename feed",
@@ -213,7 +225,9 @@
     "folderColor": "Color",
     "folderIcon": "Icon",
     "folderEmoji": "Emoji",
-    "folderDefaultColor": "Default"
+    "folderDefaultColor": "Default",
+    "deleteSmartFolderTitle": "Delete the smart folder “{{name}}”?",
+    "deleteSmartFolderBody": "The articles it contains go back to their feed."
   },
   "filters": {
     "title": "Filters",
@@ -239,7 +253,8 @@
     "save": "Save",
     "create": "Add",
     "deleteTitle": "Delete the rule “{{name}}”?",
-    "deleteBody": "The articles it hid will come back."
+    "deleteBody": "The articles it hid will come back.",
+    "exclusionTitle": "Exclusion rules"
   },
   "opml": {
     "title": "OPML",
@@ -249,7 +264,7 @@
   },
   "sync": {
     "enable": "Sync with my other Macs (iCloud Drive)",
-    "help": "Feeds, folders, tags, filters, read articles and favorites are shared through iCloud Drive, with no account or server. Works with the original Flux app.",
+    "help": "Feeds, folders, smart folders, tags, filters, read articles and favorites are shared through iCloud Drive, with no account or server. All your Macs need Flux 0.8.5 or later.",
     "status": "Status",
     "syncing": "Syncing…",
     "lastSync": "Last sync: {{date}}",
@@ -258,7 +273,8 @@
     "noOther": "No other Mac seen yet.",
     "now": "Sync now",
     "icloudUnavailable": "iCloud Drive is not turned on on this Mac.",
-    "permission": "Flux doesn't have permission to access iCloud Drive. Open System Settings > Privacy & Security > Files & Folders (or Full Disk Access), allow Flux, then try again: sync retries on its own every 30 seconds."
+    "permission": "Flux doesn't have permission to access iCloud Drive. Open System Settings > Privacy & Security > Files & Folders (or Full Disk Access), allow Flux, then try again: sync retries on its own every 30 seconds.",
+    "incompatible": "Can't sync with: {{names}}. That Mac uses another version of the sync format: update Flux (0.8.5 or later) on all your Macs."
   },
   "backup": {
     "enable": "Daily backup to iCloud Drive",
@@ -375,5 +391,20 @@
   },
   "offline": {
     "refresh": "No internet connection: feeds will be refreshed as soon as it returns."
+  },
+  "smart": {
+    "sectionTitle": "Smart folders",
+    "empty": "No smart folders. A folder collects the articles whose title contains one of its keywords.",
+    "footer": "An article placed in a smart folder no longer shows up in its feed (nor in the feed's folder), but stays in “All articles” and “Unread”. If it matches several folders, it is in each of them. Articles hidden by an exclusion rule are not included.",
+    "add": "Add a smart folder",
+    "articles_one": "{{count}} article",
+    "articles_other": "{{count}} articles",
+    "newTitle": "New smart folder",
+    "editTitle": "Edit smart folder",
+    "name": "Folder name",
+    "keywordsPlaceholder": "One keyword per line, e.g.:\nBitcoin\nEthereum",
+    "keywordsHelp": "Any one keyword is enough. The search looks at the title, ignoring case and accents.",
+    "preview_one": "{{count}} current article matches.",
+    "preview_other": "{{count}} current articles match."
   }
 }

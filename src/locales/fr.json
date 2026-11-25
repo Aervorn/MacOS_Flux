@@ -14,7 +14,10 @@
     "addFolder": "Nouveau dossier",
     "feedError": "Ce flux n’a pas pu être actualisé",
     "lastSuccess": "Dernière actualisation réussie : {{date}}",
-    "neverRefreshed": "Jamais actualisé avec succès."
+    "neverRefreshed": "Jamais actualisé avec succès.",
+    "smartFolders": "Dossiers intelligents",
+    "addSmartFolder": "Nouveau dossier intelligent",
+    "noSmartFolders": "Aucun dossier intelligent. Ils rangent les articles par mots-clés."
   },
   "list": {
     "emptyTitle": "Aucun article pour l'instant",
@@ -32,7 +35,11 @@
     "layoutGridFull": "Grille pleine largeur",
     "markAllRead": "Tout marquer comme lu",
     "offline": "Hors ligne",
-    "offlineHelp": "Pas de connexion : tu lis ce qui est déjà dans Flux."
+    "offlineHelp": "Pas de connexion : tu lis ce qui est déjà dans Flux.",
+    "searchScope": "Options de recherche",
+    "searchIn": "Chercher dans",
+    "searchTitle": "Le titre",
+    "searchBody": "Le corps de l'article"
   },
   "detail": {
     "select": "Choisis un article.",
@@ -95,7 +102,6 @@
     "widthNarrow": "Étroite",
     "widthWide": "Large",
     "widthFull": "Toute la largeur",
-    "showSummary": "Afficher le résumé dans la liste",
     "refreshEvery": "Actualiser les flux",
     "minutes": "Toutes les {{count}} minutes",
     "hours_one": "Toutes les heures",
@@ -151,7 +157,11 @@
     "offlinePending_one": "{{count}} article à préparer.",
     "offlinePending_other": "{{count}} articles à préparer.",
     "offlineReady": "Tout est prêt pour la lecture hors ligne.",
-    "offlineNow": "Préparer maintenant"
+    "offlineNow": "Préparer maintenant",
+    "summaryLines": "Lignes de l'article affichées en mode liste",
+    "summaryNone": "Aucune",
+    "summaryLinesCount_one": "{{count}} ligne",
+    "summaryLinesCount_other": "{{count}} lignes"
   },
   "addFeed": {
     "title": "Ajouter un flux",
@@ -189,7 +199,9 @@
     "detachCluster": "Sortir du groupe",
     "changeAddress": "Modifier l’adresse…",
     "showError": "Voir l’erreur…",
-    "folderStyle": "Icône et couleur…"
+    "folderStyle": "Icône et couleur…",
+    "editSmartFolder": "Modifier…",
+    "deleteSmartFolder": "Supprimer le dossier intelligent"
   },
   "dialogs": {
     "renameFeed": "Renommer le flux",
@@ -213,7 +225,9 @@
     "folderColor": "Couleur",
     "folderIcon": "Icône",
     "folderEmoji": "Emoji",
-    "folderDefaultColor": "Par défaut"
+    "folderDefaultColor": "Par défaut",
+    "deleteSmartFolderTitle": "Supprimer le dossier intelligent « {{name}} » ?",
+    "deleteSmartFolderBody": "Les articles qu'il contient retrouvent leur flux."
   },
   "filters": {
     "title": "Filtres",
@@ -239,7 +253,8 @@
     "save": "Enregistrer",
     "create": "Ajouter",
     "deleteTitle": "Supprimer la règle « {{name}} » ?",
-    "deleteBody": "Les articles qu'elle masquait réapparaissent."
+    "deleteBody": "Les articles qu'elle masquait réapparaissent.",
+    "exclusionTitle": "Règles d'exclusion"
   },
   "opml": {
     "title": "OPML",
@@ -249,7 +264,7 @@
   },
   "sync": {
     "enable": "Synchroniser avec mes autres Mac (iCloud Drive)",
-    "help": "Flux, dossiers, tags, filtres, articles lus et favoris sont partagés via iCloud Drive, sans compte ni serveur. Fonctionne avec l'app Flux d'origine.",
+    "help": "Flux, dossiers, dossiers intelligents, tags, filtres, articles lus et favoris sont partagés via iCloud Drive, sans compte ni serveur. Tous tes Mac doivent avoir Flux 0.8.5 ou plus.",
     "status": "État",
     "syncing": "Synchronisation en cours…",
     "lastSync": "Dernière synchronisation : {{date}}",
@@ -258,7 +273,8 @@
     "noOther": "Aucun autre Mac vu pour l'instant.",
     "now": "Synchroniser maintenant",
     "icloudUnavailable": "iCloud Drive n'est pas activé sur ce Mac.",
-    "permission": "Flux n'a pas la permission d'accéder à iCloud Drive. Ouvre Réglages Système > Confidentialité et sécurité > Fichiers et dossiers (ou Accès complet au disque), autorise Flux, puis réessaie : la synchro retente toute seule toutes les 30 secondes."
+    "permission": "Flux n'a pas la permission d'accéder à iCloud Drive. Ouvre Réglages Système > Confidentialité et sécurité > Fichiers et dossiers (ou Accès complet au disque), autorise Flux, puis réessaie : la synchro retente toute seule toutes les 30 secondes.",
+    "incompatible": "Synchro impossible avec : {{names}}. Ce Mac utilise une autre version du format de synchronisation : mets Flux à jour (0.8.5 ou plus) sur tous tes Mac."
   },
   "backup": {
     "enable": "Sauvegarde quotidienne dans iCloud Drive",
@@ -375,5 +391,20 @@
   },
   "offline": {
     "refresh": "Pas de connexion à Internet : les flux seront actualisés dès son retour."
+  },
+  "smart": {
+    "sectionTitle": "Dossiers intelligents",
+    "empty": "Aucun dossier intelligent. Un dossier range les articles dont le titre contient l'un de ses mots-clés.",
+    "footer": "Un article rangé dans un dossier intelligent n'apparaît plus dans son flux (ni dans le dossier de son flux), mais reste dans « Tous les articles » et « Non lus ». S'il correspond à plusieurs dossiers, il est dans chacun. Les articles masqués par une règle d'exclusion n'y sont pas.",
+    "add": "Ajouter un dossier intelligent",
+    "articles_one": "{{count}} article",
+    "articles_other": "{{count}} articles",
+    "newTitle": "Nouveau dossier intelligent",
+    "editTitle": "Modifier le dossier intelligent",
+    "name": "Nom du dossier",
+    "keywordsPlaceholder": "Un mot-clé par ligne, ex. :\nBitcoin\nEthereum",
+    "keywordsHelp": "Un seul mot-clé suffit. La recherche porte sur le titre, sans tenir compte des majuscules ni des accents.",
+    "preview_one": "{{count}} article actuel correspond.",
+    "preview_other": "{{count}} articles actuels correspondent."
   }
 }

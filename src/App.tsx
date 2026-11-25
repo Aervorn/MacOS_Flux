@@ -16,8 +16,9 @@ import ContextMenu, { type MenuItem } from "./components/ContextMenu";
 import { BarChart3, Compass, Download, Info, RefreshCw, Settings, SlidersHorizontal, Upload } from "lucide-react";
 import { ConfirmDialog, InfoDialog, PromptDialog } from "./components/Dialogs";
 import FolderStyleDialog from "./components/FolderStyleDialog";
+import SmartFolderDialog from "./components/SmartFolderDialog";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
-import { articleMenu, articlesMenu, feedMenu, folderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
+import { articleMenu, articlesMenu, feedMenu, folderMenu, smartFolderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
 import Toolbar from "./components/Toolbar";
 import Onboarding from "./components/Onboarding";
@@ -85,7 +86,13 @@ export default function App() {
     if (prefs) applyLook(prefs);
   }, [prefs?.uiFont, prefs?.articleFont, prefs?.sidebarDensity]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const canHideRead = selection.kind === "all" || selection.kind === "folder" || selection.kind === "feed";
+  const canHideRead = selection.kind === "all" || selection.kind === "folder" || selection.kind === "feed" || selection.kind === "smart";
+  // Un dossier intelligent supprimé (ici ou dans les réglages) ne reste pas affiché.
+  useEffect(() => {
+    if (selection.kind === "smart" && sidebar && !sidebar.smartFolders.some((f) => f.uid === selection.uid)) {
+      setSelection({ kind: "all" });
+    }
+  }, [sidebar, selection]);
   const hideRead = (prefs?.hideRead ?? false) && canHideRead;
   const hideTagged = prefs?.hideTaggedFavorites ?? false;
   const ready = prefs !== null;
@@ -97,6 +104,8 @@ export default function App() {
       .articles({
         selection,
         search: debouncedSearch,
+        searchTitle: prefs?.searchInTitle ?? true,
+        searchBody: prefs?.searchInBody ?? true,
         hideRead,
         hideTaggedFavorites: hideTagged,
         sticky: selectedKeyRef.current ? [selectedKeyRef.current] : [],
@@ -108,7 +117,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [ready, selection, debouncedSearch, hideRead, hideTagged, reloadTick]);
+  }, [ready, selection, debouncedSearch, prefs?.searchInTitle, prefs?.searchInBody, hideRead, hideTagged, reloadTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Après une action (lu, favori, tags…) : compteurs et liste à jour.
   const refresh = useCallback(() => {
@@ -619,6 +628,8 @@ export default function App() {
         return sidebar?.folders.find((f) => f.uid === selection.uid)?.name ?? "";
       case "tag":
         return sidebar?.tags.find((tag) => tag.uid === selection.uid)?.name ?? "";
+      case "smart":
+        return sidebar?.smartFolders.find((f) => f.uid === selection.uid)?.name ?? "";
       case "feed": {
         const all = [...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])];
         return all.find((f) => f.url === selection.url)?.title ?? "";
@@ -636,7 +647,7 @@ export default function App() {
         articles={articles}
         layout={prefs.articleLayout}
         selectedKeys={selectedKeys}
-        showSummary={prefs.showSummary}
+        summaryLines={prefs.summaryLines}
         onSelect={clickArticle}
         onMenu={(e, article) => void openArticleMenu(e, article)}
       />
@@ -669,6 +680,8 @@ export default function App() {
         onFeedMenu={(e, feed) => openMenu(e, feedMenu(menuContext(), feed))}
         onFolderMenu={(e, folder) => openMenu(e, folderMenu(menuContext(), folder))}
         onTagMenu={(e, tag) => openMenu(e, tagMenu(menuContext(), tag))}
+        onNewSmartFolder={() => setAsking({ kind: "smartFolder", uid: null })}
+        onSmartFolderMenu={(e, folder) => openMenu(e, smartFolderMenu(menuContext(), folder))}
         onMoveFeed={(url, folderUid) => {
           api.moveFeed(url, folderUid).then(refresh).catch((err) => setNotice(errorMessage(err, t)));
         }}
@@ -682,6 +695,9 @@ export default function App() {
           title={title}
           search={search}
           onSearch={setSearch}
+          searchInTitle={prefs.searchInTitle}
+          searchInBody={prefs.searchInBody}
+          onSearchScope={(searchInTitle, searchInBody) => updatePrefs({ searchInTitle, searchInBody })}
           layout={prefs.articleLayout}
           onLayout={(articleLayout) => updatePrefs({ articleLayout })}
           hideRead={hideRead}
@@ -819,6 +835,17 @@ export default function App() {
           onSubmit={(symbol, color) => {
             setAsking(null);
             asking.onSubmit(symbol, color);
+          }}
+          onClose={() => setAsking(null)}
+        />
+      )}
+      {asking?.kind === "smartFolder" && (
+        <SmartFolderDialog
+          uid={asking.uid}
+          onSaved={(uid, created) => {
+            setAsking(null);
+            refresh();
+            if (created) select({ kind: "smart", uid });
           }}
           onClose={() => setAsking(null)}
         />

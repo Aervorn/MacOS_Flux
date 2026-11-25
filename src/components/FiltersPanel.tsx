@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { EyeOff, CircleCheck, Pencil, Plus, Trash2 } from "lucide-react";
+import { EyeOff, CircleCheck, FolderSearch, Pencil, Plus, Trash2 } from "lucide-react";
 import { api } from "../api";
-import type { FilterInput, FilterRule, SidebarFeed } from "../api";
+import type { FilterInput, FilterRule, SidebarFeed, SmartFolder } from "../api";
 import { errorMessage } from "../errors";
 import Select from "./Select";
+import SmartFolderDialog from "./SmartFolderDialog";
 import base from "./AddFeedDialog.module.css";
 import styles from "./FiltersPanel.module.css";
 
@@ -25,15 +26,19 @@ export default function FiltersPanel({ feeds, onChanged, onEditingChange }: Prop
   const [editing, setEditing] = useState<{ uid: string | null; form: FilterInput } | null>(null);
   const [preview, setPreview] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [smartFolders, setSmartFolders] = useState<SmartFolder[]>([]);
+  /** Dossier intelligent en cours de création (uid null) ou de modification. */
+  const [smartEditing, setSmartEditing] = useState<{ uid: string | null } | null>(null);
 
   const load = useCallback(() => {
     api.filters().then(setRules).catch((e) => setError(errorMessage(e, t)));
+    api.smartFolders().then(setSmartFolders).catch((e) => setError(errorMessage(e, t)));
   }, [t]);
   useEffect(load, [load]);
 
   useEffect(() => {
-    onEditingChange?.(editing !== null);
-  }, [editing, onEditingChange]);
+    onEditingChange?.(editing !== null || smartEditing !== null);
+  }, [editing, smartEditing, onEditingChange]);
 
   useEffect(() => {
     if (!editing) return;
@@ -106,6 +111,7 @@ export default function FiltersPanel({ feeds, onChanged, onEditingChange }: Prop
     <div className={styles.panel}>
         {!editing && (
           <>
+            <h3 className={styles.heading}>{t("filters.exclusionTitle")}</h3>
             <div className={styles.list}>
               {rules.length === 0 && <p className={base.help}>{t("filters.empty")}</p>}
               {rules.map((rule) => (
@@ -158,7 +164,57 @@ export default function FiltersPanel({ feeds, onChanged, onEditingChange }: Prop
                 <Plus size={14} /> {t("filters.add")}
               </button>
             </div>
+
+            <h3 className={styles.heading}>{t("smart.sectionTitle")}</h3>
+            <div className={styles.list}>
+              {smartFolders.length === 0 && <p className={base.help}>{t("smart.empty")}</p>}
+              {smartFolders.map((folder) => (
+                <div key={folder.uid} className={styles.rule}>
+                  <FolderSearch size={16} />
+                  <div className={styles.ruleText}>
+                    <div className={styles.keyword}>{folder.name}</div>
+                    <div className={styles.details}>
+                      {[
+                        folder.keywords.join(", "),
+                        folder.wholeWord ? t("filters.wholeWord") : null,
+                        t("smart.articles", { count: folder.articleCount }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </div>
+                  </div>
+                  <button className={styles.icon} title={t("filters.edit")} onClick={() => setSmartEditing({ uid: folder.uid })}>
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    className={styles.icon}
+                    title={t("filters.delete")}
+                    onClick={() => run(() => api.deleteSmartFolder(folder.uid))}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className={base.help}>{t("smart.footer")}</p>
+            <div className={base.actions}>
+              <button className={base.button} onClick={() => setSmartEditing({ uid: null })}>
+                <Plus size={14} /> {t("smart.add")}
+              </button>
+            </div>
           </>
+        )}
+
+        {smartEditing && (
+          <SmartFolderDialog
+            uid={smartEditing.uid}
+            onSaved={() => {
+              setSmartEditing(null);
+              load();
+              onChanged();
+            }}
+            onClose={() => setSmartEditing(null)}
+          />
         )}
 
         {editing && form && (

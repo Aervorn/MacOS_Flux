@@ -55,7 +55,7 @@ pub fn parse_settings(d: &Dictionary) -> ImportedSettings {
     if let Some(v) = int(d, "markReadDelay").and_then(|i| i32::try_from(i).ok()) { p.mark_read_delay = v; }
     if let Some(v) = uint(d, "imageCacheLimitMB") { p.image_cache_limit_mb = v; }
     if let Some(v) = one_of(d, "readerWidth", &["narrow", "wide", "full"]) { p.reader_width = v; }
-    if let Some(v) = flag(d, "showSummary") { p.show_summary = v; }
+    if let Some(v) = flag(d, "showSummary") { p.summary_lines = if v { 2 } else { 0 }; }
     if let Some(v) = uint(d, "readerFontSize") { p.reader_font_size = v.clamp(13, 28); }
     if let Some(v) = flag(d, "archiveFavorites") { p.archive_favorites = v; }
     if let Some(v) = flag(d, "groupDuplicates") { p.group_duplicates = v; }

@@ -1,7 +1,9 @@
 //! Synchronisation entre Mac par iCloud Drive.
 //!
-//! Même format de fichiers que l'app Swift (JSON v1) : les deux versions peuvent se
-//! synchroniser dans le même dossier.
+//! Format de fichiers JSON v2 (depuis la 0.8.5, pour synchroniser les dossiers intelligents).
+//! Il remplace le v1 de l'app Swift et des versions 0.8.0 et 0.8.1 : un Mac qui lit un fichier d'une
+//! autre version l'ignore et le signale (`SyncReport::incompatible`), il faut donc mettre les deux
+//! Mac à jour. Les fichiers v1 restent dans le dossier, sans effet.
 //!
 //! ```text
 //! iCloud Drive/Flux/devices/<identifiant du Mac>.json
@@ -22,7 +24,10 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 
 use crate::error::{Error, Result};
-use crate::{actions, db, filters, manage};
+use crate::{actions, db, filters, manage, smart};
+
+/// Version du format des fichiers. La 2 ajoute `smartFolders` ; les fichiers d'une autre version sont ignorés.
+pub const SYNC_VERSION: u32 = 2;
 
 const TOMBSTONE_LIFETIME: f64 = 60.0 * 86_400.0;
 const STATE_KEY: &str = "syncState";
@@ -33,7 +38,7 @@ fn io(e: std::io::Error) -> Error {
 }
 
 // ---------------------------------------------------------------------------
-// Format des fichiers (identique à l'app Swift)
+// Format des fichiers
 // ---------------------------------------------------------------------------
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -56,12 +61,15 @@ pub struct Snapshot {
     /// Tags des favoris (clé : uid) ; absent des fichiers des anciennes versions
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<BTreeMap<String, TagEntry>>,
+    /// Dossiers intelligents (clé : uid), depuis le format v2
+    #[serde(rename = "smartFolders")]
+    pub smart_folders: BTreeMap<String, SmartFolderEntry>,
 }
 
 impl Default for Snapshot {
     fn default() -> Self {
         Snapshot {
-            version: 1,
+            version: SYNC_VERSION,
             device: String::new(),
             device_name: String::new(),
             updated_at: 0.0,
@@ -70,6 +78,7 @@ impl Default for Snapshot {
             filters: BTreeMap::new(),
             articles: BTreeMap::new(),
             tags: None,
+            smart_folders: BTreeMap::new(),
         }
     }
 }
@@ -95,6 +104,22 @@ pub struct FeedEntry {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FolderEntry {
     pub name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub symbol: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
+    #[serde(default)]
+    pub deleted: bool,
+    pub modified: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SmartFolderEntry {
+    pub name: String,
+    /// Mots-clés, dans l'ordre choisi (un seul suffit)
+    pub keywords: Vec<String>,
+    #[serde(rename = "wholeWord")]
+    pub whole_word: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub symbol: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -238,6 +263,18 @@ impl Entry for FolderEntry {
     }
 }
 
+impl Entry for SmartFolderEntry {
+    entry_common!();
+    fn same_value(&self, o: &Self) -> bool {
+        self.name == o.name
+            && self.keywords == o.keywords
+            && self.whole_word == o.whole_word
+            && self.symbol == o.symbol
+            && self.color == o.color
+            && self.deleted == o.deleted
+    }
+}
+
 impl Entry for TagEntry {
     entry_common!();
     fn same_value(&self, o: &Self) -> bool {
@@ -366,6 +403,8 @@ pub struct SyncReport {
     pub changed: bool,
     /// Notre fichier a été réécrit.
     pub published: bool,
+    /// Fichiers d'un autre Mac dans un format d'une autre version (à mettre à jour) : ignorés.
+    pub incompatible: Vec<OtherDevice>,
 }
 
 /// Une synchro complète : état local → fusion des autres Mac → publication.
@@ -385,7 +424,8 @@ pub fn sync(conn: &Connection, dir: &Path, dev: &Device, retention_days: u32, no
     for (path, _) in remote_files(dir, &dev.id) {
         let Ok(data) = std::fs::read(&path) else { continue };
         let Ok(remote) = serde_json::from_slice::<Snapshot>(&data) else { continue };
-        if remote.version != 1 {
+        if remote.version != SYNC_VERSION {
+            report.incompatible.push(OtherDevice { name: remote.device_name.clone(), updated: remote.updated_at });
             continue;
         }
         others.push(OtherDevice { name: remote.device_name.clone(), updated: remote.updated_at });
@@ -523,6 +563,21 @@ fn build_snapshot(conn: &Connection, prev: &Snapshot, now: f64, retention: f64) 
         carry_deleted(&prev_tags, &mut tags, now, limit);
         snap.tags = if tags.is_empty() { None } else { Some(tags) };
     }
+
+    // Dossiers intelligents
+    for folder in smart::list(conn)? {
+        let entry = SmartFolderEntry {
+            name: folder.name,
+            keywords: folder.keywords,
+            whole_word: folder.whole_word,
+            symbol: folder.symbol,
+            color: folder.color_name,
+            deleted: false,
+            modified: now,
+        };
+        snap.smart_folders.insert(folder.uid.clone(), stamp(&prev.smart_folders, &folder.uid, entry));
+    }
+    carry_deleted(&prev.smart_folders, &mut snap.smart_folders, now, limit);
 
     // Règles de filtrage
     for rule in filters::list(conn)? {
@@ -845,6 +900,51 @@ fn merge(conn: &Connection, remote: &Snapshot, current: &mut Snapshot, now: f64)
         filters::apply(conn, None)?;
     }
 
+    // Dossiers intelligents
+    let mut smart_changed = false;
+    for (uid, entry) in &remote.smart_folders {
+        if current.smart_folders.get(uid).is_some_and(|local| local.modified >= entry.modified) {
+            continue;
+        }
+        out.changed = true;
+        smart_changed = true;
+        let id: Option<i64> =
+            conn.query_row("SELECT id FROM smart_folders WHERE uid = ?1", params![uid], |r| r.get(0)).optional()?;
+        let keywords = smart::clean_keywords(&entry.keywords);
+        if entry.deleted {
+            if id.is_some() {
+                smart::delete(conn, uid)?;
+            }
+        } else if keywords.is_empty() || entry.name.trim().is_empty() {
+            // Entrée inutilisable : on la garde sans l'appliquer
+        } else if let Some(id) = id {
+            conn.execute(
+                "UPDATE smart_folders SET name = ?2, whole_word = ?3, symbol = ?4, color_name = ?5 WHERE id = ?1",
+                params![id, entry.name, entry.whole_word, entry.symbol, entry.color],
+            )?;
+            smart::set_keywords(conn, id, &keywords)?;
+        } else if let Some(twin) = twin_smart_folder(conn, &entry.name, &remote.smart_folders)? {
+            // Même dossier créé séparément sur les deux Mac : un seul identifiant, le contenu le plus récent
+            conn.execute(
+                "UPDATE smart_folders SET uid = ?1, name = ?2, whole_word = ?3, symbol = ?4, color_name = ?5 WHERE uid = ?6",
+                params![uid, entry.name, entry.whole_word, entry.symbol, entry.color, twin],
+            )?;
+            let twin_id: i64 = conn.query_row("SELECT id FROM smart_folders WHERE uid = ?1", params![uid], |r| r.get(0))?;
+            smart::set_keywords(conn, twin_id, &keywords)?;
+            current.smart_folders.remove(&twin);
+        } else {
+            conn.execute(
+                "INSERT INTO smart_folders (uid, name, whole_word, symbol, color_name, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![uid, entry.name, entry.whole_word, entry.symbol, entry.color, now],
+            )?;
+            smart::set_keywords(conn, conn.last_insert_rowid(), &keywords)?;
+        }
+        current.smart_folders.insert(uid.clone(), entry.clone());
+    }
+    if smart_changed {
+        smart::rebuild(conn)?;
+    }
+
     // États des articles
     for (key, entry) in &remote.articles {
         if current.articles.get(key).is_some_and(|local| local.modified >= entry.modified) {
@@ -902,6 +1002,17 @@ fn twin_folder(conn: &Connection, name: &str, remote: &BTreeMap<String, FolderEn
 
 fn twin_tag(conn: &Connection, name: &str, remote: &BTreeMap<String, TagEntry>) -> Result<Option<String>> {
     let mut stmt = conn.prepare("SELECT uid, name FROM favorite_tags")?;
+    let rows: Vec<(String, String)> = stmt
+        .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
+        .collect::<std::result::Result<_, _>>()?;
+    Ok(rows
+        .into_iter()
+        .find(|(uid, n)| n.to_lowercase() == name.to_lowercase() && !remote.contains_key(uid))
+        .map(|(uid, _)| uid))
+}
+
+fn twin_smart_folder(conn: &Connection, name: &str, remote: &BTreeMap<String, SmartFolderEntry>) -> Result<Option<String>> {
+    let mut stmt = conn.prepare("SELECT uid, name FROM smart_folders")?;
     let rows: Vec<(String, String)> = stmt
         .query_map([], |r| Ok((r.get(0)?, r.get(1)?)))?
         .collect::<std::result::Result<_, _>>()?;
@@ -976,6 +1087,88 @@ mod tests {
         .unwrap();
         run(&b, dir.path(), 1300.0);
         assert_eq!(count(&b.0, "SELECT is_read FROM articles WHERE key = 'u1|1'"), 1);
+    }
+
+    #[test]
+    fn smart_folders_travel_and_follow_edits_and_deletion() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = mac("A");
+        let b = mac("B");
+        a.0.execute_batch(
+            "INSERT INTO feeds (id, url, title, added_at) VALUES (1, 'u1', 'Korben', 0);
+             INSERT INTO articles (id, key, feed_id, feed_url, title, published) VALUES
+               (1, 'u1|1', 1, 'u1', 'Nouvel iPhone', 10), (2, 'u1|2', 1, 'u1', 'Météo', 20);",
+        )
+        .unwrap();
+        let uid = smart::create(&a.0, "Tech", &["iphone".to_string(), "mac".to_string()], true).unwrap();
+        smart::set_style(&a.0, &uid, Some("cpu"), Some("blue")).unwrap();
+        run(&a, dir.path(), 1000.0);
+
+        // B reçoit le dossier avec ses mots-clés et son style ; ses articles y sont rangés une fois présents
+        b.0.execute_batch(
+            "INSERT INTO feeds (id, url, title, added_at) VALUES (1, 'u1', 'Korben', 0);
+             INSERT INTO articles (id, key, feed_id, feed_url, title, published) VALUES (1, 'u1|1', 1, 'u1', 'Nouvel iPhone', 10);",
+        )
+        .unwrap();
+        let r = run(&b, dir.path(), 1100.0);
+        assert!(r.changed && r.incompatible.is_empty());
+        let folders = smart::list(&b.0).unwrap();
+        assert_eq!(folders.len(), 1);
+        assert_eq!(folders[0].uid, uid);
+        assert_eq!(folders[0].keywords, vec!["iphone".to_string(), "mac".to_string()]);
+        assert_eq!((folders[0].symbol.as_deref(), folders[0].color_name.as_deref()), (Some("cpu"), Some("blue")));
+        assert_eq!(folders[0].article_count, 1);
+
+        // Modification sur B, puis suppression sur A
+        smart::update(&b.0, &uid, "Technologie", &["iphone".to_string()], false).unwrap();
+        run(&b, dir.path(), 1200.0);
+        run(&a, dir.path(), 1300.0);
+        let on_a = smart::list(&a.0).unwrap();
+        assert_eq!((on_a[0].name.as_str(), on_a[0].keywords.len(), on_a[0].whole_word), ("Technologie", 1, false));
+        smart::delete(&a.0, &uid).unwrap();
+        run(&a, dir.path(), 1400.0);
+        run(&b, dir.path(), 1500.0);
+        assert!(smart::list(&b.0).unwrap().is_empty());
+    }
+
+    #[test]
+    fn same_smart_folder_created_on_both_macs_is_merged() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = mac("A");
+        let b = mac("B");
+        smart::create(&a.0, "Tech", &["iphone".to_string()], true).unwrap();
+        smart::create(&b.0, "tech", &["iphone".to_string()], true).unwrap();
+        run(&a, dir.path(), 1000.0);
+        run(&b, dir.path(), 1100.0);
+        run(&a, dir.path(), 1200.0);
+        assert_eq!(smart::list(&a.0).unwrap().len(), 1);
+        assert_eq!(smart::list(&b.0).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn files_of_another_format_version_are_ignored_and_reported() {
+        let dir = tempfile::tempdir().unwrap();
+        let a = mac("A");
+        let old = Snapshot {
+            version: 1,
+            device: "OLD".into(),
+            device_name: "Vieux Mac".into(),
+            updated_at: 5.0,
+            folders: BTreeMap::from([(
+                "F9".to_string(),
+                FolderEntry { name: "Ancien".into(), symbol: None, color: None, deleted: false, modified: 5.0 },
+            )]),
+            ..Snapshot::default()
+        };
+        std::fs::write(dir.path().join("OLD.json"), serde_json::to_vec(&old).unwrap()).unwrap();
+        let r = run(&a, dir.path(), 1000.0);
+        assert_eq!(r.incompatible.len(), 1);
+        assert_eq!(r.incompatible[0].name, "Vieux Mac");
+        assert!(r.others.is_empty() && !r.changed);
+        assert_eq!(count(&a.0, "SELECT COUNT(*) FROM folders"), 0);
+        // Notre fichier est bien au nouveau format
+        let own: Snapshot = serde_json::from_slice(&std::fs::read(dir.path().join("A.json")).unwrap()).unwrap();
+        assert_eq!(own.version, SYNC_VERSION);
     }
 
     #[test]

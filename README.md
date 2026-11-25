@@ -55,9 +55,9 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 
 ### 🖼️ A list you enjoy browsing
 
-- Three layouts, switched in the toolbar: **list** (thumbnail, source, date, title and an optional summary), **grid** (cards with the title, the number of columns adapts to the width) and **full-width grid**, where an article opens in place, with a back arrow.
+- Three layouts, switched in the toolbar: **list** (thumbnail, source, date, title and 0 to 4 lines of the start of the article, 2 by default), **grid** (cards with the title, the number of columns adapts to the width) and **full-width grid**, where an article opens in place, with a back arrow.
 - Thumbnails come from the feed (`media:thumbnail`, `enclosure`…), from the first image of the article, or as a last resort from the page's `og:image`.
-- **Search** the articles of the current view, **hide read articles** with one button, **mark all as read**.
+- **Search** the articles of the current view, in the title, the body or both, **hide read articles** with one button, **mark all as read**.
 - Views: All articles, Unread, Favorites, History, folders, feeds and tags.
 - **Keyboard:** J / K (or the arrows) move through the list, Space scrolls the article and moves on to the next one at the bottom, M toggles read, S toggles favorite, B opens the article in your browser. Also ⌘A (select all), ⌘N (add a feed), ⌘R (refresh), ⇧⌘K (mark all as read), ⌥⌘S (statistics).
 - **Multiple selection:** ⌘-click or ⇧-click to select several articles, then right-click to mark them as read, favorite them or tag them at once.
@@ -80,10 +80,10 @@ When several sources publish the same story within 48 hours, Flux groups them: o
 
 ### 🚫 Keyword filters
 
-Rules (menu › Filters) act on articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. A rule applies to all feeds or only to the ones you check, to the whole word or anywhere in the title, and shows how many articles it affects.
+Rules (menu › Filters) act on articles by a keyword in their title, ignoring case and accents: **hide** the article, or simply **mark it as read**. **Smart folders** (section of the same name in the sidebar, at the level of « Flux », or menu › Filters) gather the articles whose title contains one of their keywords (any of them), whole word or not; an article that lands in a smart folder leaves its feed and its feed's folder but stays in All and Unread, and shows up in every smart folder that matches. A rule applies to all feeds or only to the ones you check, to the whole word or anywhere in the title, and shows how many articles it affects.
 
 - Rules apply to existing and incoming articles; favorites are never filtered. Deleting a rule brings back the articles it was hiding.
-- **Limitations:** only the title is checked, not the article text; the oldest rule wins and rules can't be reordered.
+- **Limitations:** only the title is checked, not the article text; the oldest rule wins and rules can't be reordered. Smart folders have no per-feed scope and no « exclude » keywords.
 
 ### ⭐ Favorites, tags and history
 
@@ -108,7 +108,7 @@ Settings › Feeds › *Prepare articles for offline reading*: after each refres
 
 ### ☁️ Sync between Macs
 
-Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/devices/` and merges the others: when something changed on both Macs, the most recent change wins, item by item. The format is the same as the Swift version's.
+Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/devices/` and merges the others: when something changed on both Macs, the most recent change wins, item by item. **Since 0.8.5 the sync format (v2) also carries smart folders and is not compatible with the previous one: update Flux to 0.8.5 on all your Macs.** Until then, Macs on different versions ignore each other (Flux says so in Settings › Sync) and nothing is lost. The Swift version, 0.8.0 and 0.8.1 use the old format.
 
 - Not synced: settings, history and images.
 - **Limitations:** iCloud Drive must be turned on; changes arrive as fast as iCloud Drive carries the files (usually within a minute). The first time, macOS may ask permission to access iCloud Drive: allow it, Flux retries by itself.
@@ -122,7 +122,7 @@ Settings › Backup: once a day, Flux stores a complete copy of its database (fe
 
 ### ⚙️ Settings
 
-Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, summary in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity, offline preparation and image cache size, favorites archive. A short **tour** of Flux opens on first launch (app menu › Discover Flux to see it again).
+Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, number of summary lines in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity, offline preparation and image cache size, favorites archive. A short **tour** of Flux opens on first launch (app menu › Discover Flux to see it again).
 
 ## 🧩 Compatibility
 
@@ -172,6 +172,13 @@ Your reading history and reading times are imported too, so your statistics carr
 Flux checks for a new version at launch (or app menu › **Check for updates…**) and offers to install it. Updates are signed, and Flux refuses any file that wasn't signed by the author.
 
 ## 📝 Changelog
+
+### 0.8.5
+- **Smart folders**: a new section in the sidebar, next to « Flux ». Each folder gathers articles by keywords (title, any keyword, optional whole word). Matching articles leave their feed and its folder, but stay in All and Unread.
+- **Better search**: choose to search in the title, the body of the article, or both.
+- **Summary lines in the list layout**: from 0 to 4 lines of the start of the article (Settings), 2 by default.
+- Fixes: the expand/collapse arrow of folders is now at the far right of the row; in the list layout, the thumbnail now takes the full height of the card.
+- ⚠️ **Sync format changed (v2)** to carry smart folders: update Flux to 0.8.5 on **all** your Macs. Macs on different versions don't see each other until they are all updated.
 
 ### 0.8.1
 - **Feed errors in the sidebar**: a warning badge appears next to a feed that couldn't be refreshed; hover it for the message.

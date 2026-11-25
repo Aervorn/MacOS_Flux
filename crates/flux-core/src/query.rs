@@ -23,6 +23,8 @@ pub enum Selection {
     Folder { uid: String },
     Tag { uid: String },
     Feed { url: String },
+    /// Dossier intelligent (rangé par mots-clés).
+    Smart { uid: String },
 }
 
 /// Minuscules et sans accents, pour comparer et chercher (équivalent approché de
@@ -58,6 +60,18 @@ pub struct SidebarFolder {
     pub feeds: Vec<SidebarFeed>,
 }
 
+/// Dossier intelligent de la barre latérale.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SidebarSmartFolder {
+    pub uid: String,
+    pub name: String,
+    pub symbol: Option<String>,
+    pub color_name: Option<String>,
+    /// Articles non lus rangés dans le dossier.
+    pub unread: i64,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SidebarTag {
@@ -74,7 +88,12 @@ pub struct Sidebar {
     /// Flux qui ne sont dans aucun dossier.
     pub feeds: Vec<SidebarFeed>,
     pub tags: Vec<SidebarTag>,
+    /// Dossiers intelligents, par ordre alphabétique.
+    pub smart_folders: Vec<SidebarSmartFolder>,
 }
+
+/// Article rangé dans un dossier intelligent : il n'apparaît plus dans son flux ni dans le dossier de son flux.
+const NOT_IN_SMART: &str = "NOT EXISTS (SELECT 1 FROM smart_folder_articles s WHERE s.article_id = a.id)";
 
 pub fn sidebar(conn: &Connection) -> Result<Sidebar> {
     let unread: i64 = conn.query_row(
@@ -87,7 +106,10 @@ pub fn sidebar(conn: &Connection) -> Result<Sidebar> {
     let mut counts: HashMap<String, i64> = HashMap::new();
     {
         let mut stmt = conn.prepare(
-            "SELECT feed_url, COUNT(*) FROM articles WHERE is_read = 0 AND is_hidden = 0 GROUP BY feed_url",
+            "SELECT feed_url, COUNT(*) FROM articles a
+             WHERE is_read = 0 AND is_hidden = 0
+               AND NOT EXISTS (SELECT 1 FROM smart_folder_articles s WHERE s.article_id = a.id)
+             GROUP BY feed_url",
         )?;
         let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, i64>(1)?)))?;
         for row in rows {
@@ -154,7 +176,24 @@ pub fn sidebar(conn: &Connection) -> Result<Sidebar> {
     }
     tags.sort_by_cached_key(|t| fold(&t.name));
 
-    Ok(Sidebar { unread, folders, feeds: root_feeds, tags })
+    let mut smart_folders = Vec::new();
+    {
+        let mut stmt = conn.prepare(
+            "SELECT d.uid, d.name, d.symbol, d.color_name,
+                    (SELECT COUNT(*) FROM smart_folder_articles s JOIN articles a ON a.id = s.article_id
+                     WHERE s.folder_id = d.id AND a.is_read = 0 AND a.is_hidden = 0 AND a.is_duplicate = 0)
+             FROM smart_folders d",
+        )?;
+        let rows = stmt.query_map([], |r| {
+            Ok(SidebarSmartFolder { uid: r.get(0)?, name: r.get(1)?, symbol: r.get(2)?, color_name: r.get(3)?, unread: r.get(4)? })
+        })?;
+        for row in rows {
+            smart_folders.push(row?);
+        }
+    }
+    smart_folders.sort_by_cached_key(|f| fold(&f.name));
+
+    Ok(Sidebar { unread, folders, feeds: root_feeds, tags, smart_folders })
 }
 
 // --- Listes d'articles -------------------------------------------------------
@@ -163,8 +202,12 @@ pub fn sidebar(conn: &Connection) -> Result<Sidebar> {
 #[serde(rename_all = "camelCase", default)]
 pub struct ListQuery {
     pub selection: Selection,
-    /// Recherche dans le titre et le texte (vide = pas de recherche).
+    /// Recherche (vide = pas de recherche).
     pub search: String,
+    /// La recherche porte sur le titre.
+    pub search_title: bool,
+    /// La recherche porte sur le corps (résumé et texte). Si les deux sont faux, on cherche partout.
+    pub search_body: bool,
     /// Masque les articles lus (Tous, dossiers, flux), comme le réglage de l'app Swift.
     pub hide_read: bool,
     /// Favoris : ne montre que les articles sans tag.
@@ -178,6 +221,8 @@ impl Default for ListQuery {
         Self {
             selection: Selection::All,
             search: String::new(),
+            search_title: true,
+            search_body: true,
             hide_read: false,
             hide_tagged_favorites: false,
             sticky: Vec::new(),
@@ -262,16 +307,27 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
             params.push(Value::Text(uid.clone()));
         }
         Selection::Feed { url } => {
-            conds.push("a.is_hidden = 0 AND a.feed_url = ?".into());
+            conds.push(format!("a.is_hidden = 0 AND {NOT_IN_SMART} AND a.feed_url = ?"));
             params.push(Value::Text(url.clone()));
             if q.hide_read {
                 conds.push(unread_or_sticky(&q.sticky, &mut params));
             }
         }
         Selection::Folder { uid } => {
-            conds.push(
-                "a.is_hidden = 0 AND a.is_duplicate = 0 AND a.feed_url IN
+            conds.push(format!(
+                "a.is_hidden = 0 AND a.is_duplicate = 0 AND {NOT_IN_SMART} AND a.feed_url IN
                     (SELECT f.url FROM feeds f JOIN folders d ON d.id = f.folder_id WHERE d.uid = ?)"
+            ));
+            params.push(Value::Text(uid.clone()));
+            if q.hide_read {
+                conds.push(unread_or_sticky(&q.sticky, &mut params));
+            }
+        }
+        Selection::Smart { uid } => {
+            conds.push(
+                "a.is_hidden = 0 AND a.is_duplicate = 0 AND EXISTS
+                    (SELECT 1 FROM smart_folder_articles s JOIN smart_folders d ON d.id = s.folder_id
+                     WHERE s.article_id = a.id AND d.uid = ?)"
                     .into(),
             );
             params.push(Value::Text(uid.clone()));
@@ -283,6 +339,7 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
 
     let search = fold(q.search.trim());
     let searching = !search.is_empty();
+    let (in_title, in_body) = if q.search_title || q.search_body { (q.search_title, q.search_body) } else { (true, true) };
 
     let sql = format!(
         "SELECT a.key, a.title, a.summary, a.feed_url, a.published, a.opened_at, a.is_read, a.is_starred,
@@ -307,8 +364,11 @@ pub fn list_articles(conn: &Connection, q: &ListQuery) -> Result<Vec<ArticleRow>
         let title: String = row.get(1)?;
         if searching {
             let text: Option<String> = row.get(14)?;
-            let haystack = fold(&format!("{title}\n{}", text.unwrap_or_default()));
-            if !haystack.contains(&search) {
+            let text = text.unwrap_or_default();
+            // Le texte indexé commence par le titre : le corps est ce qui reste (résumé et contenu).
+            let body = text.strip_prefix(title.as_str()).unwrap_or(&text);
+            let found = (in_title && fold(&title).contains(&search)) || (in_body && fold(body).contains(&search));
+            if !found {
                 continue;
             }
         }
@@ -436,6 +496,52 @@ mod tests {
         assert_eq!(keys(list_articles(&c, &q).unwrap()), ["a"]);
         let q = ListQuery { search: "DEUXIEME".into(), ..query(Selection::All) };
         assert_eq!(keys(list_articles(&c, &q).unwrap()), ["b"]);
+    }
+
+    #[test]
+    fn search_can_be_limited_to_title_or_body() {
+        let c = fixture();
+        // « eleves » n'est que dans le texte de « a » ; « premier » n'est que dans son titre
+        let title_only = |word: &str| ListQuery { search: word.into(), search_body: false, ..query(Selection::All) };
+        let body_only = |word: &str| ListQuery { search: word.into(), search_title: false, ..query(Selection::All) };
+        assert!(list_articles(&c, &title_only("eleves")).unwrap().is_empty());
+        assert_eq!(keys(list_articles(&c, &title_only("premier")).unwrap()), ["a"]);
+        assert_eq!(keys(list_articles(&c, &body_only("eleves")).unwrap()), ["a"]);
+        assert!(list_articles(&c, &body_only("premier")).unwrap().is_empty());
+        // Le texte indexé commence par le titre : il ne compte pas comme du corps
+        c.execute_batch("UPDATE articles SET search_text = 'Deuxième\nrésumé du texte' WHERE key = 'b'").unwrap();
+        assert!(list_articles(&c, &body_only("deuxieme")).unwrap().is_empty());
+        assert_eq!(keys(list_articles(&c, &body_only("resume")).unwrap()), ["b"]);
+        // Aucune case cochée : on cherche partout
+        let none = ListQuery { search: "premier".into(), search_title: false, search_body: false, ..query(Selection::All) };
+        assert_eq!(keys(list_articles(&c, &none).unwrap()), ["a"]);
+    }
+
+    #[test]
+    fn smart_folder_takes_articles_out_of_their_feed_only() {
+        let c = fixture();
+        c.execute_batch(
+            "INSERT INTO smart_folders (id, uid, name, created_at) VALUES (1, 'S1', 'Choix', 0);
+             INSERT INTO smart_folder_articles (folder_id, article_id) VALUES (1, 1), (1, 3);",
+        )
+        .unwrap();
+        // « a » (flux u1, dossier Tech) disparaît de son flux et de son dossier de flux…
+        assert_eq!(keys(list_articles(&c, &query(Selection::Feed { url: "u1".into() })).unwrap()), ["b"]);
+        assert_eq!(keys(list_articles(&c, &query(Selection::Folder { uid: "F1".into() })).unwrap()), ["e", "b"]);
+        // …mais reste dans « Tous les articles » et « Non lus »
+        assert_eq!(keys(list_articles(&c, &query(Selection::All)).unwrap()), ["e", "b", "a"]);
+        assert_eq!(keys(list_articles(&c, &query(Selection::Unread)).unwrap()), ["e", "a"]);
+        // Le dossier intelligent montre ses articles (sans le doublon « c »)
+        assert_eq!(keys(list_articles(&c, &query(Selection::Smart { uid: "S1".into() })).unwrap()), ["a"]);
+        let q = ListQuery { hide_read: true, ..query(Selection::Smart { uid: "S1".into() }) };
+        assert_eq!(keys(list_articles(&c, &q).unwrap()), ["a"]);
+        // Compteurs : le flux u1 ne compte plus « a », le dossier intelligent le compte
+        let s = sidebar(&c).unwrap();
+        assert_eq!(s.unread, 2);
+        let tech = &s.folders[0];
+        assert_eq!(tech.unread, 1);
+        assert_eq!(s.smart_folders.len(), 1);
+        assert_eq!(s.smart_folders[0].unread, 1);
     }
 
     #[test]

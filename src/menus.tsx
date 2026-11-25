@@ -2,7 +2,7 @@ import type { TFunction } from "i18next";
 import { AlertTriangle, CheckCheck, Circle, CircleCheck, ExternalLink, FolderInput, Globe, Link, Palette, Pencil, Plus, Star, Tag, Trash2, Unlink } from "lucide-react";
 import { api } from "./api";
 import i18n from "./i18n";
-import type { ArticleDetail, ArticleRow, Selection, SidebarFeed, SidebarFolder, SidebarTag, Sidebar } from "./api";
+import type { ArticleDetail, ArticleRow, Selection, SidebarFeed, SidebarFolder, SidebarSmartFolder, SidebarTag, Sidebar } from "./api";
 import type { MenuItem } from "./components/ContextMenu";
 
 /** Fenêtres que les menus peuvent ouvrir. */
@@ -10,7 +10,9 @@ export type Ask =
   | { kind: "prompt"; title: string; initial?: string; placeholder?: string; confirmLabel: string; allowEmpty?: boolean; onSubmit: (v: string) => void }
   | { kind: "confirm"; title: string; message: string; confirmLabel: string; onConfirm: () => void }
   | { kind: "info"; title: string; message: string }
-  | { kind: "folderStyle"; folder: SidebarFolder; onSubmit: (symbol: string | null, color: string | null) => void };
+  | { kind: "folderStyle"; folder: { name: string; symbol: string | null; colorName: string | null }; onSubmit: (symbol: string | null, color: string | null) => void }
+  /** Création (uid null) ou modification d'un dossier intelligent. */
+  | { kind: "smartFolder"; uid: string | null };
 
 export interface MenuContext {
   t: TFunction;
@@ -184,6 +186,49 @@ export function folderMenu(ctx: MenuContext, folder: SidebarFolder): MenuItem[] 
           onConfirm: () => {
             if (ctx.selection.kind === "folder" && ctx.selection.uid === folder.uid) ctx.select({ kind: "all" });
             run(ctx, () => api.deleteFolder(folder.uid));
+          },
+        }),
+    },
+  ];
+}
+
+export function smartFolderMenu(ctx: MenuContext, folder: SidebarSmartFolder): MenuItem[] {
+  const { t } = ctx;
+  return [
+    {
+      label: t("menu.editSmartFolder"),
+      icon: <Pencil size={16} />,
+      onClick: () => ctx.ask({ kind: "smartFolder", uid: folder.uid }),
+    },
+    {
+      label: t("menu.folderStyle"),
+      icon: <Palette size={16} />,
+      onClick: () =>
+        ctx.ask({
+          kind: "folderStyle",
+          folder,
+          onSubmit: (symbol, color) => run(ctx, () => api.setSmartFolderStyle(folder.uid, symbol, color)),
+        }),
+    },
+    {
+      label: t("menu.markAllRead"),
+      icon: <CheckCheck size={16} />,
+      onClick: () => run(ctx, () => api.markAllRead({ kind: "smart", uid: folder.uid }, ctx.hideTaggedFavorites)),
+    },
+    "separator",
+    {
+      label: t("menu.deleteSmartFolder"),
+      icon: <Trash2 size={16} />,
+      danger: true,
+      onClick: () =>
+        ctx.ask({
+          kind: "confirm",
+          title: t("dialogs.deleteSmartFolderTitle", { name: folder.name }),
+          message: t("dialogs.deleteSmartFolderBody"),
+          confirmLabel: t("dialogs.delete"),
+          onConfirm: () => {
+            if (ctx.selection.kind === "smart" && ctx.selection.uid === folder.uid) ctx.select({ kind: "all" });
+            run(ctx, () => api.deleteSmartFolder(folder.uid));
           },
         }),
     },

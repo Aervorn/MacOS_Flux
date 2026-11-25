@@ -7,7 +7,8 @@ export type Selection =
   | { kind: "history" }
   | { kind: "folder"; uid: string }
   | { kind: "tag"; uid: string }
-  | { kind: "feed"; url: string };
+  | { kind: "feed"; url: string }
+  | { kind: "smart"; uid: string };
 
 export type ArticleLayout = "list" | "grid" | "gridFull";
 export type Appearance = "system" | "light" | "dark";
@@ -19,7 +20,11 @@ export interface Prefs {
   markReadDelay: number;
   imageCacheLimitMb: number;
   readerWidth: "narrow" | "wide" | "full";
-  showSummary: boolean;
+  /** Lignes du début de l'article sous le titre, en liste (0 à 4). */
+  summaryLines: number;
+  /** La recherche porte sur le titre, sur le corps de l'article, ou sur les deux. */
+  searchInTitle: boolean;
+  searchInBody: boolean;
   readerFontSize: number;
   archiveFavorites: boolean;
   groupDuplicates: boolean;
@@ -75,11 +80,31 @@ export interface SidebarTag {
   name: string;
 }
 
+export interface SidebarSmartFolder {
+  uid: string;
+  name: string;
+  symbol: string | null;
+  colorName: string | null;
+  unread: number;
+}
+
+/** Dossier intelligent tel que le renvoie `list_smart_folders`. */
+export interface SmartFolder {
+  uid: string;
+  name: string;
+  keywords: string[];
+  wholeWord: boolean;
+  symbol: string | null;
+  colorName: string | null;
+  articleCount: number;
+}
+
 export interface Sidebar {
   unread: number;
   folders: SidebarFolder[];
   feeds: SidebarFeed[];
   tags: SidebarTag[];
+  smartFolders: SidebarSmartFolder[];
 }
 
 export interface ArticleRow {
@@ -161,6 +186,8 @@ export interface FetchedPage {
 export interface ListQuery {
   selection: Selection;
   search: string;
+  searchTitle: boolean;
+  searchBody: boolean;
   hideRead: boolean;
   hideTaggedFavorites: boolean;
   sticky: string[];
@@ -248,6 +275,8 @@ export interface SyncStatus {
   /** `icloud_unavailable` ou un message */
   error: string | null;
   others: { name: string; updated: number }[];
+  /** Mac dont le fichier de synchro est d'une autre version : il faut le mettre à jour. */
+  incompatible: { name: string; updated: number }[];
   icloudAvailable: boolean;
 }
 
@@ -342,6 +371,16 @@ export const api = {
   deleteFilter: (uid: string) => invoke<void>("delete_filter", { uid }),
   previewFilter: (keyword: string, wholeWord: boolean, feedUrls: string[]) =>
     invoke<number>("preview_filter", { keyword, wholeWord, feedUrls }),
+  smartFolders: () => invoke<SmartFolder[]>("list_smart_folders"),
+  createSmartFolder: (name: string, keywords: string[], wholeWord: boolean) =>
+    invoke<string>("create_smart_folder", { name, keywords, wholeWord }),
+  updateSmartFolder: (uid: string, name: string, keywords: string[], wholeWord: boolean) =>
+    invoke<void>("update_smart_folder", { uid, name, keywords, wholeWord }),
+  deleteSmartFolder: (uid: string) => invoke<void>("delete_smart_folder", { uid }),
+  setSmartFolderStyle: (uid: string, symbol: string | null, color: string | null) =>
+    invoke<void>("set_smart_folder_style", { uid, symbol, color }),
+  previewSmartFolder: (keywords: string[], wholeWord: boolean) =>
+    invoke<number>("preview_smart_folder", { keywords, wholeWord }),
   importOpml: (path: string) => invoke<OpmlResult>("import_opml", { path }),
   exportOpml: (path: string) => invoke<void>("export_opml", { path }),
   regroupDuplicates: () => invoke<void>("regroup_duplicates"),

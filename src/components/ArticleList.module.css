@@ -31,10 +31,12 @@
   background: var(--surface-hover);
 }
 
+/* La miniature suit la hauteur de la carte (méta, titre et résumé), avec 64 px au minimum. */
 .itemThumb {
   flex: none;
+  align-self: stretch;
   width: 96px;
-  height: 64px;
+  min-height: 64px;
   border-radius: 8px;
 }
 

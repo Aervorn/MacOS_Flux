@@ -10,12 +10,13 @@ interface Props {
   layout: ArticleLayout;
   /** Articles sélectionnés (un seul, ou plusieurs avec ⌘ / ⇧). */
   selectedKeys: string[];
-  showSummary: boolean;
+  /** Lignes du début de l'article sous le titre (0 : aucune). */
+  summaryLines: number;
   onSelect: (article: ArticleRow, e: React.MouseEvent) => void;
   onMenu: (e: React.MouseEvent, article: ArticleRow) => void;
 }
 
-export default function ArticleList({ articles, layout, selectedKeys, showSummary, onSelect, onMenu }: Props) {
+export default function ArticleList({ articles, layout, selectedKeys, summaryLines, onSelect, onMenu }: Props) {
   const { t, i18n } = useTranslation();
 
   if (articles.length === 0) {
@@ -83,7 +84,11 @@ export default function ArticleList({ articles, layout, selectedKeys, showSummar
                 {a.isStarred && <Star size={12} className={styles.star} />}
               </div>
               <div className={styles.title}>{a.title}</div>
-              {showSummary && a.summary && <div className={styles.summary}>{a.summary}</div>}
+              {summaryLines > 0 && a.summary && (
+                <div className={styles.summary} style={{ WebkitLineClamp: summaryLines }}>
+                  {a.summary}
+                </div>
+              )}
             </div>
           </button>
         );

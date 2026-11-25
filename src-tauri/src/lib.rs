@@ -63,6 +63,8 @@ struct SyncStatus {
     /// Code d'erreur (`icloud_unavailable`) ou message
     error: Option<String>,
     others: Vec<flux_core::sync::OtherDevice>,
+    /// Mac dont le fichier de synchro est d'une autre version du format : à mettre à jour.
+    incompatible: Vec<flux_core::sync::OtherDevice>,
     icloud_available: bool,
 }
 
@@ -420,6 +422,49 @@ fn preview_filter(state: State<'_, AppState>, keyword: String, whole_word: bool,
     flux_core::filters::preview_count(&conn, &keyword, whole_word, &feed_urls).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+fn list_smart_folders(state: State<'_, AppState>) -> Result<Vec<flux_core::smart::SmartFolder>, String> {
+    let conn = lock(&state)?;
+    flux_core::smart::list(&conn).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn create_smart_folder(state: State<'_, AppState>, name: String, keywords: Vec<String>, whole_word: bool) -> Result<String, String> {
+    let conn = lock(&state)?;
+    flux_core::smart::create(&conn, &name, &keywords, whole_word).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_smart_folder(
+    state: State<'_, AppState>,
+    uid: String,
+    name: String,
+    keywords: Vec<String>,
+    whole_word: bool,
+) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::smart::update(&conn, &uid, &name, &keywords, whole_word).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_smart_folder(state: State<'_, AppState>, uid: String) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::smart::delete(&conn, &uid).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_smart_folder_style(state: State<'_, AppState>, uid: String, symbol: Option<String>, color: Option<String>) -> Result<(), String> {
+    let conn = lock(&state)?;
+    flux_core::smart::set_style(&conn, &uid, symbol.as_deref(), color.as_deref()).map_err(|e| e.to_string())
+}
+
+/// Nombre d'articles actuels que les mots-clés rangeraient dans le dossier.
+#[tauri::command]
+fn preview_smart_folder(state: State<'_, AppState>, keywords: Vec<String>, whole_word: bool) -> Result<i64, String> {
+    let conn = lock(&state)?;
+    flux_core::smart::preview_count(&conn, &keywords, whole_word).map_err(|e| e.to_string())
+}
+
 /// Recalcule les groupes de doublons (après un changement de réglage).
 #[tauri::command]
 fn regroup_duplicates(state: State<'_, AppState>) -> Result<(), String> {
@@ -511,6 +556,7 @@ fn run_sync(app: &tauri::AppHandle) -> Result<(), String> {
             st.last_sync = Some(flux_core::feeds::now());
             st.error = None;
             st.others = report.others.clone();
+            st.incompatible = report.incompatible.clone();
             drop(st);
             if report.changed || !report.new_feeds.is_empty() {
                 let _ = app.emit("sync-changed", report.new_feeds.len());
@@ -1012,6 +1058,12 @@ pub fn run() {
             update_filter,
             delete_filter,
             preview_filter,
+            list_smart_folders,
+            create_smart_folder,
+            update_smart_folder,
+            delete_smart_folder,
+            set_smart_folder_style,
+            preview_smart_folder,
             regroup_duplicates,
             detach_from_cluster,
             sync_status,

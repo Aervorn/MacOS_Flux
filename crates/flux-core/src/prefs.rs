@@ -16,7 +16,12 @@ pub struct Prefs {
     pub image_cache_limit_mb: u32,
     /// "narrow", "wide" ou "full"
     pub reader_width: String,
-    pub show_summary: bool,
+    /// Lignes du début de l'article affichées sous le titre en mode liste (0 à 4, 2 par défaut).
+    pub summary_lines: u32,
+    /// La recherche porte sur le titre des articles.
+    pub search_in_title: bool,
+    /// La recherche porte sur le corps des articles (résumé et texte).
+    pub search_in_body: bool,
     pub reader_font_size: u32,
     pub archive_favorites: bool,
     pub group_duplicates: bool,
@@ -58,7 +63,9 @@ impl Default for Prefs {
             mark_read_delay: 0,
             image_cache_limit_mb: 1024,
             reader_width: "narrow".into(),
-            show_summary: true,
+            summary_lines: 2,
+            search_in_title: true,
+            search_in_body: true,
             reader_font_size: 17,
             archive_favorites: true,
             group_duplicates: true,
@@ -99,6 +106,8 @@ mod tests {
         assert_eq!(p.article_layout, "list");
         assert_eq!(p.sidebar_width, 260.0);
         assert!(p.archive_favorites && p.group_duplicates);
+        assert_eq!(p.summary_lines, 2);
+        assert!(p.search_in_title && p.search_in_body);
         assert_eq!((p.ui_font.as_str(), p.article_font.as_str(), p.sidebar_density.as_str()), ("inter", "classic", "normal"));
     }
 

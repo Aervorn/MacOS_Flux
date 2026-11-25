@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
-import type { Selection, Sidebar as SidebarData, SidebarFeed, SidebarFolder, SidebarTag } from "../api";
+import type { Selection, Sidebar as SidebarData, SidebarFeed, SidebarFolder, SidebarSmartFolder, SidebarTag } from "../api";
 import { sameSelection } from "../api";
 import Favicon from "./Favicon";
 import { folderGlyph } from "../icons";
@@ -22,6 +22,8 @@ interface Props {
   onFeedMenu: (e: React.MouseEvent, feed: SidebarFeed) => void;
   onFolderMenu: (e: React.MouseEvent, folder: SidebarFolder) => void;
   onTagMenu: (e: React.MouseEvent, tag: SidebarTag) => void;
+  onNewSmartFolder: () => void;
+  onSmartFolderMenu: (e: React.MouseEvent, folder: SidebarSmartFolder) => void;
   onToggleFolder: (uid: string, open: boolean) => void;
   /** Un flux a été déposé sur un dossier (null : à la racine). */
   onMoveFeed: (url: string, folderUid: string | null) => void;
@@ -38,6 +40,8 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
   onFeedMenu,
   onFolderMenu,
   onTagMenu,
+  onNewSmartFolder,
+  onSmartFolderMenu,
   onToggleFolder,
   onMoveFeed,
 }: Props) {
@@ -193,6 +197,30 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
           data?.tags.map((tag) => row({ kind: "tag", uid: tag.uid }, <Tag size={15} />, tag.name, 0, true, (e) => onTagMenu(e, tag)))}
 
         {row({ kind: "history" }, <History size={16} />, t("sidebar.history"))}
+
+        {/* Dossiers intelligents : au même niveau que « Flux » */}
+        <div className={styles.section}>
+          <span className={styles.sectionTitle}>{t("sidebar.smartFolders")}</span>
+          <button
+            className={styles.sectionButton}
+            onClick={onNewSmartFolder}
+            title={t("sidebar.addSmartFolder")}
+            aria-label={t("sidebar.addSmartFolder")}
+          >
+            <Plus size={14} />
+          </button>
+        </div>
+        {data && data.smartFolders.length === 0 && <p className={styles.hint}>{t("sidebar.noSmartFolders")}</p>}
+        {data?.smartFolders.map((folder) =>
+          row(
+            { kind: "smart", uid: folder.uid },
+            folderGlyph(folder.symbol ?? "sparkles", folder.colorName),
+            folder.name,
+            folder.unread,
+            false,
+            (e) => onSmartFolderMenu(e, folder),
+          ),
+        )}
 
         <div className={`${styles.section} ${dropKey === ROOT ? styles.dropTarget : ""}`} data-drop={ROOT}>
           {t("sidebar.feeds")}

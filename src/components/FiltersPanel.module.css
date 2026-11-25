@@ -76,3 +76,9 @@
   font-size: 12px;
   color: var(--text-muted);
 }
+
+.heading {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+}

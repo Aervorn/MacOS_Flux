@@ -57,18 +57,30 @@ pub fn set_read(conn: &Connection, keys: &[String], read: bool) -> Result<()> {
     Ok(())
 }
 
+const NOT_IN_SMART: &str = "NOT EXISTS (SELECT 1 FROM smart_folder_articles s WHERE s.article_id = articles.id)";
+
 /// « Tout marquer comme lu » pour la sélection affichée. Renvoie le nombre d'articles changés.
 pub fn mark_all_read(conn: &Connection, selection: &Selection, hide_tagged_favorites: bool) -> Result<usize> {
     let mut params: Vec<Value> = Vec::new();
     let cond = match selection {
         Selection::All | Selection::Unread => "1 = 1".to_string(),
+        // Les articles rangés dans un dossier intelligent n'apparaissent plus dans leur flux : ils ne sont pas touchés
         Selection::Feed { url } => {
             params.push(Value::Text(url.clone()));
-            "feed_url = ?".into()
+            format!("feed_url = ? AND {NOT_IN_SMART}")
         }
         Selection::Folder { uid } => {
             params.push(Value::Text(uid.clone()));
-            "feed_url IN (SELECT f.url FROM feeds f JOIN folders d ON d.id = f.folder_id WHERE d.uid = ?)".into()
+            format!(
+                "feed_url IN (SELECT f.url FROM feeds f JOIN folders d ON d.id = f.folder_id WHERE d.uid = ?)
+                 AND {NOT_IN_SMART}"
+            )
+        }
+        Selection::Smart { uid } => {
+            params.push(Value::Text(uid.clone()));
+            "EXISTS (SELECT 1 FROM smart_folder_articles s JOIN smart_folders d ON d.id = s.folder_id
+                     WHERE s.article_id = articles.id AND d.uid = ?)"
+                .into()
         }
         Selection::Starred if hide_tagged_favorites => {
             "is_starred = 1 AND NOT EXISTS (SELECT 1 FROM article_tags x WHERE x.article_id = articles.id)".into()

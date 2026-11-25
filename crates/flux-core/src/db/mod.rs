@@ -9,7 +9,7 @@ use crate::error::{Error, Result};
 use crate::prefs::Prefs;
 
 /// Migrations dans l'ordre : l'indice + 1 est le numéro de version (`PRAGMA user_version`).
-const MIGRATIONS: &[&str] = &[include_str!("schema_v1.sql")];
+const MIGRATIONS: &[&str] = &[include_str!("schema_v1.sql"), include_str!("schema_v2.sql")];
 
 /// Ouvre (et crée au besoin) la base d'un fichier, en mode WAL.
 pub fn open(path: &Path) -> Result<Connection> {
@@ -80,7 +80,19 @@ pub fn save_prefs(conn: &Connection, prefs: &Prefs) -> Result<()> {
 
 /// Réglages enregistrés, ou valeurs par défaut s'il n'y en a pas encore.
 pub fn load_prefs(conn: &Connection) -> Result<Prefs> {
-    Ok(load_setting(conn, PREFS_KEY)?.unwrap_or_default())
+    let Some(mut value) = load_setting::<serde_json::Value>(conn, PREFS_KEY)? else {
+        return Ok(Prefs::default());
+    };
+    // Avant les dossiers intelligents, « showSummary » (oui/non) réglait le résumé de la liste :
+    // il devient un nombre de lignes (non = 0, oui = 2, la valeur par défaut).
+    if let Some(obj) = value.as_object_mut() {
+        if !obj.contains_key("summaryLines") {
+            if let Some(show) = obj.get("showSummary").and_then(serde_json::Value::as_bool) {
+                obj.insert("summaryLines".into(), serde_json::Value::from(if show { 2 } else { 0 }));
+            }
+        }
+    }
+    Ok(serde_json::from_value(value)?)
 }
 
 #[cfg(test)]
@@ -106,6 +118,18 @@ mod tests {
         p.retention_days = 14;
         save_prefs(&conn, &p).unwrap();
         assert_eq!(load_prefs(&conn).unwrap().retention_days, 14);
+    }
+
+    #[test]
+    fn legacy_show_summary_becomes_summary_lines() {
+        let conn = open_in_memory().unwrap();
+        save_setting(&conn, PREFS_KEY, &serde_json::json!({ "showSummary": false, "retentionDays": 14 })).unwrap();
+        let p = load_prefs(&conn).unwrap();
+        assert_eq!((p.summary_lines, p.retention_days), (0, 14));
+        save_setting(&conn, PREFS_KEY, &serde_json::json!({ "showSummary": true })).unwrap();
+        assert_eq!(load_prefs(&conn).unwrap().summary_lines, 2);
+        save_setting(&conn, PREFS_KEY, &serde_json::json!({ "showSummary": false, "summaryLines": 3 })).unwrap();
+        assert_eq!(load_prefs(&conn).unwrap().summary_lines, 3);
     }
 
     #[test]

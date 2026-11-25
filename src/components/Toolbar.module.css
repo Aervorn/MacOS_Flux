@@ -79,3 +79,38 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+/* Options de recherche : où chercher (titre, corps de l'article) */
+.scope {
+  position: relative;
+  margin-left: -6px;
+}
+
+.scopeMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 190px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.scopeHeading {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.scopeOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}

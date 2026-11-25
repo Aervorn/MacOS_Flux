@@ -174,7 +174,18 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
                 (readerWidth) => onPrefs({ readerWidth }),
               ),
             )}
-            {toggle(t("settings.showSummary"), prefs.showSummary, (showSummary) => onPrefs({ showSummary }))}
+            {row(
+              t("settings.summaryLines"),
+              <div className={styles.stepper}>
+                <button onClick={() => onPrefs({ summaryLines: Math.max(0, prefs.summaryLines - 1) })} disabled={prefs.summaryLines <= 0}>
+                  −
+                </button>
+                <span>{prefs.summaryLines === 0 ? t("settings.summaryNone") : t("settings.summaryLinesCount", { count: prefs.summaryLines })}</span>
+                <button onClick={() => onPrefs({ summaryLines: Math.min(4, prefs.summaryLines + 1) })} disabled={prefs.summaryLines >= 4}>
+                  +
+                </button>
+              </div>,
+            )}
           </>
         );
       case "feeds":

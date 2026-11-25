@@ -115,9 +115,14 @@
   line-height: 20px;
 }
 
+/* La flèche des dossiers est tout à droite de la ligne ; le compteur se place à sa gauche. */
+.group:has(> .chevron) > .row {
+  padding-right: 34px;
+}
+
 .chevron {
   position: absolute;
-  right: 40px;
+  right: 8px;
   top: var(--sb-row-py, 7px);
   display: inline-flex;
   padding: 3px;
@@ -133,11 +138,33 @@
 }
 
 .section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 16px 12px 4px;
   font-size: 12px;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.sectionTitle {
+  min-width: 0;
+}
+
+.sectionButton {
+  display: inline-flex;
+  padding: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.sectionButton:hover {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .hint {

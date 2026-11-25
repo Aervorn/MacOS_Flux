@@ -55,9 +55,9 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 
 ### 🖼️ Une liste agréable à parcourir
 
-- Trois dispositions, à choisir dans la barre d'outils : **liste** (miniature, source, date, titre et résumé facultatif), **grille** (cartes avec le titre, le nombre de colonnes s'adapte à la largeur) et **grille pleine largeur**, où l'article s'ouvre à sa place, avec une flèche de retour.
+- Trois dispositions, à choisir dans la barre d'outils : **liste** (miniature, source, date, titre et 0 à 4 lignes du début de l'article, 2 par défaut), **grille** (cartes avec le titre, le nombre de colonnes s'adapte à la largeur) et **grille pleine largeur**, où l'article s'ouvre à sa place, avec une flèche de retour.
 - Les miniatures viennent du flux (`media:thumbnail`, `enclosure`…), de la première image de l'article ou, en dernier recours, de l'`og:image` de la page.
-- **Recherche** dans les articles de la vue en cours, bouton pour **masquer les articles lus**, **tout marquer comme lu**.
+- **Recherche** dans les articles de la vue en cours, dans le titre, le corps ou les deux, bouton pour **masquer les articles lus**, **tout marquer comme lu**.
 - Vues : Tous les articles, Non lus, Favoris, Historique, dossiers, flux et tags.
 - **Clavier :** J / K (ou les flèches) pour parcourir la liste, Espace pour faire défiler l'article puis passer au suivant en bas, M pour lu / non lu, S pour favori, B pour ouvrir l'article dans ton navigateur. Aussi ⌘A (tout sélectionner), ⌘N (ajouter un flux), ⌘R (actualiser), ⇧⌘K (tout marquer comme lu), ⌥⌘S (statistiques).
 - **Sélection multiple :** ⌘-clic ou ⇧-clic pour sélectionner plusieurs articles, puis clic droit pour les marquer comme lus, les mettre en favoris ou leur ajouter un tag d'un coup.
@@ -80,10 +80,10 @@ Quand plusieurs sources publient le même sujet en moins de 48 heures, Flux les 
 
 ### 🚫 Filtres par mots-clés
 
-Des règles (menu › Filtres) agissent sur les articles selon un mot-clé dans leur titre, sans tenir compte de la casse ni des accents : **masquer** l'article, ou simplement le **marquer comme lu**. Une règle s'applique à tous les flux ou seulement à ceux que tu coches, au mot entier ou n'importe où dans le titre, et indique combien d'articles elle concerne.
+Des règles (menu › Filtres) agissent sur les articles selon un mot-clé dans leur titre, sans tenir compte de la casse ni des accents : **masquer** l'article, ou simplement le **marquer comme lu**. Les **dossiers intelligents** (section du même nom dans la barre latérale, au niveau de « Flux », ou menu › Filtres) regroupent les articles dont le titre contient l'un de leurs mots-clés (n'importe lequel), au mot entier ou non ; un article qui entre dans un dossier intelligent quitte son flux et le dossier de son flux, mais reste dans Tous et Non lus, et apparaît dans chaque dossier intelligent qui correspond. Une règle s'applique à tous les flux ou seulement à ceux que tu coches, au mot entier ou n'importe où dans le titre, et indique combien d'articles elle concerne.
 
 - Les règles s'appliquent aux articles existants et à venir ; les favoris ne sont jamais filtrés. Supprimer une règle fait réapparaître les articles qu'elle masquait.
-- **Limites :** seul le titre est vérifié, pas le texte de l'article ; la règle la plus ancienne l'emporte et l'ordre des règles ne se change pas.
+- **Limites :** seul le titre est vérifié, pas le texte de l'article ; la règle la plus ancienne l'emporte et l'ordre des règles ne se change pas. Les dossiers intelligents n'ont pas de portée par flux ni de mots-clés « à exclure ».
 
 ### ⭐ Favoris, tags et historique
 
@@ -108,7 +108,7 @@ Réglages › Flux › *Préparer les articles pour la lecture hors ligne* : apr
 
 ### ☁️ Synchronisation entre Mac
 
-Réglages › Synchronisation : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus, favoris et leurs tags**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/devices/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément. Le format est le même que celui de la version Swift.
+Réglages › Synchronisation : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus, favoris et leurs tags**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/devices/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément. **Depuis la 0.8.5, le format de synchro (v2) transporte aussi les dossiers intelligents et n'est pas compatible avec le précédent : mets Flux à jour en 0.8.5 sur tous tes Mac.** D'ici là, des Mac de versions différentes s'ignorent (Flux le signale dans Réglages › Synchronisation) et rien n'est perdu. La version Swift, la 0.8.0 et la 0.8.1 utilisent l'ancien format.
 
 - Non synchronisés : réglages, historique et images.
 - **Limites :** iCloud Drive doit être activé ; les changements arrivent aussi vite qu'iCloud Drive transporte les fichiers (en général moins d'une minute). La première fois, macOS peut demander l'autorisation d'accéder à iCloud Drive : accepte, Flux réessaie tout seul.
@@ -122,7 +122,7 @@ Réglages › Sauvegarde : une fois par jour, Flux stocke une copie complète de
 
 ### ⚙️ Réglages
 
-Apparence (automatique, clair, sombre), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons, préparation hors ligne et taille du cache d'images, archive des favoris. Une courte **visite guidée** de Flux s'ouvre au premier lancement (menu de l'app › Découvrir Flux pour la revoir).
+Apparence (automatique, clair, sombre), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, nombre de lignes de résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons, préparation hors ligne et taille du cache d'images, archive des favoris. Une courte **visite guidée** de Flux s'ouvre au premier lancement (menu de l'app › Découvrir Flux pour la revoir).
 
 ## 🧩 Compatibilité
 
@@ -172,6 +172,13 @@ Ton historique et tes temps de lecture sont importés aussi : tes statistiques c
 Flux recherche une nouvelle version au lancement (ou menu de l'app › **Rechercher les mises à jour…**) et propose de l'installer. Les mises à jour sont signées : Flux refuse tout fichier qui n'a pas été signé par l'auteur.
 
 ## 📝 Historique des versions
+
+### 0.8.5
+- **Dossiers intelligents** : une nouvelle section dans la barre latérale, à côté de « Flux ». Chaque dossier regroupe des articles par mots-clés (dans le titre, n'importe quel mot-clé, mot entier en option). Les articles concernés quittent leur flux et son dossier, mais restent dans Tous et Non lus.
+- **Recherche améliorée** : cherche dans le titre, dans le corps de l'article, ou les deux.
+- **Lignes de résumé en vue liste** : de 0 à 4 lignes du début de l'article (Réglages), 2 par défaut.
+- Corrections : la flèche pour déplier/replier un dossier est maintenant tout à droite de la ligne ; en vue liste, la vignette fait toute la hauteur de la carte.
+- ⚠️ **Format de synchro modifié (v2)** pour transporter les dossiers intelligents : mets Flux à jour en 0.8.5 sur **tous** tes Mac. Des Mac de versions différentes ne se voient pas tant qu'ils ne sont pas tous à jour.
 
 ### 0.8.1
 - **Les erreurs de flux dans la barre latérale** : une pastille d'avertissement apparaît à côté d'un flux qui n'a pas pu être actualisé ; survole-la pour lire le message.

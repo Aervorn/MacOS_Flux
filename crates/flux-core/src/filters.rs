@@ -68,7 +68,7 @@ impl CompiledFilter {
 }
 
 /// Le mot-clé apparaît sans lettre ni chiffre juste avant ou juste après.
-fn contains_whole_word(haystack: &str, needle: &str) -> bool {
+pub(crate) fn contains_whole_word(haystack: &str, needle: &str) -> bool {
     let mut from = 0;
     while let Some(pos) = haystack[from..].find(needle) {
         let start = from + pos;
@@ -138,9 +138,16 @@ pub fn list(conn: &Connection) -> Result<Vec<Rule>> {
     Ok(out)
 }
 
-/// Passe les règles sur les articles non encore filtrés (hors favoris).
+/// Passe les règles sur les articles non encore filtrés (hors favoris), puis recalcule le contenu
+/// des dossiers intelligents (un article masqué n'y figure pas).
 /// `only` limite aux articles dont la clé est donnée (nouveaux articles).
 pub fn apply(conn: &Connection, only: Option<&[String]>) -> Result<usize> {
+    let changed = apply_rules(conn, only)?;
+    crate::smart::rebuild(conn)?;
+    Ok(changed)
+}
+
+fn apply_rules(conn: &Connection, only: Option<&[String]>) -> Result<usize> {
     let filters = compiled_rules(conn)?;
     if filters.is_empty() {
         return Ok(0);
