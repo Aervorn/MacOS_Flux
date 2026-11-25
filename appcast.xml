@@ -4,24 +4,22 @@
     <title>Flux</title>
     <link>https://github.com/Aervorn/MacOS_Flux</link>
     <item>
-      <title>Flux 0.8.1</title>
-      <pubDate>Tue, 24 Nov 2026 21:53:52 +0000</pubDate>
-      <sparkle:version>9</sparkle:version>
-      <sparkle:shortVersionString>0.8.1</sparkle:shortVersionString>
+      <title>Flux 0.8.5</title>
+      <pubDate>Wed, 25 Nov 2026 13:38:47 +0000</pubDate>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>0.8.5</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[<ul><li><b>Feed errors in the sidebar</b>: a warning badge appears next to a feed that couldn't be refreshed; hover it for the message.</li>
-<li><b>Folder icon and color</b> (right-click a folder): symbols, emojis and a color palette.</li>
-<li><b>Drag a feed onto a folder</b> (or onto “Feeds” to take it out), and a closed folder opens when you hover it while dragging.</li>
-<li><b>Embedded videos</b> (YouTube, Vimeo, Dailymotion) can be played in the article, loaded only when you click.</li>
-<li><b>Direct PDF export</b> from the article toolbar, without going through the print dialog.</li>
-<li>A feed's <b>address change is now carried over by sync</b>: your other Macs keep the articles and their state.</li></ul>]]></description>
-      <description xml:lang="fr"><![CDATA[<ul><li><b>Les erreurs de flux dans la barre latérale</b> : une pastille d'avertissement apparaît à côté d'un flux qui n'a pas pu être actualisé ; survole-la pour lire le message.</li>
-<li><b>Icône et couleur d'un dossier</b> (clic droit sur un dossier) : symboles, emojis et palette de couleurs.</li>
-<li><b>Glisse un flux sur un dossier</b> (ou sur « Flux » pour le sortir), et un dossier fermé s'ouvre quand tu le survoles pendant le glissement.</li>
-<li><b>Vidéos intégrées</b> (YouTube, Vimeo, Dailymotion) lisibles dans l'article, chargées seulement au clic.</li>
-<li><b>Export PDF direct</b> depuis la barre d'outils de l'article, sans passer par la fenêtre d'impression.</li>
-<li>Le <b>changement d'adresse d'un flux est maintenant transmis par la synchro</b> : tes autres Mac gardent les articles et leur état.</li></ul>]]></description>
-      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.8.1/Flux-0.8.1.dmg" type="application/octet-stream" sparkle:edSignature="U1VNaBE8Hatj4r82Su9nnDYqdrf9r+m1Dh5IRT093qs7fWBetAa+igBFwq48GKwge+pDzq3msQKu/XC1wNceCg==" length="17550245" />
+      <description><![CDATA[<ul><li><b>Smart folders</b>: a new section in the sidebar, next to « Flux ». Each folder gathers articles by keywords (title, any keyword, optional whole word). Matching articles leave their feed and its folder, but stay in All and Unread.</li>
+<li><b>Better search</b>: choose to search in the title, the body of the article, or both.</li>
+<li><b>Summary lines in the list layout</b>: from 0 to 4 lines of the start of the article (Settings), 2 by default.</li>
+<li>Fixes: the expand/collapse arrow of folders is now at the far right of the row; in the list layout, the thumbnail now takes the full height of the card.</li>
+<li>⚠️ <b>Sync format changed (v2)</b> to carry smart folders: update Flux to 0.8.5 on <b>all</b> your Macs. Macs on different versions don't see each other until they are all updated.</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li><b>Dossiers intelligents</b> : une nouvelle section dans la barre latérale, à côté de « Flux ». Chaque dossier regroupe des articles par mots-clés (dans le titre, n'importe quel mot-clé, mot entier en option). Les articles concernés quittent leur flux et son dossier, mais restent dans Tous et Non lus.</li>
+<li><b>Recherche améliorée</b> : cherche dans le titre, dans le corps de l'article, ou les deux.</li>
+<li><b>Lignes de résumé en vue liste</b> : de 0 à 4 lignes du début de l'article (Réglages), 2 par défaut.</li>
+<li>Corrections : la flèche pour déplier/replier un dossier est maintenant tout à droite de la ligne ; en vue liste, la vignette fait toute la hauteur de la carte.</li>
+<li>⚠️ <b>Format de synchro modifié (v2)</b> pour transporter les dossiers intelligents : mets Flux à jour en 0.8.5 sur <b>tous</b> tes Mac. Des Mac de versions différentes ne se voient pas tant qu'ils ne sont pas tous à jour.</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.8.5/Flux-0.8.5.dmg" type="application/octet-stream" sparkle:edSignature="5GLnQ5mYBE70Ppq/Hs5aO6D/LEyEFuCg9zcU3vmFTZHsUMsi8nedk18i4VMccFBR4KCM1gORhvsYlU9EtECmBQ==" length="17640776" />
     </item>
   </channel>
 </rss>
