@@ -21,7 +21,7 @@ Flux is a simple, good-looking RSS reader for macOS.
 
 You add your feeds yourself (no directory, no account, no recommendations), you browse the articles as a list with thumbnails or as a grid, and you read the **full article right inside the app**, without opening your browser. Everything stays on your Mac.
 
-Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available in English and French, in light and dark mode. Versions up to 0.6 were native SwiftUI apps; that code is kept in the [`swift/`](swift) folder and at the `swift-final` tag.
+Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available in English and French, with seven themes. Versions up to 0.6 were native SwiftUI apps; that code is kept in the [`swift/`](swift) folder and at the `swift-final` tag.
 
 > [!NOTE]
 > **Built with the help of AI.** Flux is a personal project I built with [Claude](https://claude.ai), Anthropic's AI assistant: my skills alone wouldn't have been enough to code it entirely by myself. I decided what the app should do, made the design choices and tested every version in daily use; Claude wrote a large part of the code. Just being upfront about it.
@@ -53,12 +53,18 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 - **Limitations:** nested folders in an OPML file are flattened to their closest folder. Feeds are dragged one at a time. A feed whose last refresh failed gets a warning badge in the sidebar: hover it (or right-click › Show error…) for the message and the date of the last successful refresh; it only shows the last error, not a history.
 - **Change a feed's address** (right-click › Change address…): enter the new feed or site address; the articles, their read state and the favorites are kept, and the change is carried over by sync to your other Macs.
 
+### 🏠 Home
+
+Flux opens on **Home**, a briefing of what's new, with nothing to set up: today's date, the number of articles published today, your unread count and feeds with an error; **trending topics** (stories covered by several of your sources in the last 48 hours, the most covered first); the latest unread articles of each **smart folder**; and your **unread articles from the last 24 hours**. An article opens in place, with a back arrow.
+
+- **Limitation:** trending topics rely on the grouping of similar articles: the section stays empty when grouping is turned off.
+
 ### 🖼️ A list you enjoy browsing
 
 - Three layouts, switched in the toolbar: **list** (thumbnail, source, date, title and 0 to 4 lines of the start of the article, 2 by default), **grid** (cards with the title, the number of columns adapts to the width) and **full-width grid**, where an article opens in place, with a back arrow.
 - Thumbnails come from the feed (`media:thumbnail`, `enclosure`…), from the first image of the article, or as a last resort from the page's `og:image`.
 - **Search** the articles of the current view, in the title, the body or both, **hide read articles** with one button, **mark all as read**.
-- Views: All articles, Unread, Favorites, History, folders, feeds and tags.
+- Views: Home, All articles, Unread, Favorites, History, folders, feeds and tags.
 - **Keyboard:** J / K (or the arrows) move through the list, Space scrolls the article and moves on to the next one at the bottom, M toggles read, S toggles favorite, B opens the article in your browser. Also ⌘A (select all), ⌘N (add a feed), ⌘R (refresh), ⇧⌘K (mark all as read), ⌥⌘S (statistics).
 - **Multiple selection:** ⌘-click or ⇧-click to select several articles, then right-click to mark them as read, favorite them or tag them at once.
 
@@ -68,6 +74,12 @@ Flux is a [Tauri](https://tauri.app) app (Rust core, React interface), available
 - Clean reading layout, light or dark, with an adjustable text size (⌘+ or ⌘= / ⌘− / ⌘0), three text widths and a choice of article fonts. Links open in your default browser.
 - **Print or export as PDF** from the article toolbar: the PDF button asks where to save, then writes the article to a file with the print layout (no sidebar, no buttons).
 - **Limitations:** articles reserved for a site's subscribers stay cut, since the site itself doesn't serve the rest. Pages built entirely in JavaScript can be extracted poorly: the “Open in browser” button is there for those. Embedded videos from YouTube, Vimeo and Dailymotion show a “Play the video” box and only load when you click it (and not offline); other players are removed from the article, only their link remains.
+
+### ✨ Summaries with Apple Intelligence
+
+The **Summarize** button of the article toolbar sums the article up in 3 to 5 bullet points, in the language of the interface, with Apple's on-device model: nothing leaves your Mac. Settings › Reading can also summarize every article you open automatically.
+
+- **Limitations:** requires macOS 26 and an Apple silicon Mac with Apple Intelligence turned on; elsewhere the button is hidden. Only the first 7,000 characters of an article are summarized. Apple's model may still decline some sensitive texts, and a summary can contain mistakes. Summaries aren't saved: they're forgotten when you quit Flux.
 
 ### 🧲 Similar articles
 
@@ -106,6 +118,13 @@ Settings › Feeds › *Prepare articles for offline reading*: after each refres
 
 - **Limitations:** articles reserved for subscribers and pages that can't be extracted stay as the feed provides them. Preparation downloads data after every refresh, only for the articles that don't have their full text yet.
 
+### 🔔 Notifications and menu bar
+
+Settings › Notifications: get notified of new articles, from all feeds or only from the folders, feeds, smart folders and title keywords you choose. Clicking a notification opens the article; more than three articles at once are grouped into a single notification, which opens Unread. Flux checks the permission macOS gives it and takes you to System Settings when notifications are turned off. An option keeps Flux in the **menu bar** when you close its window, so it keeps refreshing and notifying you; ⌘Q always quits it.
+
+- Refreshing now happens in the background, at the interval you choose, even when the window is closed.
+- **Limitations:** no notification while Flux is in front, unless you check the option for it. Articles hidden or marked as read by a filter, duplicates and articles published more than 48 hours ago don't trigger any. Without the menu bar option, notifications only come while Flux is open (its window can be minimized). These settings are specific to each Mac.
+
 ### ☁️ Sync between Macs
 
 Settings › Sync: turn it on on each Mac (same iCloud account) to keep your **feeds, folders, custom names, filter rules, read articles, favorites and their tags** in sync. Flux writes a small state file per Mac in `iCloud Drive/Flux/devices/` and merges the others: when something changed on both Macs, the most recent change wins, item by item. **Since 0.8.5 the sync format (v2) also carries smart folders and is not compatible with the previous one: update Flux to 0.8.5 on all your Macs.** Until then, Macs on different versions ignore each other (Flux says so in Settings › Sync) and nothing is lost. The Swift version, 0.8.0 and 0.8.1 use the old format.
@@ -120,23 +139,29 @@ Settings › Backup: once a day, Flux stores a complete copy of its database (fe
 - **Restore** replaces the current contents at the next launch; the current contents are set aside first.
 - **Limitation:** backups made by the Swift version use another format and can't be restored here (use the import described below instead).
 
+### 🎨 Themes
+
+Seven themes: **Light**, **Sepia** and **Dawn** on the light side, **Dark**, **Pure black**, **Nord** and **Forest** on the dark side. In **Automatic** mode, Flux follows the macOS appearance with the day theme and the night theme of your choice. The accent color can be the theme's own, or blue, violet, pink, red, orange or green. Printing and PDF export stay light.
+
+- **Limitations:** themes and accent color are set per Mac (not synced); there's no theme editor.
+
 ### ⚙️ Settings
 
-Appearance (automatic, light, dark), interface font and sidebar density, article font, text size and width, number of summary lines in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity, offline preparation and image cache size, favorites archive. A short **tour** of Flux opens on first launch (app menu › Discover Flux to see it again).
+Appearance (seven themes, day and night themes in automatic mode, accent color), interface font and sidebar density, article font, text size and width, number of summary lines in the list, language, refresh interval, mark-as-read delay, automatic cleanup, duplicate sensitivity, offline preparation and image cache size, favorites archive, notifications and menu bar, automatic summaries. A short **tour** of Flux opens on first launch (app menu › Discover Flux to see it again).
 
 ## 🧩 Compatibility
 
-**macOS 14 (Sonoma) or later**, on Apple Silicon and Intel Macs.
+**macOS 14 (Sonoma) or later**, on Apple Silicon and Intel Macs. Summaries with Apple Intelligence require macOS 26 and an Apple silicon Mac.
 
 Feed formats: **RSS 2.0**, **RSS 1.0 (RDF)**, **Atom** and **JSON Feed**, served over `https` or `http`.
 
 ## 🔐 Required permissions
 
-None, except one: if you turn on sync or backup, macOS asks once whether Flux may access iCloud Drive. Otherwise Flux only uses the network to download your feeds, their articles and their images.
+Two, both optional: **notifications**, if you turn them on (Flux shows the permission macOS gives it and opens System Settings for you); and **iCloud Drive**, if you turn on sync or backup (macOS asks once). Otherwise Flux only uses the network to download your feeds, their articles and their images.
 
 ## 🔒 Privacy
 
-Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. The one exception is an embedded video: YouTube, Vimeo or Dailymotion is only contacted if you click “Play”. Everything is stored on your Mac:
+Flux collects nothing and sends nothing about you. There is no account, no analytics and no tracking. Apart from the optional sync through your own iCloud Drive and the check for a new version on GitHub, the only network requests go directly to the sites you subscribe to: their feeds, the pages of their articles, their images and their favicons. The one exception is an embedded video: YouTube, Vimeo or Dailymotion is only contacted if you click “Play”. Summaries are computed on your Mac by Apple's model. Everything is stored on your Mac:
 
 - articles, feeds, folders and settings: `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite`;
 - thumbnails and images: `~/Library/Application Support/io.github.aervorn.flux/images`; archived favorites' images: `…/archive`;
@@ -172,6 +197,13 @@ Your reading history and reading times are imported too, so your statistics carr
 Flux checks for a new version at launch (or app menu › **Check for updates…**) and offers to install it. Updates are signed, and Flux refuses any file that wasn't signed by the author.
 
 ## 📝 Changelog
+
+### 0.9.0
+- **Home**: Flux now opens on a briefing with today's figures, trending topics covered by several sources, your smart folders and the unread articles of the last 24 hours.
+- **Notifications** of new articles (all feeds, or a selection of folders, feeds, smart folders and keywords), with background refresh and an option to **keep Flux in the menu bar** when the window is closed.
+- **Summaries with Apple Intelligence**, on your Mac, with the Summarize button or automatically (macOS 26, Apple silicon).
+- **Five new themes** (Sepia, Dawn, Pure black, Nord, Forest), day and night themes in automatic mode, and a choice of accent color.
+- Fix: a window resized to fill the screen (without full screen) no longer reopens with an empty band at the top.
 
 ### 0.8.5
 - **Smart folders**: a new section in the sidebar, next to « Flux ». Each folder gathers articles by keywords (title, any keyword, optional whole word). Matching articles leave their feed and its folder, but stay in All and Unread.
@@ -239,7 +271,7 @@ Flux checks for a new version at launch (or app menu › **Check for updates…*
 
 ## 🛠️ Building from source
 
-Requirements: macOS 14 or later, [Rust](https://rustup.rs) (stable), Node.js and [pnpm](https://pnpm.io), and the Xcode command-line tools.
+Requirements: macOS 14 or later, [Rust](https://rustup.rs) (stable), Node.js and [pnpm](https://pnpm.io), and the Xcode command-line tools (for `swiftc`). Summaries need the macOS 26 SDK (Xcode 26 or later); with an older SDK, Flux builds without them.
 
 ```bash
 git clone https://github.com/Aervorn/MacOS_Flux.git
@@ -252,7 +284,8 @@ pnpm tauri dev      # runs the app in development
 
 ```
 crates/flux-core/   Rust core without Tauri: database, feeds, filters, similar articles, sync, backup
-src-tauri/          Tauri shell: commands, window, updater, bundle
+src-tauri/          Tauri shell: commands, window, updater, notifications, bundle
+src-tauri/swift/    Swift bridges: Apple Intelligence summaries, notification permission
 src/                React interface (components, reader, locales fr / en)
 swift/              the former SwiftUI app (kept for reference)
 Design/             app icon and DMG background

@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import fr from "./locales/fr.json";
@@ -35,6 +36,8 @@ export function hasSavedLang(): boolean {
 
 export function setLang(lang: Lang) {
   void i18n.changeLanguage(lang);
+  // Textes des notifications et du menu de la barre des menus (hors Tauri : sans effet)
+  invoke("set_ui_language", { lang }).catch(() => undefined);
   document.documentElement.lang = lang;
   try {
     localStorage.setItem(STORAGE_KEY, lang);

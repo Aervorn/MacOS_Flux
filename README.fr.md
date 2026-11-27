@@ -21,7 +21,7 @@ Flux est un lecteur RSS simple et soigné pour macOS.
 
 Tu ajoutes tes flux toi-même (pas d'annuaire, pas de compte, pas de recommandations), tu parcours les articles en liste avec miniatures ou en grille, et tu lis **l'article complet directement dans l'app**, sans ouvrir ton navigateur. Tout reste sur ton Mac.
 
-Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React), en français et en anglais, en mode clair et sombre. Les versions jusqu'à la 0.6 étaient des apps SwiftUI natives ; ce code est conservé dans le dossier [`swift/`](swift) et au tag `swift-final`.
+Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React), en français et en anglais, avec sept thèmes. Les versions jusqu'à la 0.6 étaient des apps SwiftUI natives ; ce code est conservé dans le dossier [`swift/`](swift) et au tag `swift-final`.
 
 > [!NOTE]
 > **Développé avec l'aide d'une IA.** Flux est un projet perso que j'ai construit avec [Claude](https://claude.ai), l'assistant d'Anthropic : mes compétences ne m'auraient pas permis de le coder entièrement seul. J'ai défini ce que l'app devait faire, fait les choix d'interface et testé chaque version au quotidien ; Claude a écrit une grande partie du code. Autant jouer cartes sur table.
@@ -53,12 +53,18 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 - **Limites :** les dossiers imbriqués d'un fichier OPML sont aplatis dans le dossier le plus proche. Les flux se glissent un par un. Un flux dont la dernière actualisation a échoué reçoit une pastille d'avertissement dans la barre latérale : survole-la (ou clic droit › Voir l’erreur…) pour lire le message et la date de la dernière actualisation réussie ; seule la dernière erreur est conservée, pas un historique.
 - **Changer l'adresse d'un flux** (clic droit › Modifier l’adresse…) : saisis la nouvelle adresse du flux ou du site ; les articles, leur état de lecture et les favoris sont conservés, et la synchro transmet le changement à tes autres Mac.
 
+### 🏠 Accueil
+
+Flux s'ouvre sur l'**Accueil**, un point sur les nouveautés, sans rien à régler : la date, le nombre d'articles publiés aujourd'hui, tes non-lus et les flux en erreur ; les **sujets du moment** (repris par plusieurs de tes sources ces dernières 48 heures, les plus repris d'abord) ; les derniers non-lus de chaque **dossier intelligent** ; et tes **non-lus des dernières 24 heures**. Un article s'ouvre à la place, avec une flèche de retour.
+
+- **Limite :** les sujets du moment reposent sur le regroupement des articles similaires : la section reste vide s'il est désactivé.
+
 ### 🖼️ Une liste agréable à parcourir
 
 - Trois dispositions, à choisir dans la barre d'outils : **liste** (miniature, source, date, titre et 0 à 4 lignes du début de l'article, 2 par défaut), **grille** (cartes avec le titre, le nombre de colonnes s'adapte à la largeur) et **grille pleine largeur**, où l'article s'ouvre à sa place, avec une flèche de retour.
 - Les miniatures viennent du flux (`media:thumbnail`, `enclosure`…), de la première image de l'article ou, en dernier recours, de l'`og:image` de la page.
 - **Recherche** dans les articles de la vue en cours, dans le titre, le corps ou les deux, bouton pour **masquer les articles lus**, **tout marquer comme lu**.
-- Vues : Tous les articles, Non lus, Favoris, Historique, dossiers, flux et tags.
+- Vues : Accueil, Tous les articles, Non lus, Favoris, Historique, dossiers, flux et tags.
 - **Clavier :** J / K (ou les flèches) pour parcourir la liste, Espace pour faire défiler l'article puis passer au suivant en bas, M pour lu / non lu, S pour favori, B pour ouvrir l'article dans ton navigateur. Aussi ⌘A (tout sélectionner), ⌘N (ajouter un flux), ⌘R (actualiser), ⇧⌘K (tout marquer comme lu), ⌥⌘S (statistiques).
 - **Sélection multiple :** ⌘-clic ou ⇧-clic pour sélectionner plusieurs articles, puis clic droit pour les marquer comme lus, les mettre en favoris ou leur ajouter un tag d'un coup.
 
@@ -68,6 +74,12 @@ Flux est une app [Tauri](https://tauri.app) (cœur en Rust, interface en React),
 - Mise en page soignée, claire ou sombre, avec une taille de texte réglable (⌘+ ou ⌘= / ⌘− / ⌘0), trois largeurs de texte et un choix de polices d'article. Les liens s'ouvrent dans ton navigateur par défaut.
 - **Imprimer ou exporter en PDF** depuis la barre d'outils de l'article : le bouton PDF demande où enregistrer, puis écrit l'article dans un fichier avec la mise en page d'impression (sans barre latérale ni boutons).
 - **Limites :** les articles réservés aux abonnés d'un site restent coupés, puisque le site ne fournit pas la suite. Les pages entièrement construites en JavaScript peuvent être mal extraites : le bouton « Ouvrir dans le navigateur » est là pour elles. Les vidéos intégrées de YouTube, Vimeo et Dailymotion affichent un cadre « Lire la vidéo » et ne se chargent qu'au clic (et pas hors ligne) ; les autres lecteurs sont retirés de l'article, seul leur lien reste.
+
+### ✨ Résumés par Apple Intelligence
+
+Le bouton **Résumer** de la barre d'outils de l'article le résume en 3 à 5 points, dans la langue de l'interface, avec le modèle d'Apple calculé sur ton Mac : rien ne sort de ton Mac. Réglages › Lecture permet aussi de résumer automatiquement chaque article ouvert.
+
+- **Limites :** il faut macOS 26 et un Mac Apple Silicon avec Apple Intelligence activée ; ailleurs, le bouton est masqué. Seuls les 7 000 premiers caractères d'un article sont résumés. Le modèle d'Apple peut encore refuser certains textes sensibles, et un résumé peut contenir des erreurs. Les résumés ne sont pas enregistrés : ils sont oubliés quand tu quittes Flux.
 
 ### 🧲 Articles similaires
 
@@ -106,6 +118,13 @@ Réglages › Flux › *Préparer les articles pour la lecture hors ligne* : apr
 
 - **Limites :** les articles réservés aux abonnés et les pages impossibles à extraire restent tels que le flux les fournit. La préparation télécharge des données après chaque actualisation, mais seulement pour les articles qui n'ont pas encore leur texte complet.
 
+### 🔔 Notifications et barre des menus
+
+Réglages › Notifications : sois prévenu des nouveaux articles, de tous les flux ou seulement des dossiers, flux, dossiers intelligents et mots-clés du titre que tu choisis. Un clic sur une notification ouvre l'article ; au-delà de trois articles d'un coup, une seule notification les regroupe et ouvre les non-lus. Flux vérifie l'autorisation que lui donne macOS et t'amène dans les Réglages Système quand les notifications sont désactivées. Une option garde Flux dans la **barre des menus** quand tu fermes sa fenêtre : il continue alors d'actualiser et de te prévenir ; ⌘Q le quitte toujours.
+
+- L'actualisation se fait désormais en arrière-plan, au rythme choisi, même fenêtre fermée.
+- **Limites :** pas de notification quand Flux est au premier plan, sauf si tu coches l'option prévue. Les articles masqués ou marqués comme lus par un filtre, les doublons et ceux publiés il y a plus de 48 heures n'en déclenchent pas. Sans l'option de la barre des menus, les notifications n'arrivent que tant que Flux est ouvert (sa fenêtre peut être réduite). Ces réglages sont propres à chaque Mac.
+
 ### ☁️ Synchronisation entre Mac
 
 Réglages › Synchronisation : active-la sur chaque Mac (même compte iCloud) pour garder synchronisés tes **flux, dossiers, noms personnalisés, règles de filtrage, articles lus, favoris et leurs tags**. Flux écrit un petit fichier d'état par Mac dans `iCloud Drive/Flux/devices/` et fusionne ceux des autres : quand un élément a changé sur les deux Mac, la modification la plus récente l'emporte, élément par élément. **Depuis la 0.8.5, le format de synchro (v2) transporte aussi les dossiers intelligents et n'est pas compatible avec le précédent : mets Flux à jour en 0.8.5 sur tous tes Mac.** D'ici là, des Mac de versions différentes s'ignorent (Flux le signale dans Réglages › Synchronisation) et rien n'est perdu. La version Swift, la 0.8.0 et la 0.8.1 utilisent l'ancien format.
@@ -120,23 +139,29 @@ Réglages › Sauvegarde : une fois par jour, Flux stocke une copie complète de
 - **Restaurer** remplace le contenu actuel au lancement suivant ; le contenu actuel est mis de côté avant.
 - **Limite :** les sauvegardes de la version Swift ont un autre format et ne peuvent pas être restaurées ici (utilise plutôt l'import décrit plus bas).
 
+### 🎨 Thèmes
+
+Sept thèmes : **Clair**, **Sépia** et **Aube** côté clair, **Sombre**, **Noir pur**, **Nord** et **Forêt** côté sombre. En mode **Automatique**, Flux suit l'apparence de macOS avec le thème de jour et le thème de nuit de ton choix. La couleur d'accent peut être celle du thème, ou bleue, violette, rose, rouge, orange ou verte. L'impression et l'export PDF restent en clair.
+
+- **Limites :** thème et couleur d'accent se règlent sur chaque Mac (pas de synchro) ; il n'y a pas d'éditeur de thème.
+
 ### ⚙️ Réglages
 
-Apparence (automatique, clair, sombre), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, nombre de lignes de résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons, préparation hors ligne et taille du cache d'images, archive des favoris. Une courte **visite guidée** de Flux s'ouvre au premier lancement (menu de l'app › Découvrir Flux pour la revoir).
+Apparence (sept thèmes, thèmes de jour et de nuit en automatique, couleur d'accent), police de l'interface et densité de la barre latérale, police des articles, taille et largeur du texte, nombre de lignes de résumé dans la liste, langue, fréquence d'actualisation, délai avant de marquer comme lu, nettoyage automatique, sensibilité des doublons, préparation hors ligne et taille du cache d'images, archive des favoris, notifications et barre des menus, résumés automatiques. Une courte **visite guidée** de Flux s'ouvre au premier lancement (menu de l'app › Découvrir Flux pour la revoir).
 
 ## 🧩 Compatibilité
 
-**macOS 14 (Sonoma) ou plus récent**, sur Mac Apple Silicon et Intel.
+**macOS 14 (Sonoma) ou plus récent**, sur Mac Apple Silicon et Intel. Les résumés par Apple Intelligence demandent macOS 26 et un Mac Apple Silicon.
 
 Formats de flux : **RSS 2.0**, **RSS 1.0 (RDF)**, **Atom** et **JSON Feed**, en `https` ou en `http`.
 
 ## 🔐 Autorisations nécessaires
 
-Aucune, sauf une : si tu actives la synchro ou la sauvegarde, macOS demande une fois si Flux peut accéder à iCloud Drive. Sinon, Flux n'utilise le réseau que pour télécharger tes flux, leurs articles et leurs images.
+Deux, toutes deux facultatives : les **notifications**, si tu les actives (Flux affiche l'autorisation que lui donne macOS et t'ouvre les Réglages Système) ; et **iCloud Drive**, si tu actives la synchro ou la sauvegarde (macOS le demande une fois). Sinon, Flux n'utilise le réseau que pour télécharger tes flux, leurs articles et leurs images.
 
 ## 🔒 Confidentialité
 
-Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni statistiques d'usage, ni suivi. En dehors de la synchro facultative via ton propre iCloud Drive et de la recherche d'une nouvelle version sur GitHub, les seules requêtes réseau vont directement aux sites auxquels tu es abonné : leurs flux, les pages de leurs articles, leurs images et leurs favicons. Seule exception : une vidéo intégrée, où YouTube, Vimeo ou Dailymotion n'est contacté que si tu cliques sur « Lire ». Tout est stocké sur ton Mac :
+Flux ne collecte rien et n'envoie rien te concernant. Il n'y a ni compte, ni statistiques d'usage, ni suivi. En dehors de la synchro facultative via ton propre iCloud Drive et de la recherche d'une nouvelle version sur GitHub, les seules requêtes réseau vont directement aux sites auxquels tu es abonné : leurs flux, les pages de leurs articles, leurs images et leurs favicons. Seule exception : une vidéo intégrée, où YouTube, Vimeo ou Dailymotion n'est contacté que si tu cliques sur « Lire ». Les résumés sont calculés sur ton Mac par le modèle d'Apple. Tout est stocké sur ton Mac :
 
 - articles, flux, dossiers et réglages : `~/Library/Application Support/io.github.aervorn.flux/flux.sqlite` ;
 - miniatures et images : `~/Library/Application Support/io.github.aervorn.flux/images` ; images des favoris archivés : `…/archive` ;
@@ -172,6 +197,13 @@ Ton historique et tes temps de lecture sont importés aussi : tes statistiques c
 Flux recherche une nouvelle version au lancement (ou menu de l'app › **Rechercher les mises à jour…**) et propose de l'installer. Les mises à jour sont signées : Flux refuse tout fichier qui n'a pas été signé par l'auteur.
 
 ## 📝 Historique des versions
+
+### 0.9.0
+- **Accueil** : Flux s'ouvre maintenant sur un point du jour avec les chiffres du jour, les sujets repris par plusieurs sources, tes dossiers intelligents et les non-lus des dernières 24 heures.
+- **Notifications** des nouveaux articles (tous les flux, ou une sélection de dossiers, flux, dossiers intelligents et mots-clés), avec une actualisation en arrière-plan et une option pour **garder Flux dans la barre des menus** quand la fenêtre est fermée.
+- **Résumés par Apple Intelligence**, sur ton Mac, avec le bouton Résumer ou automatiquement (macOS 26, Apple Silicon).
+- **Cinq nouveaux thèmes** (Sépia, Aube, Noir pur, Nord, Forêt), thèmes de jour et de nuit en automatique, et choix de la couleur d'accent.
+- Correction : une fenêtre agrandie à tout l'écran (sans plein écran) ne se rouvre plus avec une bande vide en haut.
 
 ### 0.8.5
 - **Dossiers intelligents** : une nouvelle section dans la barre latérale, à côté de « Flux ». Chaque dossier regroupe des articles par mots-clés (dans le titre, n'importe quel mot-clé, mot entier en option). Les articles concernés quittent leur flux et son dossier, mais restent dans Tous et Non lus.
@@ -239,7 +271,7 @@ Flux recherche une nouvelle version au lancement (ou menu de l'app › **Recherc
 
 ## 🛠️ Compiler depuis les sources
 
-Prérequis : macOS 14 ou plus récent, [Rust](https://rustup.rs) (stable), Node.js et [pnpm](https://pnpm.io), et les outils en ligne de commande de Xcode.
+Prérequis : macOS 14 ou plus récent, [Rust](https://rustup.rs) (stable), Node.js et [pnpm](https://pnpm.io), et les outils en ligne de commande de Xcode (pour `swiftc`). Les résumés demandent le SDK de macOS 26 (Xcode 26 ou plus récent) ; avec un SDK plus ancien, Flux se compile sans eux.
 
 ```bash
 git clone https://github.com/Aervorn/MacOS_Flux.git
@@ -252,7 +284,8 @@ pnpm tauri dev      # lance l'app en développement
 
 ```
 crates/flux-core/   cœur Rust sans Tauri : base, flux, filtres, articles similaires, synchro, sauvegarde
-src-tauri/          coque Tauri : commandes, fenêtre, mises à jour, bundle
+src-tauri/          coque Tauri : commandes, fenêtre, mises à jour, notifications, bundle
+src-tauri/swift/    ponts Swift : résumés par Apple Intelligence, autorisation des notifications
 src/                interface React (composants, lecteur, textes fr / en)
 swift/              l'ancienne app SwiftUI (conservée pour mémoire)
 Design/             icône de l'app et fond du DMG

@@ -29,10 +29,8 @@ button {
 
 /* Impression / PDF : toujours en clair, sans les éléments d'interface. */
 @media print {
-  :root,
-  :root[data-theme="dark"],
-  :root[data-theme="light"],
-  :root[data-theme="auto"] {
+  /* sélecteur renforcé : il doit l'emporter sur le thème et sur la couleur d'accent choisie */
+  :root:root[data-theme][data-scheme] {
     color-scheme: light;
     --bg: #ffffff;
     --surface: #ffffff;

@@ -1,6 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
+// Import croisé sans risque : `offline` n'utilise `api` qu'à l'intérieur de ses fonctions.
+import { prepareOffline } from "./offline";
 
+/** « home » (l'accueil) n'existe que dans l'interface : elle n'est jamais envoyée au cœur Rust. */
 export type Selection =
+  | { kind: "home" }
   | { kind: "all" }
   | { kind: "unread" }
   | { kind: "starred" }
@@ -10,8 +14,18 @@ export type Selection =
   | { kind: "feed"; url: string }
   | { kind: "smart"; uid: string };
 
+/** Autorisation donnée à Flux dans Réglages Système › Notifications. */
+export type NotificationPermission = "notDetermined" | "denied" | "authorized" | "unknown";
+
+/** Résumés par Apple Intelligence : disponibles, ou pourquoi pas. */
+export type AiStatus = "available" | "unsupported" | "deviceNotEligible" | "notEnabled" | "notReady" | "unavailable";
+
 export type ArticleLayout = "list" | "grid" | "gridFull";
-export type Appearance = "system" | "light" | "dark";
+export type LightTheme = "light" | "sepia" | "dawn";
+export type DarkTheme = "dark" | "pureBlack" | "nord" | "forest";
+export type ThemeId = LightTheme | DarkTheme;
+export type Appearance = "system" | ThemeId;
+export type AccentChoice = "theme" | "blue" | "violet" | "pink" | "red" | "orange" | "green";
 
 /** Miroir de `flux_core::prefs::Prefs` (clés en camelCase). */
 export interface Prefs {
@@ -38,6 +52,10 @@ export interface Prefs {
   autoMarkReadDays: number;
   offlineEnabled: boolean;
   appearance: Appearance;
+  /** Thèmes utilisés en mode automatique, selon l'apparence de macOS. */
+  lightTheme: LightTheme;
+  darkTheme: DarkTheme;
+  accent: AccentChoice;
   articleLayout: ArticleLayout;
   articleListWidth: number;
   syncEnabled: boolean;
@@ -47,6 +65,20 @@ export interface Prefs {
   articleFont: "classic" | "geist" | "literata" | "sourceSerif" | "merriweather" | "atkinson" | "systemSerif" | "mono";
   sidebarDensity: "compact" | "normal" | "spacious";
   onboardingSeen: boolean;
+  /** Notifications des nouveaux articles (réglage propre à ce Mac). */
+  notifyEnabled: boolean;
+  /** Tous les flux, ou seulement les flux, dossiers, dossiers intelligents et mots-clés choisis. */
+  notifyAll: boolean;
+  notifyFeeds: string[];
+  notifyFolders: string[];
+  notifySmartFolders: string[];
+  notifyKeywords: string[];
+  /** Fermer la fenêtre laisse Flux dans la barre des menus. */
+  menuBar: boolean;
+  /** Notifier aussi quand la fenêtre de Flux est au premier plan. */
+  notifyInFront: boolean;
+  /** Résumer automatiquement chaque article ouvert (Apple Intelligence). */
+  autoSummarize: boolean;
 }
 
 export interface Settings {
@@ -299,9 +331,9 @@ export interface BackupInfo {
   backups: BackupFile[];
 }
 
-/** Nouveau favori : on récupère son texte complet (import dynamique : `offline` dépend de `api`), puis on archive. */
+/** Nouveau favori : on récupère son texte complet, puis on archive. */
 async function archiveSoon(): Promise<void> {
-  await import("./offline").then((m) => m.prepareOffline()).catch(() => undefined);
+  await prepareOffline().catch(() => undefined);
   await api.archivePending().catch(() => undefined);
 }
 
@@ -354,6 +386,13 @@ export const api = {
   addFeed: (input: string, folderUid: string | null) => invoke<AddedFeed>("add_feed", { input, folderUid }),
   changeFeedAddress: (url: string, input: string) => invoke<AddedFeed>("change_feed_address", { url, input }),
   refreshAll: () => invoke<RefreshReport>("refresh_all"),
+  testNotification: () => invoke<void>("test_notification"),
+  notificationPermission: () => invoke<NotificationPermission>("notification_permission"),
+  requestNotificationPermission: () => invoke<NotificationPermission>("request_notification_permission"),
+  openNotificationSettings: () => invoke<void>("open_notification_settings"),
+  aiStatus: () => invoke<AiStatus>("ai_status"),
+  summarize: (text: string, lang: string) => invoke<string>("summarize_article", { text, lang }),
+  setUiLanguage: (lang: string) => invoke<void>("set_ui_language", { lang }),
   renameFeed: (url: string, name: string) => invoke<void>("rename_feed", { url, name }),
   moveFeed: (url: string, folderUid: string | null) => invoke<void>("move_feed", { url, folderUid }),
   deleteFeed: (url: string) => invoke<void>("delete_feed", { url }),

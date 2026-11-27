@@ -1,0 +1,143 @@
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.help {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.card,
+.cardActive {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.card:hover {
+  background: var(--surface-hover);
+}
+
+.cardActive {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+  color: var(--text);
+}
+
+.preview {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 46px;
+  padding: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.previewSide {
+  width: 22%;
+  border-radius: 3px;
+  background: var(--surface-hover);
+}
+
+.previewPanel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+}
+
+.previewTitle,
+.previewLine,
+.previewAccent {
+  display: block;
+  flex: none;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.previewTitle {
+  width: 80%;
+  background: var(--text);
+}
+
+.previewLine {
+  width: 60%;
+  background: var(--text-muted);
+}
+
+.previewAccent {
+  width: 35%;
+  background: var(--accent);
+}
+
+/* Carte « Automatique » : moitié jour, moitié nuit */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  width: 100%;
+}
+
+.accents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accent,
+.accentActive {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.accentActive {
+  border-color: var(--accent);
+  outline: 1px solid var(--accent);
+  color: var(--text);
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+}

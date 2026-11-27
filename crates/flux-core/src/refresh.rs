@@ -213,6 +213,9 @@ pub struct RefreshReport {
     pub failed: usize,
     /// Tous les téléchargements ont échoué faute de connexion.
     pub offline: bool,
+    /// Clés des articles arrivés pendant l'actualisation (pour les notifications).
+    #[serde(skip)]
+    pub new_keys: Vec<String>,
 }
 
 /// Actualise tous les flux.
@@ -260,6 +263,7 @@ pub async fn refresh_all(db: &Mutex<Connection>, prefs: &Prefs, images: &ImageDi
         feeds::prune(&conn, opts.cutoff)?;
     }
     report.added = added.len();
+    report.new_keys = added.iter().map(|a| a.key.clone()).collect();
     process_new(db, &added, prefs);
 
     if !offline {

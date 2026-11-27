@@ -8,6 +8,8 @@ export default defineConfig({
   plugins: [react()],
   clearScreen: false,
   test: { environment: "jsdom", include: ["src/**/*.test.ts"] },
-  build: { outDir: "web-dist", emptyOutDir: true },
+  // L'app est lue depuis le Mac, pas téléchargée : la taille d'un fichier JavaScript n'a pas
+  // d'importance, d'où une limite d'avertissement relevée.
+  build: { outDir: "web-dist", emptyOutDir: true, chunkSizeWarningLimit: 4000 },
   server: { port: 1420, strictPort: true, watch: { ignored: ["**/src-tauri/**", "**/crates/**"] } },
 });

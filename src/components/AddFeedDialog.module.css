@@ -55,7 +55,7 @@
 .error {
   margin: 0;
   font-size: 13px;
-  color: #ff6b6b;
+  color: var(--danger-text);
   user-select: text;
 }
 
@@ -77,7 +77,7 @@
 .primary {
   border-color: var(--accent);
   background: var(--accent);
-  color: #0d0d0d;
+  color: var(--on-accent);
   font-weight: 600;
 }
 

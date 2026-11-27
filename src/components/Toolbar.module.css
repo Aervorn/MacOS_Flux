@@ -74,8 +74,8 @@
   gap: 5px;
   padding: 3px 9px;
   border-radius: 999px;
-  background: color-mix(in srgb, #f5a524 18%, transparent);
-  color: #f5a524;
+  background: color-mix(in srgb, var(--warning-text) 18%, transparent);
+  color: var(--warning-text);
   font-size: 12px;
   font-weight: 600;
 }

@@ -141,6 +141,8 @@
 
 .segmentActive {
   background: var(--surface-hover);
+  /* liseré : sur les thèmes clairs, la couleur de fond seule se voit à peine */
+  box-shadow: inset 0 0 0 1px var(--accent);
   color: var(--text);
 }
 

@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
+import { api, type AiStatus } from "../api";
 import { useTranslation } from "react-i18next";
-import { Archive, BookOpen, Cloud, Palette, Rss, SlidersHorizontal, X } from "lucide-react";
-import type { Prefs, SidebarFeed } from "../api";
+import { Archive, Bell, BookOpen, Cloud, Palette, Rss, SlidersHorizontal, X } from "lucide-react";
+import type { Prefs, SidebarFeed, SidebarFolder, SidebarSmartFolder } from "../api";
 import { setLang, type Lang } from "../i18n";
-import type { ThemeMode } from "../theme";
+import type { ThemeChoice } from "../theme";
+import AppearanceThemes from "./AppearanceThemes";
+import NotificationSettings from "./NotificationSettings";
 import { ARTICLE_FONTS, UI_FONTS } from "../fonts";
 import FiltersPanel from "./FiltersPanel";
 import BackupSection from "./BackupSection";
@@ -13,21 +16,16 @@ import OfflineSettings from "./OfflineSettings";
 import Select from "./Select";
 import styles from "./SettingsDialog.module.css";
 
-export type Section = "appearance" | "reading" | "feeds" | "filters" | "sync" | "backup";
+export type Section = "appearance" | "reading" | "feeds" | "notifications" | "filters" | "sync" | "backup";
 
 const SECTIONS: { id: Section; icon: React.ReactNode; labelKey: string }[] = [
   { id: "appearance", icon: <Palette size={16} />, labelKey: "settings.sectionAppearance" },
   { id: "reading", icon: <BookOpen size={16} />, labelKey: "settings.sectionReading" },
   { id: "feeds", icon: <Rss size={16} />, labelKey: "settings.sectionFeeds" },
+  { id: "notifications", icon: <Bell size={16} />, labelKey: "settings.sectionNotifications" },
   { id: "filters", icon: <SlidersHorizontal size={16} />, labelKey: "settings.sectionFilters" },
   { id: "sync", icon: <Cloud size={16} />, labelKey: "settings.sectionSync" },
   { id: "backup", icon: <Archive size={16} />, labelKey: "settings.sectionBackup" },
-];
-
-const THEMES: { mode: ThemeMode; labelKey: string }[] = [
-  { mode: "light", labelKey: "settings.appearanceLight" },
-  { mode: "dark", labelKey: "settings.appearanceDark" },
-  { mode: "auto", labelKey: "settings.appearanceAuto" },
 ];
 
 const MIN_FONT = 13;
@@ -41,18 +39,23 @@ interface Props {
   onSection: (s: Section) => void;
   prefs: Prefs;
   onPrefs: (patch: Partial<Prefs>) => void;
-  themeMode: ThemeMode;
-  onTheme: (m: ThemeMode) => void;
+  onTheme: (patch: Partial<ThemeChoice>) => void;
   onDuplicates: (level: number) => void;
   feeds: SidebarFeed[];
+  folders: SidebarFolder[];
+  smartFolders: SidebarSmartFolder[];
   /** Recharge compteurs et liste (après un changement de filtres). */
   onChanged: () => void;
   onClose: () => void;
 }
 
-export default function SettingsDialog({ section, onSection, prefs, onPrefs, themeMode, onTheme, onDuplicates, feeds, onChanged, onClose }: Props) {
+export default function SettingsDialog({ section, onSection, prefs, onPrefs, onTheme, onDuplicates, feeds, folders, smartFolders, onChanged, onClose }: Props) {
   const { t, i18n } = useTranslation();
   const [filtersEditing, setFiltersEditing] = useState(false);
+  const [ai, setAi] = useState<AiStatus>("unsupported");
+  useEffect(() => {
+    api.aiStatus().then(setAi).catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -100,7 +103,7 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
       case "appearance":
         return (
           <>
-            {row(t("settings.appearance"), segmented(themeMode, THEMES.map((x) => ({ value: x.mode, label: t(x.labelKey) })), onTheme))}
+            <AppearanceThemes prefs={prefs} onTheme={onTheme} />
             {row(
               t("settings.language"),
               segmented(i18n.language as Lang, (["fr", "en"] as Lang[]).map((l) => ({ value: l, label: l === "fr" ? "Français" : "English" })), setLang),
@@ -186,6 +189,12 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
                 </button>
               </div>,
             )}
+            {ai !== "unsupported" && ai !== "deviceNotEligible" && (
+              <div className={styles.row}>
+                {toggle(t("ai.autoSummarize"), prefs.autoSummarize, (autoSummarize) => onPrefs({ autoSummarize }))}
+                <p className={styles.help}>{t("ai.autoSummarizeHelp")}</p>
+              </div>
+            )}
           </>
         );
       case "feeds":
@@ -250,6 +259,18 @@ export default function SettingsDialog({ section, onSection, prefs, onPrefs, the
             <OfflineSettings prefs={prefs} onPrefs={onPrefs} toggle={toggle} select={select} />
             <ArchiveSettings prefs={prefs} onPrefs={onPrefs} toggle={toggle} />
           </>
+        );
+      case "notifications":
+        return (
+          <NotificationSettings
+            prefs={prefs}
+            onPrefs={onPrefs}
+            feeds={feeds}
+            folders={folders}
+            smartFolders={smartFolders}
+            toggle={toggle}
+            segmented={segmented}
+          />
         );
       case "filters":
         return <FiltersPanel feeds={feeds} onChanged={onChanged} onEditingChange={setFiltersEditing} />;

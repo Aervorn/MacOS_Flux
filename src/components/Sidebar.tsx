@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, ChevronDown, ChevronRight, CircleDot, FolderPlus, History, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, CircleDot, FolderPlus, History, House, Inbox, Plus, RefreshCw, Star, Tag } from "lucide-react";
 import type { Selection, Sidebar as SidebarData, SidebarFeed, SidebarFolder, SidebarSmartFolder, SidebarTag } from "../api";
 import { sameSelection } from "../api";
 import Favicon from "./Favicon";
@@ -182,6 +182,7 @@ export default function Sidebar({ data, selection, onSelect, favoritesExpanded, 
       </div>
 
       <nav className={styles.nav}>
+        {row({ kind: "home" }, <House size={16} />, t("sidebar.home"))}
         {row({ kind: "all" }, <Inbox size={16} />, t("sidebar.allArticles"))}
         {row({ kind: "unread" }, <CircleDot size={16} />, t("sidebar.unread"), data?.unread ?? 0)}
 

@@ -1,4 +1,7 @@
+mod ai;
+mod notifications;
 mod pdf;
+mod window_frame;
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -17,6 +20,7 @@ use flux_core::query::{ArticleRow, ListQuery, Selection, Sidebar};
 use rusqlite::Connection;
 use serde::Serialize;
 use tauri::{Emitter, Manager, State};
+use tauri_plugin_window_state::StateFlags;
 
 struct AppState {
     db: Mutex<Connection>,
@@ -33,6 +37,13 @@ struct AppState {
     sync: Mutex<SyncStatus>,
     /// État de la sauvegarde iCloud (affiché dans les réglages).
     backup: Mutex<BackupStatus>,
+    /// Fin de la dernière actualisation (secondes) : la suivante vient après le délai réglé.
+    last_refresh: Mutex<f64>,
+    /// Fermer la fenêtre la masque seulement : Flux reste dans la barre des menus.
+    keep_in_menu_bar: AtomicBool,
+    /// Langue de l'interface ("fr" ou "en"), pour les notifications et la barre des menus.
+    language: Mutex<String>,
+    notifier: notifications::Notifier,
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -104,9 +115,70 @@ fn get_settings(state: State<'_, AppState>) -> Result<Settings, String> {
 }
 
 #[tauri::command]
-fn save_prefs(state: State<'_, AppState>, prefs: Prefs) -> Result<(), String> {
-    let conn = lock(&state)?;
-    flux_core::db::save_prefs(&conn, &prefs).map_err(|e| e.to_string())
+fn save_prefs(app: tauri::AppHandle, state: State<'_, AppState>, prefs: Prefs) -> Result<(), String> {
+    {
+        let conn = lock(&state)?;
+        flux_core::db::save_prefs(&conn, &prefs).map_err(|e| e.to_string())?;
+    }
+    state.keep_in_menu_bar.store(prefs.menu_bar, Ordering::SeqCst);
+    notifications::set_tray_visible(&app, prefs.menu_bar);
+    Ok(())
+}
+
+/// Langue choisie dans l'interface : textes des notifications et du menu de la barre des menus.
+#[tauri::command]
+fn set_ui_language(app: tauri::AppHandle, state: State<'_, AppState>, lang: String) -> Result<(), String> {
+    let lang = if lang.starts_with("fr") { "fr" } else { "en" }.to_string();
+    let changed = {
+        let mut current = state.language.lock().map_err(|_| "état verrouillé".to_string())?;
+        let changed = *current != lang;
+        *current = lang.clone();
+        changed
+    };
+    if changed {
+        if let Ok(conn) = state.db.lock() {
+            let _ = flux_core::db::save_setting(&conn, "uiLanguage", &lang);
+        }
+        notifications::relabel_tray(&app);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn test_notification(app: tauri::AppHandle) {
+    notifications::test(&app);
+}
+
+/// "notDetermined", "denied", "authorized" ou "unknown" (Réglages Système › Notifications).
+#[tauri::command]
+async fn notification_permission() -> Result<&'static str, String> {
+    tauri::async_runtime::spawn_blocking(notifications::permission).await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn request_notification_permission() -> Result<&'static str, String> {
+    tauri::async_runtime::spawn_blocking(notifications::request_permission).await.map_err(|e| e.to_string())
+}
+
+/// Ouvre Réglages Système › Notifications, sur Flux.
+#[tauri::command]
+fn open_notification_settings(app: tauri::AppHandle) -> Result<(), String> {
+    let url = format!("x-apple.systempreferences:com.apple.Notifications-Settings.extension?id={}", app.config().identifier);
+    std::process::Command::new("open").arg(url).status().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Disponibilité des résumés par Apple Intelligence sur ce Mac (voir `ai::status`).
+#[tauri::command]
+fn ai_status() -> &'static str {
+    ai::status()
+}
+
+/// Résume le texte d'un article, sur le Mac, avec le modèle d'Apple.
+#[tauri::command]
+async fn summarize_article(text: String, lang: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || ai::summarize(&text, &lang))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -329,8 +401,10 @@ async fn change_feed_address(state: State<'_, AppState>, url: String, input: Str
 }
 
 /// Actualise tous les flux (sans effet si une actualisation est déjà en cours).
-#[tauri::command]
-async fn refresh_all(state: State<'_, AppState>) -> Result<RefreshReport, String> {
+/// Actualise tous les flux (une seule actualisation à la fois), puis prévient des nouveaux
+/// articles. Appelée par l'interface, par la boucle régulière et par la barre des menus.
+pub(crate) async fn run_refresh(app: &tauri::AppHandle) -> Result<RefreshReport, String> {
+    let state = app.state::<AppState>();
     if state.refreshing.swap(true, Ordering::SeqCst) {
         return Ok(RefreshReport::default());
     }
@@ -339,7 +413,36 @@ async fn refresh_all(state: State<'_, AppState>) -> Result<RefreshReport, String
         Err(e) => Err(e),
     };
     state.refreshing.store(false, Ordering::SeqCst);
+    if let Ok(mut last) = state.last_refresh.lock() {
+        *last = flux_core::feeds::now();
+    }
+    if let Ok(report) = &result {
+        notifications::after_refresh(app, &report.new_keys);
+    }
     result
+}
+
+#[tauri::command]
+async fn refresh_all(app: tauri::AppHandle) -> Result<RefreshReport, String> {
+    run_refresh(&app).await
+}
+
+/// Actualisation régulière, au rythme réglé (5 minutes au moins), même fenêtre fermée.
+/// L'interface est prévenue par l'évènement `feeds-refreshed`.
+fn refresh_loop(app: tauri::AppHandle) {
+    loop {
+        std::thread::sleep(std::time::Duration::from_secs(30));
+        let state = app.state::<AppState>();
+        let minutes = current_prefs(&state).map(|p| p.refresh_minutes.max(5)).unwrap_or(30);
+        let last = state.last_refresh.lock().map(|l| *l).unwrap_or(0.0);
+        if flux_core::feeds::now() - last < f64::from(minutes) * 60.0 {
+            continue;
+        }
+        eprintln!("actualisation automatique (toutes les {minutes} min)");
+        if let Ok(report) = tauri::async_runtime::block_on(run_refresh(&app)) {
+            let _ = app.emit("feeds-refreshed", &report);
+        }
+    }
 }
 
 #[tauri::command]
@@ -938,8 +1041,27 @@ fn serve_image(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // Le plugin ne retient plus que le plein écran (et affiche la fenêtre) : la taille et la
+        // position sont confiées à macOS, voir `window_frame`.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::VISIBLE | StateFlags::FULLSCREEN)
+                .build(),
+        )
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_notification::init())
+        // Avec l'option « barre des menus », fermer la fenêtre la masque seulement.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let keep = window
+                    .try_state::<AppState>()
+                    .is_some_and(|s| s.keep_in_menu_bar.load(Ordering::SeqCst));
+                if window.label() == "main" && keep {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .register_uri_scheme_protocol("flux-image", |ctx, request| serve_image(ctx, request))
         .setup(|app| {
             // Menu par défaut de macOS, mais « Tout sélectionner » (⌘A) est géré par l'interface :
@@ -987,6 +1109,9 @@ pub fn run() {
                     }
                 });
             }
+            if let Some(window) = app.get_webview_window("main") {
+                window_frame::remember(&window);
+            }
             let dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&dir)?;
             // Restauration préparée : appliquée avant d'ouvrir la base
@@ -995,6 +1120,11 @@ pub fn run() {
             }
             let db_path = dir.join("flux.sqlite");
             let conn = flux_core::db::open(&db_path)?;
+            let startup_prefs = flux_core::db::load_prefs(&conn).unwrap_or_default();
+            let language = flux_core::db::load_setting::<String>(&conn, "uiLanguage")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "fr".to_string());
             let swift = app.path().home_dir()?.join("Library/Application Support/Flux");
             let images = ImageDirs {
                 own: dir.join("images"),
@@ -1010,7 +1140,18 @@ pub fn run() {
                 preparing: AtomicBool::new(false),
                 sync: Mutex::new(SyncStatus::default()),
                 backup: Mutex::new(BackupStatus::default()),
+                // l'interface actualise au lancement ; la boucle prend le relais ensuite
+                last_refresh: Mutex::new(flux_core::feeds::now()),
+                keep_in_menu_bar: AtomicBool::new(startup_prefs.menu_bar),
+                language: Mutex::new(language),
+                notifier: notifications::Notifier::default(),
             });
+            notifications::listen(app.handle());
+            if let Err(e) = notifications::setup_tray(app.handle(), startup_prefs.menu_bar) {
+                eprintln!("barre des menus : {e}");
+            }
+            let handle = app.handle().clone();
+            std::thread::spawn(move || refresh_loop(handle));
             let handle = app.handle().clone();
             std::thread::spawn(move || sync_loop(handle));
             let handle = app.handle().clone();
@@ -1083,8 +1224,22 @@ pub fn run() {
             install_update,
             swift_import_status,
             swift_import_dismiss,
-            import_swift_data
+            import_swift_data,
+            set_ui_language,
+            test_notification,
+            notification_permission,
+            request_notification_permission,
+            open_notification_settings,
+            ai_status,
+            summarize_article
         ])
-        .run(tauri::generate_context!())
-        .expect("erreur au lancement de Flux");
+        .build(tauri::generate_context!())
+        .expect("erreur au lancement de Flux")
+        .run(|_app, _event| {
+            // Clic sur l'icône du Dock alors que la fenêtre est masquée (barre des menus)
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = _event {
+                notifications::show_main(_app);
+            }
+        });
 }

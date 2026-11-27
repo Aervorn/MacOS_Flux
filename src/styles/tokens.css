@@ -1,11 +1,15 @@
 /*
  * Jetons de design de Flux.
  * Thème sombre : mesuré sur la capture Turbo Reader (voir rapport, §14).
- * Thème clair : PROVISOIRE, à valider (la capture ne montre que le sombre).
+ *
+ * Chaque palette n'est écrite qu'ici. Elle s'applique à toute l'app (data-theme sur <html>)
+ * et aux vignettes des réglages (data-swatch). Le mode automatique est résolu par theme.ts,
+ * qui pose le thème de jour ou de nuit choisi.
  */
 
 :root,
-:root[data-theme="dark"] {
+:root[data-theme="dark"],
+[data-swatch="dark"] {
   color-scheme: dark;
   --bg: #0d0d0d;
   --surface: #131313;
@@ -20,7 +24,56 @@
   --placeholder-to: #221e1d;
 }
 
-:root[data-theme="light"] {
+:root[data-theme="pureBlack"],
+[data-swatch="pureBlack"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #000000;
+  --surface-hover: #161616;
+  --pill: #131313;
+  --border: #262626;
+  --text: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #767676;
+  --accent: #6cabff;
+  --placeholder-from: #2b2226;
+  --placeholder-to: #181515;
+}
+
+:root[data-theme="nord"],
+[data-swatch="nord"] {
+  color-scheme: dark;
+  --bg: #242933;
+  --surface: #2e3440;
+  --surface-hover: #3b4252;
+  --pill: #3b4252;
+  --border: #434c5e;
+  --text: #eceff4;
+  --text-secondary: #c0c8d6;
+  --text-muted: #8c96aa;
+  --accent: #88c0d0;
+  --placeholder-from: #4c566a;
+  --placeholder-to: #3b4252;
+}
+
+:root[data-theme="forest"],
+[data-swatch="forest"] {
+  color-scheme: dark;
+  --bg: #0e1512;
+  --surface: #141e19;
+  --surface-hover: #1e2c25;
+  --pill: #1b2721;
+  --border: #253329;
+  --text: #e6efe9;
+  --text-secondary: #a3b5aa;
+  --text-muted: #74887c;
+  --accent: #6fcf97;
+  --placeholder-from: #284036;
+  --placeholder-to: #1a2922;
+}
+
+:root[data-theme="light"],
+[data-swatch="light"] {
   color-scheme: light;
   --bg: #f5f5f5;
   --surface: #ffffff;
@@ -35,21 +88,111 @@
   --placeholder-to: #d9d4d2;
 }
 
-@media (prefers-color-scheme: light) {
-  :root[data-theme="auto"] {
-    color-scheme: light;
-    --bg: #f5f5f5;
-    --surface: #ffffff;
-    --surface-hover: #ececec;
-    --pill: #e8e8e8;
-    --border: #e2e2e2;
-    --text: #171717;
-    --text-secondary: #5c5c5c;
-    --text-muted: #8a8a8a;
-    --accent: #2f6fdb;
-    --placeholder-from: #e6dcdf;
-    --placeholder-to: #d9d4d2;
-  }
+:root[data-theme="sepia"],
+[data-swatch="sepia"] {
+  color-scheme: light;
+  --bg: #ebe0cc;
+  --surface: #f5ecd9;
+  --surface-hover: #eadfc7;
+  --pill: #e6dac0;
+  --border: #dccdb0;
+  --text: #3b2f20;
+  --text-secondary: #665440;
+  --text-muted: #8a765c;
+  --accent: #94521f;
+  --placeholder-from: #e2d0b0;
+  --placeholder-to: #d5c19c;
+}
+
+:root[data-theme="dawn"],
+[data-swatch="dawn"] {
+  color-scheme: light;
+  --bg: #f6f1ec;
+  --surface: #fffbf7;
+  --surface-hover: #f4ebe4;
+  --pill: #efe5dd;
+  --border: #e9ddd3;
+  --text: #2a2220;
+  --text-secondary: #655955;
+  --text-muted: #8d807a;
+  --accent: #bf4430;
+  --placeholder-from: #f3d9cf;
+  --placeholder-to: #e8c8bd;
+}
+
+/* Couleurs qui dépendent seulement du caractère clair ou sombre du thème. */
+:root {
+  /* texte posé sur un fond de couleur d'accent */
+  --on-accent: #0d0d0d;
+  --danger-text: #ff6b6b;
+  --warning-text: #f5a524;
+}
+
+:root[data-scheme="light"] {
+  --on-accent: #ffffff;
+  --danger-text: #b3261e;
+  --warning-text: #8a5300;
+}
+
+/* Couleur d'accent choisie (sans choix : celle du thème), dans une teinte adaptée au fond. */
+:root[data-scheme="dark"][data-accent="blue"],
+[data-accent-swatch="blue"][data-scheme="dark"] {
+  --accent: #64a1f7;
+}
+
+:root[data-scheme="light"][data-accent="blue"],
+[data-accent-swatch="blue"][data-scheme="light"] {
+  --accent: #1f5fc4;
+}
+
+:root[data-scheme="dark"][data-accent="violet"],
+[data-accent-swatch="violet"][data-scheme="dark"] {
+  --accent: #b49bff;
+}
+
+:root[data-scheme="light"][data-accent="violet"],
+[data-accent-swatch="violet"][data-scheme="light"] {
+  --accent: #6d46c9;
+}
+
+:root[data-scheme="dark"][data-accent="pink"],
+[data-accent-swatch="pink"][data-scheme="dark"] {
+  --accent: #ff8cc0;
+}
+
+:root[data-scheme="light"][data-accent="pink"],
+[data-accent-swatch="pink"][data-scheme="light"] {
+  --accent: #a82766;
+}
+
+:root[data-scheme="dark"][data-accent="red"],
+[data-accent-swatch="red"][data-scheme="dark"] {
+  --accent: #ff8078;
+}
+
+:root[data-scheme="light"][data-accent="red"],
+[data-accent-swatch="red"][data-scheme="light"] {
+  --accent: #b02e25;
+}
+
+:root[data-scheme="dark"][data-accent="orange"],
+[data-accent-swatch="orange"][data-scheme="dark"] {
+  --accent: #ffa457;
+}
+
+:root[data-scheme="light"][data-accent="orange"],
+[data-accent-swatch="orange"][data-scheme="light"] {
+  --accent: #8f4706;
+}
+
+:root[data-scheme="dark"][data-accent="green"],
+[data-accent-swatch="green"][data-scheme="dark"] {
+  --accent: #6fd69a;
+}
+
+:root[data-scheme="light"][data-accent="green"],
+[data-accent-swatch="green"][data-scheme="light"] {
+  --accent: #1b6a40;
 }
 
 :root {

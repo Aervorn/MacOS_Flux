@@ -24,6 +24,7 @@ pub mod refresh;
 pub mod semantic;
 pub mod stats;
 pub mod net;
+pub mod notify;
 pub mod offline;
 pub mod prefs;
 pub mod query;

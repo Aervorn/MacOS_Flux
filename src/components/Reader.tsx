@@ -1,21 +1,35 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileDown, FileText, Minus, Plus, Printer, Rss, Star, Tag } from "lucide-react";
+import { ArrowLeft, Check, Circle, CircleCheck, ExternalLink, FileDown, FileText, Minus, Plus, Printer, Rss, Sparkles, Star, Tag } from "lucide-react";
 import { api } from "../api";
-import type { ArticleDetail, Prefs, SidebarTag } from "../api";
+import type { AiStatus, ArticleDetail, Prefs, SidebarTag } from "../api";
 import { errorMessage } from "../errors";
 import { formatPublished } from "../format";
 import { extractArticle } from "../reader/extract";
 import { cachedImageSrc, restoreOnError, rewriteImages } from "../reader/images";
 import { bodyHtml, heroAlreadyInBody, sanitizeArticle } from "../reader/sanitize";
 import { createPlayer, parseEmbed } from "../reader/video";
-import { looksLikeExcerpt } from "../reader/text";
+import { looksLikeExcerpt, plainText } from "../reader/text";
 import styles from "./Reader.module.css";
 
 const MIN_FONT = 13;
 const MAX_FONT = 28;
 const DEFAULT_FONT = 17;
 const WIDTHS: Prefs["readerWidth"][] = ["narrow", "wide", "full"];
+
+// Résumés par Apple Intelligence : disponibilité vérifiée une fois, résumés gardés le temps de la session.
+let aiStatusPromise: Promise<AiStatus> | null = null;
+const aiStatus = () => (aiStatusPromise ??= api.aiStatus().catch(() => "unsupported" as const));
+const summaries = new Map<string, string>();
+
+type Summary = { state: "idle" } | { state: "loading" } | { state: "done"; lines: string[] } | { state: "error"; message: string };
+
+/** « - premier point » → « premier point » ; une réponse sans puces reste un seul paragraphe. */
+const summaryLines = (text: string) =>
+  text
+    .split("\n")
+    .map((l) => l.replace(/^\s*(?:[-•*]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean);
 
 interface Props {
   articleKey: string;
@@ -44,6 +58,56 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
   const [tagMenu, setTagMenu] = useState(false);
   const [pdf, setPdf] = useState<{ busy: boolean; message: string | null; failed: boolean }>({ busy: false, message: null, failed: false });
   const [newTag, setNewTag] = useState("");
+  const [ai, setAi] = useState<AiStatus>("unsupported");
+  const [summary, setSummary] = useState<Summary>({ state: "idle" });
+
+  useEffect(() => {
+    void aiStatus().then(setAi);
+  }, []);
+  useEffect(() => {
+    const known = summaries.get(articleKey);
+    setSummary(known ? { state: "done", lines: summaryLines(known) } : { state: "idle" });
+  }, [articleKey]);
+
+  const summarize = async () => {
+    if (!detail) return;
+    const status = await api.aiStatus().catch(() => "unsupported" as const);
+    setAi(status);
+    if (status !== "available") {
+      setSummary({ state: "error", message: t(`ai.status_${status}`) });
+      return;
+    }
+    const key = detail.key;
+    const text = `${detail.title}\n\n${plainText(detail.fullHtml || detail.contentHtml || detail.summary)}`;
+    setSummary({ state: "loading" });
+    try {
+      const result = await api.summarize(text, i18n.language);
+      summaries.set(key, result);
+      if (key === articleKeyRef.current) setSummary({ state: "done", lines: summaryLines(result) });
+    } catch (e) {
+      const raw = String(e);
+      const message = /context|window|exceeded/i.test(raw)
+        ? t("ai.tooLong")
+        : /guardrail|refus|unsafe|sensitive/i.test(raw)
+          ? t("ai.refused")
+          : /language|locale/i.test(raw)
+            ? t("ai.language")
+            : t("ai.failed", { message: raw });
+      if (key === articleKeyRef.current) setSummary({ state: "error", message });
+    }
+  };
+  const articleKeyRef = useRef(articleKey);
+  articleKeyRef.current = articleKey;
+
+  // Résumé automatique (Réglages › Lecture) : une fois l'article et son texte complet chargés.
+  const autoDone = useRef<string | null>(null);
+  useEffect(() => {
+    if (!prefs.autoSummarize || ai !== "available" || !detail || detail.key !== articleKey) return;
+    if (status === "loading" || autoDone.current === articleKey || summaries.has(articleKey)) return;
+    autoDone.current = articleKey;
+    void summarize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs.autoSummarize, ai, detail, articleKey, status]);
   const onChangedRef = useRef(onChanged);
   onChangedRef.current = onChanged;
   const manualReadKey = useRef<string | null>(null); // lu/non lu choisi à la main : plus de marquage automatique
@@ -397,6 +461,17 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
             {t("detail.loadFull")}
           </button>
         )}
+        {ai !== "unsupported" && ai !== "deviceNotEligible" && (
+          <button
+            className={styles.pill}
+            onClick={() => void summarize()}
+            disabled={summary.state === "loading"}
+            title={t("ai.summarizeHelp")}
+          >
+            <Sparkles size={14} />
+            {t("ai.summarize")}
+          </button>
+        )}
         <div className={styles.group}>
           <button className={styles.iconButton} onClick={() => setFont(prefs.readerFontSize - 1)} title={t("detail.smaller")} aria-label={t("detail.smaller")}>
             <Minus size={14} />
@@ -449,6 +524,33 @@ export default function Reader({ articleKey, prefs, onPrefs, onOpenArticle, tags
                 </button>
               ))}
             </div>
+          )}
+
+          {summary.state !== "idle" && (
+            <aside className={styles.summary} data-noprint>
+              <header>
+                <Sparkles size={14} />
+                <span>{t("ai.title")}</span>
+                {summary.state !== "loading" && (
+                  <button onClick={() => setSummary({ state: "idle" })} aria-label={t("ai.hide")} title={t("ai.hide")}>
+                    ×
+                  </button>
+                )}
+              </header>
+              {summary.state === "loading" && <p className={styles.summaryNote}>{t("ai.loading")}</p>}
+              {summary.state === "error" && <p className={styles.summaryNote}>{summary.message}</p>}
+              {summary.state === "done" &&
+                (summary.lines.length > 1 ? (
+                  <ul>
+                    {summary.lines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>{summary.lines[0]}</p>
+                ))}
+              {summary.state === "done" && <p className={styles.summaryNote}>{t("ai.disclaimer")}</p>}
+            </aside>
           )}
 
           {pdf.message && (

@@ -126,6 +126,6 @@
 .primary {
   border-color: var(--accent);
   background: var(--accent);
-  color: #0d0d0d;
+  color: var(--on-accent);
   font-weight: 600;
 }

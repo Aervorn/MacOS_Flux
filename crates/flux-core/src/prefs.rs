@@ -36,8 +36,15 @@ pub struct Prefs {
     pub offline_enabled: bool,
     /// Synchronisation entre Mac par iCloud Drive.
     pub sync_enabled: bool,
-    /// "system", "light" ou "dark"
+    /// "system" (automatique) ou un thème : "light", "sepia", "dawn", "dark", "pureBlack",
+    /// "nord" ou "forest"
     pub appearance: String,
+    /// Thème de jour du mode automatique : "light", "sepia" ou "dawn".
+    pub light_theme: String,
+    /// Thème de nuit du mode automatique : "dark", "pureBlack", "nord" ou "forest".
+    pub dark_theme: String,
+    /// "theme" (celle du thème), "blue", "violet", "pink", "red", "orange" ou "green"
+    pub accent: String,
     /// "list", "grid" ou "gridFull"
     pub article_layout: String,
     pub article_list_width: f64,
@@ -53,6 +60,24 @@ pub struct Prefs {
     pub sidebar_density: String,
     /// La découverte de Flux a déjà été vue (ou n'a plus lieu d'être).
     pub onboarding_seen: bool,
+    /// Notifications des nouveaux articles.
+    pub notify_enabled: bool,
+    /// Tous les flux ; sinon seulement les flux, dossiers, dossiers intelligents et mots-clés choisis.
+    pub notify_all: bool,
+    /// Adresses des flux choisis.
+    pub notify_feeds: Vec<String>,
+    /// uid des dossiers choisis.
+    pub notify_folders: Vec<String>,
+    /// uid des dossiers intelligents choisis.
+    pub notify_smart_folders: Vec<String>,
+    /// Mots-clés cherchés dans le titre (mot entier, sans casse ni accents).
+    pub notify_keywords: Vec<String>,
+    /// Fermer la fenêtre laisse Flux tourner dans la barre des menus.
+    pub menu_bar: bool,
+    /// Notifier aussi quand la fenêtre de Flux est au premier plan.
+    pub notify_in_front: bool,
+    /// Résumer automatiquement (Apple Intelligence) chaque article ouvert.
+    pub auto_summarize: bool,
 }
 
 impl Default for Prefs {
@@ -80,6 +105,9 @@ impl Default for Prefs {
             offline_enabled: false,
             sync_enabled: false,
             appearance: "system".into(),
+            light_theme: "light".into(),
+            dark_theme: "dark".into(),
+            accent: "theme".into(),
             article_layout: "list".into(),
             article_list_width: 400.0,
             sidebar_width: 260.0,
@@ -88,6 +116,15 @@ impl Default for Prefs {
             article_font: "classic".into(),
             sidebar_density: "normal".into(),
             onboarding_seen: false,
+            notify_enabled: false,
+            notify_all: true,
+            notify_feeds: Vec::new(),
+            notify_folders: Vec::new(),
+            notify_smart_folders: Vec::new(),
+            notify_keywords: Vec::new(),
+            menu_bar: false,
+            notify_in_front: false,
+            auto_summarize: false,
         }
     }
 }
@@ -122,5 +159,8 @@ mod tests {
         let p: Prefs = serde_json::from_str("{\"retentionDays\":14}").unwrap();
         assert_eq!(p.retention_days, 14);
         assert_eq!(p.refresh_minutes, 30);
+        // Réglages enregistrés avant les nouveaux thèmes
+        assert_eq!((p.light_theme.as_str(), p.dark_theme.as_str(), p.accent.as_str()), ("light", "dark", "theme"));
+        assert!(!p.notify_enabled && p.notify_all && !p.menu_bar);
     }
 }

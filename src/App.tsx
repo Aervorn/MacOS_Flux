@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { useTranslation } from "react-i18next";
+import i18next from "i18next";
 import { api, sameSelection } from "./api";
 import type { AppInfo, ArticleRow, Prefs, Selection, Sidebar as SidebarData } from "./api";
 import { hasSavedLang, setLang } from "./i18n";
 import { errorMessage } from "./errors";
-import { applyTheme, appearanceToMode, modeToAppearance } from "./theme";
+import { applyTheme } from "./theme";
 import { applyLook } from "./fonts";
 import ArticleList from "./components/ArticleList";
 import Resizer from "./components/Resizer";
@@ -20,6 +21,7 @@ import SmartFolderDialog from "./components/SmartFolderDialog";
 import { open as openFile, save as saveFile } from "@tauri-apps/plugin-dialog";
 import { articleMenu, articlesMenu, feedMenu, folderMenu, smartFolderMenu, tagMenu, type Ask, type MenuContext } from "./menus";
 import Reader from "./components/Reader";
+import HomeView from "./components/HomeView";
 import Toolbar from "./components/Toolbar";
 import Onboarding from "./components/Onboarding";
 import StatsDialog from "./components/StatsDialog";
@@ -31,7 +33,7 @@ export default function App() {
   const { t } = useTranslation();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [sidebar, setSidebar] = useState<SidebarData | null>(null);
-  const [selection, setSelection] = useState<Selection>({ kind: "all" });
+  const [selection, setSelection] = useState<Selection>({ kind: "home" }); // l'accueil au lancement
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [articles, setArticles] = useState<ArticleRow[]>([]);
@@ -61,7 +63,7 @@ export default function App() {
   const loadSettings = useCallback(async () => {
     const { prefs: loaded, language } = await api.settings();
     setPrefs(loaded);
-    applyTheme(appearanceToMode(loaded.appearance));
+    applyTheme(loaded);
     if ((language === "fr" || language === "en") && !hasSavedLang()) setLang(language);
   }, []);
 
@@ -72,6 +74,7 @@ export default function App() {
     api.checkUpdate().then((u) => setUpdate(u?.version ?? null)).catch(() => undefined); // silencieux : pas de réseau, ou hors Tauri
     api.swiftImportStatus().then(setSwiftImport).catch(() => undefined);
     api.archivePending().catch(() => undefined); // favoris arrivés par la synchro ou l'import
+    api.setUiLanguage(i18next.language).catch(() => undefined); // notifications et barre des menus
     loadSettings().catch((e) => setNotice(String(e)));
     loadSidebar().catch((e) => setNotice(String(e)));
   }, [loadSettings, loadSidebar]);
@@ -99,6 +102,10 @@ export default function App() {
 
   useEffect(() => {
     if (!ready) return;
+    if (selection.kind === "home") {
+      setArticles([]); // l'accueil charge ses propres articles
+      return;
+    }
     let cancelled = false;
     api
       .articles({
@@ -126,6 +133,7 @@ export default function App() {
   }, [loadSidebar]);
 
   const markAllRead = async () => {
+    if (selection.kind === "home") return; // rien de précis à marquer depuis l'accueil
     try {
       await api.markAllRead(selection, prefs?.hideTaggedFavorites ?? false);
       refresh();
@@ -187,15 +195,23 @@ export default function App() {
   const refreshFeedsRef = useRef(refreshFeeds);
   refreshFeedsRef.current = refreshFeeds;
 
-  // Au lancement (une fois les réglages chargés), puis à intervalle régulier.
-  const refreshMinutes = prefs?.refreshMinutes ?? null;
+  // Au lancement (une fois les réglages chargés). Ensuite, le cœur Rust actualise à intervalle
+  // régulier, même fenêtre fermée (barre des menus), et prévient l'interface.
   useEffect(() => {
-    if (refreshMinutes === null) return;
+    if (!ready) return;
     void refreshFeeds();
-    const id = setInterval(() => void refreshFeeds(), Math.max(refreshMinutes, 5) * 60_000);
-    return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshMinutes]);
+  }, [ready]);
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    listen("feeds-refreshed", () => {
+      refresh();
+      void prepareOffline();
+    })
+      .then((un) => (off = un))
+      .catch(() => undefined);
+    return () => off?.();
+  }, [refresh]);
 
   // Synchro iCloud : un autre Mac a changé des choses (la liste se recharge ; les nouveaux flux
   // sont actualisés), et on resynchronise au retour dans l'app.
@@ -269,6 +285,22 @@ export default function App() {
     setCursorKey(null);
     anchorRef.current = null;
   }, [selection]);
+
+  // Clic sur une notification : l'article, ou la vue Non lus pour une notification groupée.
+  useEffect(() => {
+    let off: (() => void) | undefined;
+    listen<string | null>("notification-open", (e) => {
+      if (e.payload) {
+        openArticle(e.payload);
+      } else {
+        setSelection({ kind: "unread" });
+        setSelectedKey(null);
+      }
+    })
+      .then((un) => (off = un))
+      .catch(() => undefined);
+    return () => off?.();
+  }, [openArticle]);
 
   const rangeKeys = (from: string, to: string): string[] => {
     const i = articles.findIndex((a) => a.key === from);
@@ -616,6 +648,8 @@ export default function App() {
 
   const title = (() => {
     switch (selection.kind) {
+      case "home":
+        return t("sidebar.home");
       case "all":
         return t("sidebar.allArticles");
       case "unread":
@@ -637,7 +671,6 @@ export default function App() {
     }
   })();
 
-  const currentMode = appearanceToMode(prefs.appearance);
   const sidebarWidth = dragSidebar ?? prefs.sidebarWidth;
   const listWidth = dragList ?? prefs.articleListWidth;
 
@@ -694,7 +727,11 @@ export default function App() {
         <Toolbar
           title={title}
           search={search}
-          onSearch={setSearch}
+          onSearch={(s) => {
+            setSearch(s);
+            // Chercher depuis l'accueil, c'est chercher dans tous les articles
+            if (s && selection.kind === "home") select({ kind: "all" });
+          }}
           searchInTitle={prefs.searchInTitle}
           searchInBody={prefs.searchInBody}
           onSearchScope={(searchInTitle, searchInBody) => updatePrefs({ searchInTitle, searchInBody })}
@@ -708,7 +745,29 @@ export default function App() {
           offline={!online}
         />
 
-        {prefs.articleLayout !== "gridFull" ? (
+        {selection.kind === "home" ? (
+          selectedKey ? (
+            <Reader
+              articleKey={selectedKey}
+              prefs={prefs}
+              onPrefs={updatePrefs}
+              onOpenArticle={openArticle}
+              tags={sidebar?.tags ?? []}
+              onChanged={refresh}
+              onClose={() => setSelectedKey(null)}
+            />
+          ) : (
+            <div className={styles.scroll}>
+              <HomeView
+                sidebar={sidebar}
+                reloadTick={reloadTick}
+                onOpen={openArticle}
+                onSelect={select}
+                onMenu={(e, article) => void openArticleMenu(e, article)}
+              />
+            </div>
+          )
+        ) : prefs.articleLayout !== "gridFull" ? (
           <div className={styles.split}>
             <div className={styles.listColumn} data-noprint style={{ width: listWidth }}>
               {list}
@@ -789,12 +848,13 @@ export default function App() {
           onSection={setSettings}
           prefs={prefs}
           onPrefs={updatePrefs}
-          themeMode={currentMode}
-          onTheme={(mode) => {
-            applyTheme(mode);
-            updatePrefs({ appearance: modeToAppearance(mode) });
+          onTheme={(patch) => {
+            applyTheme({ ...prefs, ...patch });
+            updatePrefs(patch);
           }}
           onDuplicates={(level) => void setDuplicates(level)}
+          folders={sidebar?.folders ?? []}
+          smartFolders={sidebar?.smartFolders ?? []}
           feeds={[...(sidebar?.feeds ?? []), ...(sidebar?.folders.flatMap((f) => f.feeds) ?? [])].sort((a, b) =>
             a.title.localeCompare(b.title),
           )}
