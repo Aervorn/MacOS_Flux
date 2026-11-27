@@ -4,22 +4,22 @@
     <title>Flux</title>
     <link>https://github.com/Aervorn/MacOS_Flux</link>
     <item>
-      <title>Flux 0.8.5</title>
-      <pubDate>Wed, 25 Nov 2026 13:38:47 +0000</pubDate>
-      <sparkle:version>10</sparkle:version>
-      <sparkle:shortVersionString>0.8.5</sparkle:shortVersionString>
+      <title>Flux 0.9.0</title>
+      <pubDate>Fri, 27 Nov 2026 15:18:55 +0000</pubDate>
+      <sparkle:version>11</sparkle:version>
+      <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[<ul><li><b>Smart folders</b>: a new section in the sidebar, next to « Flux ». Each folder gathers articles by keywords (title, any keyword, optional whole word). Matching articles leave their feed and its folder, but stay in All and Unread.</li>
-<li><b>Better search</b>: choose to search in the title, the body of the article, or both.</li>
-<li><b>Summary lines in the list layout</b>: from 0 to 4 lines of the start of the article (Settings), 2 by default.</li>
-<li>Fixes: the expand/collapse arrow of folders is now at the far right of the row; in the list layout, the thumbnail now takes the full height of the card.</li>
-<li>⚠️ <b>Sync format changed (v2)</b> to carry smart folders: update Flux to 0.8.5 on <b>all</b> your Macs. Macs on different versions don't see each other until they are all updated.</li></ul>]]></description>
-      <description xml:lang="fr"><![CDATA[<ul><li><b>Dossiers intelligents</b> : une nouvelle section dans la barre latérale, à côté de « Flux ». Chaque dossier regroupe des articles par mots-clés (dans le titre, n'importe quel mot-clé, mot entier en option). Les articles concernés quittent leur flux et son dossier, mais restent dans Tous et Non lus.</li>
-<li><b>Recherche améliorée</b> : cherche dans le titre, dans le corps de l'article, ou les deux.</li>
-<li><b>Lignes de résumé en vue liste</b> : de 0 à 4 lignes du début de l'article (Réglages), 2 par défaut.</li>
-<li>Corrections : la flèche pour déplier/replier un dossier est maintenant tout à droite de la ligne ; en vue liste, la vignette fait toute la hauteur de la carte.</li>
-<li>⚠️ <b>Format de synchro modifié (v2)</b> pour transporter les dossiers intelligents : mets Flux à jour en 0.8.5 sur <b>tous</b> tes Mac. Des Mac de versions différentes ne se voient pas tant qu'ils ne sont pas tous à jour.</li></ul>]]></description>
-      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.8.5/Flux-0.8.5.dmg" type="application/octet-stream" sparkle:edSignature="5GLnQ5mYBE70Ppq/Hs5aO6D/LEyEFuCg9zcU3vmFTZHsUMsi8nedk18i4VMccFBR4KCM1gORhvsYlU9EtECmBQ==" length="17640776" />
+      <description><![CDATA[<ul><li><b>Home</b>: Flux now opens on a briefing with today's figures, trending topics covered by several sources, your smart folders and the unread articles of the last 24 hours.</li>
+<li><b>Notifications</b> of new articles (all feeds, or a selection of folders, feeds, smart folders and keywords), with background refresh and an option to <b>keep Flux in the menu bar</b> when the window is closed.</li>
+<li><b>Summaries with Apple Intelligence</b>, on your Mac, with the Summarize button or automatically (macOS 26, Apple silicon).</li>
+<li><b>Five new themes</b> (Sepia, Dawn, Pure black, Nord, Forest), day and night themes in automatic mode, and a choice of accent color.</li>
+<li>Fix: a window resized to fill the screen (without full screen) no longer reopens with an empty band at the top.</li></ul>]]></description>
+      <description xml:lang="fr"><![CDATA[<ul><li><b>Accueil</b> : Flux s'ouvre maintenant sur un point du jour avec les chiffres du jour, les sujets repris par plusieurs sources, tes dossiers intelligents et les non-lus des dernières 24 heures.</li>
+<li><b>Notifications</b> des nouveaux articles (tous les flux, ou une sélection de dossiers, flux, dossiers intelligents et mots-clés), avec une actualisation en arrière-plan et une option pour <b>garder Flux dans la barre des menus</b> quand la fenêtre est fermée.</li>
+<li><b>Résumés par Apple Intelligence</b>, sur ton Mac, avec le bouton Résumer ou automatiquement (macOS 26, Apple Silicon).</li>
+<li><b>Cinq nouveaux thèmes</b> (Sépia, Aube, Noir pur, Nord, Forêt), thèmes de jour et de nuit en automatique, et choix de la couleur d'accent.</li>
+<li>Correction : une fenêtre agrandie à tout l'écran (sans plein écran) ne se rouvre plus avec une bande vide en haut.</li></ul>]]></description>
+      <enclosure url="https://github.com/Aervorn/MacOS_Flux/releases/download/v0.9.0/Flux-0.9.0.dmg" type="application/octet-stream" sparkle:edSignature="gxPw9eG8TZxFsk/MTWs5qmWjNN6tj0Z7Er48q4DbU0+FCgJ0ngxL2zzcclLH4ZXIK+3nOYmhDqBDmvFYUZEoAA==" length="18716083" />
     </item>
   </channel>
 </rss>
